@@ -43,14 +43,10 @@ make proto-swagger-gen
 ```
 
 ### Local network test
-Export personal github token to run dockerfile in local
-```shell
-GITHUB_TOKEN=`git config --global --list | grep 'url' | sed 's/.*git://' | awk -F '[@]' '{print $1}'` && export GITHUB_TOKEN
-```
-
 ```shell
 make localnet-build # first time only
 make localnet-start
 
-unset GITHUB_TOKEN # for safety
+# stop local network test
+make localnet-stop
 ```

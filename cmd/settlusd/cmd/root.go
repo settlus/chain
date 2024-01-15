@@ -44,7 +44,7 @@ import (
 	srvflags "github.com/settlus/chain/evmos/server/flags"
 
 	"github.com/settlus/chain/app"
-	settluscfg "github.com/settlus/chain/cmd/chaind/config"
+	settluscfg "github.com/settlus/chain/cmd/settlusd/config"
 	evmoskr "github.com/settlus/chain/evmos/crypto/keyring"
 )
 
@@ -52,7 +52,7 @@ const (
 	EnvPrefix = "SETTLUS"
 )
 
-// NewRootCmd creates a new root command for chaind. It is called once in the
+// NewRootCmd creates a new root command for settlusd. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
@@ -71,7 +71,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	eip712.SetEncodingConfig(encodingConfig)
 
 	rootCmd := &cobra.Command{
-		Use:   app.Name,
+		Use:   "settlusd",
 		Short: "Settlus Daemon",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs

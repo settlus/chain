@@ -239,18 +239,18 @@ A user can query and interact with the `x/settlement` module using the CLI.
 #### Query
 The query commands allow users to query `x/settlement` module's state.
 ```shell
-chaind query settlement --help
+settlusd query settlement --help
 ```
 
 ##### UTXRs
 The `utxrs` command allows users to query the UTXRs of a tenant.
 ```shell
-chaind query settlement utxrs [tenant-id] [id] [flags]
+settlusd query settlement utxrs [tenant-id] [id] [flags]
 ```
 
 Example:
 ```shell
-chaind query settlement utxrs 1
+settlusd query settlement utxrs 1
 ```
 
 Example Output:
@@ -273,7 +273,7 @@ Example Output:
 #### Transactions
 The `tx` commands allow users to interact with the `x/settlement` module.
 ```shell
-chaind tx settlement --help
+settlusd tx settlement --help
 ```
 
 ##### Record
@@ -281,12 +281,12 @@ The command `record` allows tenant admins to record a UTXR.
 
 Usage:
 ```shell
-chaind tx settlement record [tenant-id] [request-id] [amount] [chain-id] [contract-address] [token-id] [metadata] [flags] 
+settlusd tx settlement record [tenant-id] [request-id] [amount] [chain-id] [contract-address] [token-id] [metadata] [flags] 
 ```
 
 Example:
 ```shell
-chaind tx settlement record-revenue \
+settlusd tx settlement record-revenue \
     1 # tenant id \
     request-1 # request id \
     1000000usdc # amount
@@ -301,12 +301,12 @@ The command `cancel` allows tenant admins to cancel a UTXR.
 
 Usage:
 ```shell
-chaind tx settlement cancel [tenant-id] [request-id] [flags]
+settlusd tx settlement cancel [tenant-id] [request-id] [flags]
 ```
 
 Example:
 ```shell
-chaind tx settlement cancel \
+settlusd tx settlement cancel \
     1 # tenant id \
     request-1 # request id
 ```
@@ -316,12 +316,12 @@ The command `deposit-to-treasury` allows tenant admins to deposit funds to the t
 
 Usage:
 ```shell
-chaind tx settlement deposit-to-treasury [tenant-id] [amount] [flags]
+settlusd tx settlement deposit-to-treasury [tenant-id] [amount] [flags]
 ```
 
 Example:
 ```shell
-chaind tx settlement deposit-to-treasury \
+settlusd tx settlement deposit-to-treasury \
     1 # tenant id \
     1000000usdc # amount
 ```

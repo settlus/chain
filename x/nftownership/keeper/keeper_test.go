@@ -26,7 +26,7 @@ import (
 	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/testutil"
 	utiltx "github.com/settlus/chain/testutil/tx"

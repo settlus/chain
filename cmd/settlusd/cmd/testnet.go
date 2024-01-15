@@ -43,7 +43,7 @@ import (
 	evmostypes "github.com/settlus/chain/evmos/types"
 	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 
-	settluscfg "github.com/settlus/chain/cmd/chaind/config"
+	settluscfg "github.com/settlus/chain/cmd/settlusd/config"
 	evmoskr "github.com/settlus/chain/evmos/crypto/keyring"
 	"github.com/settlus/chain/evmos/testutil/network"
 )
@@ -125,7 +125,7 @@ or a similar setup where each node has a manually configurable IP address.
 Note, strict routability for addresses is turned off in the config file.
 
 Example:
-	chaind testnet init-files --v 4 --output-dir ./.testnets --starting-ip-address 192.168.10.2
+	settlusd testnet init-files --v 4 --output-dir ./.testnets --starting-ip-address 192.168.10.2
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -152,7 +152,7 @@ Example:
 
 	addTestnetFlagsToCmd(cmd)
 	cmd.Flags().String(flagNodeDirPrefix, "node", "Prefix the directory name for each node with (node results in node0, node1, ...)")
-	cmd.Flags().String(flagNodeDaemonHome, "chaind", "Home directory of the node's daemon configuration")
+	cmd.Flags().String(flagNodeDaemonHome, "settlusd", "Home directory of the node's daemon configuration")
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1", "Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
 
@@ -169,7 +169,7 @@ and generate "v" directories, populated with necessary validator configuration f
 (private validator, genesis, config, etc.).
 
 Example:
-	chaind testnet --v 4 --output-dir ./.testnets
+	settlusd testnet --v 4 --output-dir ./.testnets
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			args := startArgs{}

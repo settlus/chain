@@ -37,12 +37,12 @@ ldflags += -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
 
-.PHONY: all chaind test lint clean proto-gen
+.PHONY: all settlusd test lint clean proto-gen
 
-all: chaind
+all: settlusd
 
-chaind: go.sum
-	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/chaind ./cmd/chaind
+settlusd: go.sum
+	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/settlusd ./cmd/settlusd
 
 test:
 	go test -mod=readonly ./...
@@ -135,5 +135,6 @@ localnet-stop:
 	rm -rf $(CURDIR)/.testnets
 
 localnet-start: localnet-stop
-	$(BUILDDIR)/chaind testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
+	make settlusd
+	$(BUILDDIR)/settlusd testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
 	docker-compose -f $(LOCALNET_SETUP_FILE) up -d

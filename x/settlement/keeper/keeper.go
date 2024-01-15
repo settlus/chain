@@ -58,8 +58,8 @@ func (k SettlementKeeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // GetRecipient returns the owner of the given NFT from x/nftownership module
-func (k SettlementKeeper) GetRecipient(ctx sdk.Context, chaindId string, contractAddr string, tokenIdHex string) (string, error) {
-	ownerAddress, err := k.nk.OwnerOf(ctx, chaindId, contractAddr, tokenIdHex)
+func (k SettlementKeeper) GetRecipient(ctx sdk.Context, settlusdId string, contractAddr string, tokenIdHex string) (string, error) {
+	ownerAddress, err := k.nk.OwnerOf(ctx, settlusdId, contractAddr, tokenIdHex)
 	if err != nil {
 		if sdkerrorstypes.ErrInvalidAddress.Is(err) {
 			return "", err

@@ -16,7 +16,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/config"
 	evmosserverconfig "github.com/settlus/chain/evmos/server/config"
 	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 )

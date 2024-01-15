@@ -24,7 +24,7 @@ import (
 	"github.com/settlus/chain/evmos/encoding"
 	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
 
-	"github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/evmos/utils"
 )
 

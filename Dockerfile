@@ -12,13 +12,13 @@ WORKDIR /app
 COPY . .
 
 RUN go mod download
-RUN make chaind
+RUN make settlusd
 
 FROM alpine:latest
 
 WORKDIR /app
 
 RUN apk add --no-cache ca-certificates
-COPY --from=builder /app/build/chaind /usr/local/bin/
+COPY --from=builder /app/build/settlusd /usr/local/bin/
 
-ENTRYPOINT ["chaind"]
+ENTRYPOINT ["settlusd"]
