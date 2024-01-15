@@ -1,0 +1,19 @@
+syntax = "proto3";
+package settlus.oracle.v1alpha1;
+
+import "gogoproto/gogo.proto";
+import "settlus/oracle/v1alpha1/oracle.proto";
+
+option go_package = "github.com/settlus/chain/x/oracle/types";
+
+// GenesisState defines the oracle module's genesis state.
+message GenesisState {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  repeated BlockData block_data = 2 [ (gogoproto.nullable) = false ];
+  repeated FeederDelegation feeder_delegation = 3
+      [ (gogoproto.nullable) = false ];
+  repeated MissCount miss_counts = 4 [ (gogoproto.nullable) = false ];
+  repeated AggregatePrevote aggregate_prevotes = 5
+      [ (gogoproto.nullable) = false ];
+  repeated AggregateVote aggregate_votes = 6 [ (gogoproto.nullable) = false ];
+}

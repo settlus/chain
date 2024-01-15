@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  node0:
+    container_name: node0
+    image: "settlus/localnet"
+    volumes:
+      - ./.testnets/node0/chaind:/root/.settlus:Z    
+    command: 
+      - start
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.2
+    restart: always
+
+  node1:
+    container_name: node1
+    image: "settlus/localnet"
+    volumes:
+      - ./.testnets/node1/chaind:/root/.settlus:Z  
+    command:
+      - start
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.3
+    restart: always
+
+  node2:
+    container_name: node2
+    image: "settlus/localnet"
+    volumes:
+      - ./.testnets/node2/chaind:/root/.settlus:Z  
+    command:
+      - start
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.4
+    restart: always
+
+  node3:
+    container_name: node3
+    image: "settlus/localnet"
+    volumes:
+      - ./.testnets/node3/chaind:/root/.settlus:Z  
+    command:
+      - start
+    networks:
+      localnet:
+        ipv4_address: 192.168.11.5
+    restart: always
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.11.0/26

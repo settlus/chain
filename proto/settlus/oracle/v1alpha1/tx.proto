@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package settlus.oracle.v1alpha1;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/settlus/chain/x/oracle/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc Prevote(MsgPrevote) returns (MsgPrevoteResponse);
+  rpc Vote(MsgVote) returns (MsgVoteResponse);
+  rpc FeederDelegationConsent(MsgFeederDelegationConsent)
+      returns (MsgFeederDelegationConsentResponse);
+}
+
+message MsgPrevote {
+  option (cosmos.msg.v1.signer) = "feeder";
+
+  string feeder = 1;
+  string validator = 2;
+  string hash = 3;
+}
+
+message MsgPrevoteResponse {}
+
+message MsgVote {
+  option (cosmos.msg.v1.signer) = "feeder";
+
+  string feeder = 1;
+  string validator = 2;
+  string block_data_string = 3;
+  string salt = 4;
+}
+
+message MsgVoteResponse {}
+
+message MsgFeederDelegationConsent {
+  option (cosmos.msg.v1.signer) = "validator";
+
+  string validator = 1;
+  string feeder_address = 2;
+}
+
+message MsgFeederDelegationConsentResponse {}

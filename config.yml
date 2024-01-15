@@ -1,0 +1,135 @@
+# just used for local test
+version: 1
+accounts:
+  - name: treasury
+    coins:
+      - 10000000000000000000000000asetl
+      - 10000000000000000000000000uusdc # fake USDC
+    mnemonic: equal broken goose strong twenty upgrade cool pen run opinion gain brick husband repeat magnet foam creek purse alcohol this margin lunch hip birth
+  - name: bob
+    coins:
+      - 10000000000000000000000000asetl
+      - 10000000000000000000000000uusdc
+    mnemonic: police tube stay federal expire veteran roof fossil simple purse ridge knee wheel topple omit review spider public tone prosper side imitate auto inhale
+  - name: faucet
+    coins:
+      - 10000000000000000000000000asetl
+    mnemonic: island club point history solution tonight festival maid zebra business nasty clap spirit science excess win caution hand embrace heavy snow derive nuclear head
+client:
+  typescript:
+    path: ts-client
+  hooks:
+    path: react/src/hooks
+  openapi:
+    path: spec/static/openapi.yml
+build:
+  main: cmd/chaind
+  binary: chaind
+  proto:
+    path: proto
+    third_party_paths:
+      - third_party/proto
+      - proto_vendor
+genesis:
+  app_state:
+    crisis:
+      constant_fee:
+        denom: asetl
+    evm:
+      params:
+        evm_denom: asetl
+    erc20:
+      params:
+        enable_erc20: true
+        enable_evm_hook: true
+    feemarket:
+      block_gas: 1000000000000
+      params:
+        base_fee: "1"
+        base_fee_change_denominator: 1
+        min_gas_price: "1"
+    gov:
+      deposit_params:
+        max_deposit_period: "600s" # 10 minutes
+        min_deposit:
+          - amount: "100"
+            denom: asetl
+      voting_params:
+        voting_period: "600s" # 10 minutes
+    distribution:
+      params:
+        community_tax: "0.2"
+        base_proposer_reward: "0"
+        bonus_proposer_reward: "0"
+    mint:
+      params:
+        mint_denom: asetl
+        block_reward: "5000000000000000000"
+    staking:
+      params:
+        bond_denom: asetl
+        min_commission_rate: "0.0"
+        max_validators: 80
+    settlement:
+      params:
+        gas_price:
+          amount: "1"
+          denom: uusdc
+        oracle_fee_percentage: "1"
+      tenants:
+        - id: "0"
+          denom: eBLUC
+          admins:
+            - settlus12g8w5dr5jyncct8jwdxwsy2g9ktdrjjlcs5f0a
+          payout_period: 10
+          payout_method: mintable_contract
+          contract_address: "0x722A69fcd47184dDC228E9Eb6E5178f6e1Cb9A1E"
+    nftownership:
+      params:
+        allowedChainIds:
+          - "1"
+          - "5"
+    oracle:
+      params:
+        vote_period: 2
+        vote_threshold: "0.5"
+        tolerated_error_band: 2
+        whitelist:
+          - chain_id: "1"
+            chain_name: "ethereum"
+            chain_url: "https://ethereum.org"
+        slash_fraction: "0.01"
+        slash_window: 604800
+        max_miss_count_per_slash_window: 302400
+  chain_id: settlus_5371-1
+  consensus_params:
+    block:
+      max_gas: "10000000000000000"
+validators:
+  - name: treasury
+    bonded: 100000000000000000000asetl
+    app:
+      api:
+        swagger: true
+        max-open-connections: "100"
+      evm-rpc:
+        address: 0.0.0.0:8545
+        ws-address: 0.0.0.0:8546
+      json-rpc:
+        enabled: true
+        api: "eth,net,web3,txpool,debug,personal"
+      minimum-gas-prices: 1
+    config:
+      fees: 210000000asetl
+      moniker: treasury-node
+      p2p:
+        seeds: ""
+      consensus:
+        timeout_propose: "3s"
+        timeout_propose_delta: "500ms"
+        timeout_prevote: "1s"
+        timeout_prevote_delta: "500ms"
+        timeout_precommit: "1s"
+        timeout_precommit_delta: "500ms"
+        timeout_commit: "5s"
+    home: $HOME/.settlus

@@ -1,0 +1,10 @@
+syntax = "proto3";
+package settlus.nftownership;
+
+import "gogoproto/gogo.proto";
+import "settlus/nftownership/params.proto";
+
+option go_package = "github.com/settlus/chain/x/nftownership/types";
+
+// GenesisState defines the nftownership module's genesis state.
+message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }

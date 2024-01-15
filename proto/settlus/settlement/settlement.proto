@@ -1,0 +1,44 @@
+syntax = "proto3";
+package settlus.settlement;
+
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/settlus/chain/x/settlement/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  cosmos.base.v1beta1.Coin gas_price = 1 [ (gogoproto.nullable) = false ];
+  string oracle_fee_percentage = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Tenant defines the tenant parameters.
+message Tenant {
+  option (gogoproto.equal) = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  uint64 id = 1;
+  repeated string admins = 2;
+  string denom = 3;
+  uint64 payout_period = 4;
+  string payout_method = 5;
+  string contract_address = 6;
+}
+
+// UTXR defines the unspent transaction record.
+message UTXR {
+  string request_id = 1;
+  string recipient = 2 [
+    (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
+    (gogoproto.nullable) = false];
+  cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
+  uint64 payout_block = 4;
+}

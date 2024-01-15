@@ -1,0 +1,19 @@
+syntax = "proto3";
+package settlus.interop;
+
+option go_package = "github.com/settlus/chain/x/interop";
+
+service Interop {
+  rpc OwnerOf(OwnerOfRequest) returns (OwnerOfResponse) {}
+}
+
+message OwnerOfRequest {
+  string chain_id = 1;
+  string contract_addr = 2;
+  string token_id_hex = 3;
+  string block_hash = 4;
+}
+
+message OwnerOfResponse {
+  string owner = 1;
+}

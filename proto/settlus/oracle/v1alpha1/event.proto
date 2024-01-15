@@ -1,0 +1,28 @@
+syntax = "proto3";
+package settlus.oracle.v1alpha1;
+
+import "settlus/oracle/v1alpha1/oracle.proto";
+
+option go_package = "github.com/settlus/chain/x/oracle/types";
+
+message EventPrevote {
+  string feeder = 1;
+  string validator = 2;
+  string hash = 3;
+}
+
+message EventVote {
+  string feeder = 1;
+  string validator = 2;
+  repeated BlockData block_data = 3;
+}
+
+message EventFeederDelegationConsent {
+  string feeder = 1;
+  string validator = 2;
+}
+
+message EventOracleConsensusFailed {
+  string chain_id = 1;
+  int64 block_height = 2;
+}

@@ -1,0 +1,9 @@
+run:
+  timeout: 5m
+  skip-dirs:
+    - docs
+    - build
+    - evmos
+
+output:
+  format: github-actions

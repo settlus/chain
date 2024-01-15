@@ -1,0 +1,14 @@
+node_modules/
+lib/
+release/
+.idea/
+.vscode/
+.DS_Store
+build/
+.env
+.chaind
+.testnets/
+.deps
+
+# ignite generated
+ts-client/

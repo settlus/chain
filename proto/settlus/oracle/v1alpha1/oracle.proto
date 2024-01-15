@@ -1,0 +1,58 @@
+syntax = "proto3";
+package settlus.oracle.v1alpha1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/settlus/chain/x/oracle/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  uint64 vote_period = 1;
+  string vote_threshold = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  uint64 tolerated_error_band = 3;
+  repeated Chain whitelist = 4;
+  string slash_fraction = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  uint64 slash_window = 6;
+  uint64 max_miss_count_per_slash_window = 7;
+}
+
+message Chain {
+  string chain_id = 1;
+  string chain_name = 2;
+  string chain_url = 3;
+}
+
+message AggregatePrevote {
+  string hash = 1;
+  string voter = 2;
+  uint64 submit_block = 3;
+}
+
+message AggregateVote {
+  repeated BlockData blockData = 1;
+  string voter = 2;
+}
+
+message BlockData {
+  string chain_id = 1;
+  int64 block_number = 2;
+  string block_hash = 3;
+}
+
+message FeederDelegation {
+  string feeder_address = 1;
+  string validator_address = 2;
+}
+
+message MissCount {
+  string validator_address = 1;
+  uint64 miss_count = 2;
+}

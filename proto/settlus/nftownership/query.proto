@@ -1,0 +1,42 @@
+syntax = "proto3";
+package settlus.nftownership;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "settlus/nftownership/params.proto";
+
+option go_package = "github.com/settlus/chain/x/nftownership/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/web3/chain/nftownership/params";
+  }
+
+  // Queries a list of GetNftOwner items.
+  rpc GetNftOwner(QueryGetNftOwnerRequest) returns (QueryGetNftOwnerResponse) {
+    option (google.api.http).get = "/web3/chain/nftownership/get_nft_owner/"
+                                   "{chain_id}/{contract_address}/{token_id_hex}";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryGetNftOwnerRequest is request type for the Query/GetNftOwner RPC method.
+message QueryGetNftOwnerRequest {
+  string chain_id = 1;
+  string contract_address = 2;
+  string token_id_hex = 3;
+}
+
+// QueryGetNftOwnerResponse is response type for the Query/GetNftOwner RPC method.
+message QueryGetNftOwnerResponse { string owner_address = 1; }

@@ -1,0 +1,47 @@
+syntax = "proto3";
+package settlus.settlement;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/settlus/chain/x/settlement/types";
+
+message EventSettled {
+  uint64 tenant = 1;
+  uint64 utxr_id = 2;
+  string request_id = 3;
+  cosmos.base.v1beta1.Coin amount = 4 [ (gogoproto.nullable) = false ];
+  string recipient = 5;
+}
+
+message EventRecord {
+  string sender = 1;
+  uint64 tenant = 2;
+  uint64 utxr_id = 3;
+  string request_id = 4;
+  cosmos.base.v1beta1.Coin amount = 5 [ (gogoproto.nullable) = false ];
+  string chain_id = 6;
+  string contract_address = 7;
+  string token_id_hex = 8;
+  string recipient = 9;
+  string metadata = 10;
+}
+
+message EventCancel {
+  uint64 tenant = 1;
+  uint64 utxr_id = 2;
+  string request_id = 3;
+}
+
+message EventSettlementFailed {
+  uint64 tenant = 1;
+  string reason = 2;
+}
+
+message EventDeployContract {
+  uint64 tenant = 1;
+  string contract_address = 2;
+  string token_name = 3;
+  string contract_admin = 4;
+}

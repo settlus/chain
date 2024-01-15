@@ -1,0 +1,124 @@
+syntax = "proto3";
+package settlus.settlement;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/settlus/chain/x/settlement/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc Record(MsgRecord) returns (MsgRecordResponse);
+  rpc Cancel(MsgCancel) returns (MsgCancelResponse);
+  rpc CreateTenant(MsgCreateTenant) returns (MsgCreateTenantResponse);
+  rpc CreateTenantWithMintableContract(MsgCreateTenantWithMintableContract) returns (MsgCreateTenantResponse);
+  rpc AddTenantAdmin(MsgAddTenantAdmin) returns (MsgAddTenantAdminResponse);
+  rpc RemoveTenantAdmin(MsgRemoveTenantAdmin) returns (MsgRemoveTenantAdminResponse);
+  rpc UpdateTenantPayoutPeriod(MsgUpdateTenantPayoutPeriod) returns (MsgUpdateTenantPayoutPeriodResponse);
+  rpc DepositToTreasury(MsgDepositToTreasury) returns (MsgDepositToTreasuryResponse);
+}
+
+// MsgRecordRevenue is the RecordRevenue request type.
+message MsgRecord {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  uint64 tenant_id = 2;
+  string request_id = 3;
+  cosmos.base.v1beta1.Coin amount = 4 [ (gogoproto.nullable) = false ];
+  string chain_id = 5;
+  string contract_address = 6;
+  string token_id_hex = 7;
+  string metadata = 8 [ (gogoproto.nullable) = true ];
+}
+
+// MsgRecordResponse defines the response structure for executing a MsgRecord message.
+message MsgRecordResponse {
+  uint64 utxr_id = 1;
+  string recipient = 2;
+}
+
+// MsgCancel is the Cancel request type.
+message MsgCancel {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  uint64 tenant_id = 2;
+  string request_id = 3;
+}
+
+// MsgCancelResponse defines the response structure for executing a MsgCancel message.
+message MsgCancelResponse {}
+
+// MsgCreateTenant is the CreateTenant request type.
+message MsgCreateTenant {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  string denom = 2;
+  uint64 payout_period = 3;
+}
+
+// MsgCreateTenantResponse defines the response structure for executing a MsgCreateTenant message.
+message MsgCreateTenantResponse {
+  uint64 tenant_id = 1;
+}
+
+// MsgCreateTenantWithMintableContract is the CreateTenantWithMintableContract request type.
+message MsgCreateTenantWithMintableContract {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  string denom = 2;
+  uint64 payout_period = 3;
+  optional string contract_address = 4;
+}
+
+// MsgAddTenantAdmin is the AddTenantAdmin request type.
+message MsgAddTenantAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  uint64 tenant_id = 2;
+  string new_admin = 3;
+}
+
+// MsgAddTenantAdminResponse defines the response structure for executing a MsgAddTenantAdmin message.
+message MsgAddTenantAdminResponse {}
+
+// MsgRemoveTenantAdmin is the RemoveTenantAdmin request type.
+message MsgRemoveTenantAdmin {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  uint64 tenant_id = 2;
+  string admin_to_remove = 3;
+}
+
+// MsgRemoveTenantAdminResponse defines the response structure for executing a MsgRemoveTenantAdmin message.
+message MsgRemoveTenantAdminResponse {}
+
+// MsgUpdateTenantPayoutPeriod is the UpdateTenantPayoutPeriod request type.
+message MsgUpdateTenantPayoutPeriod {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  uint64 tenant_id = 2;
+  uint64 payout_period = 3;
+}
+
+// MsgUpdateTenantPayoutPeriodResponse defines the response structure for executing a MsgUpdateTenantPayoutPeriod message.
+message MsgUpdateTenantPayoutPeriodResponse {}
+
+// MsgPayout is the Payout request type.
+message MsgDepositToTreasury {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  uint64 tenant_id = 2;
+  cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
+}
+
+// MsgPayoutResponse defines the response structure for executing a MsgPayout message.
+message MsgDepositToTreasuryResponse {}

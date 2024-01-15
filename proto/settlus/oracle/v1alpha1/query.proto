@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package settlus.oracle.v1alpha1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "settlus/oracle/v1alpha1/oracle.proto";
+
+option go_package = "github.com/settlus/chain/x/oracle/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/settlus/v1alpha1/oracle/params";
+  }
+
+  // Queries a list of BlockData items for a given chainId.
+  rpc BlockData(QueryBlockDataRequest) returns (QueryBlockDataResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/block_data/{chain_id}";
+  }
+
+  // Queries a list of BlockDatas items for all chainIds.
+  rpc AllBlockData(QueryAllBlockDataRequest)
+      returns (QueryAllBlockDataResponse) {
+    option (google.api.http).get = "/settlus/oracle/v1alpha1/block_data";
+  }
+
+  // Queries an aggregate prevote of a validator.
+  rpc AggregatePrevote(QueryAggregatePrevoteRequest)
+      returns (QueryAggregatePrevoteResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/aggregate_prevote/{validator_address}";
+  }
+
+  // Queries a list of all aggregate prevotes.
+  rpc AggregatePrevotes(QueryAggregatePrevotesRequest)
+      returns (QueryAggregatePrevotesResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/aggregate_prevotes";
+  }
+
+  // Queries an aggregate vote of a validator
+  rpc AggregateVote(QueryAggregateVoteRequest)
+      returns (QueryAggregateVoteResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/aggregate_vote/{validator_address}";
+  }
+
+  // Queries a list of all aggregate votes.
+  rpc AggregateVotes(QueryAggregateVotesRequest)
+      returns (QueryAggregateVotesResponse) {
+    option (google.api.http).get = "/settlus/oracle/v1alpha1/aggregate_votes";
+  }
+
+  // Queries a list of FeederDelegation items.
+  rpc FeederDelegation(QueryFeederDelegationRequest)
+      returns (QueryFeederDelegationResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/feeder_delegation/{validator_address}";
+  }
+
+  // Queries miss count of a validator
+  rpc MissCount(QueryMissCountRequest) returns (QueryMissCountResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/miss_count/{validator_address}";
+  }
+
+  // Queries the current oracle reward pool balance.
+  rpc RewardPool(QueryRewardPoolRequest) returns (QueryRewardPoolResponse) {
+    option (google.api.http).get = "/settlus/oracle/v1alpha1/reward_pool";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryBlockDataRequest is request type for the Query/BlockData RPC method.
+message QueryBlockDataRequest { string chain_id = 1; }
+
+// QueryBlockDataResponse is response type for the Query/BlockData RPC method.
+message QueryBlockDataResponse { BlockData block_data = 1; }
+
+// QueryAllBlockDataRequest is request type for the Query/AllBlockData RPC method.
+message QueryAllBlockDataRequest {}
+
+// QueryAllBlockDataResponse is response type for the Query/AllBlockData RPC method.
+message QueryAllBlockDataResponse {
+  repeated BlockData block_data = 2 [ (gogoproto.nullable) = false ];
+}
+
+// QueryFeederDelegationRequest is request type for the Query/FeederDelegation RPC method.
+message QueryFeederDelegationRequest { string validator_address = 1; }
+
+// QueryFeederDelegationResponse is response type for the Query/FeederDelegation RPC method.
+message QueryFeederDelegationResponse {
+  FeederDelegation feeder_delegation = 1;
+}
+
+// QueryAggregatePrevoteRequest is request type for the Query/AggregatePrevote RPC method.
+message QueryAggregatePrevoteRequest {
+  string validator_address = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAggregatePrevoteResponse is response type for the Query/AggregatePrevote RPC method.
+message QueryAggregatePrevoteResponse {
+  AggregatePrevote aggregate_prevote = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAggregatePrevotesRequest is request type for the Query/AggregatePrevotes RPC method.
+message QueryAggregatePrevotesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryAggregatePrevotesResponse is response type for the Query/AggregatePrevotes RPC method.
+message QueryAggregatePrevotesResponse {
+  repeated AggregatePrevote aggregate_prevotes = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAggregateVoteRequest is request type for the Query/AggregateVote RPC method.
+message QueryAggregateVoteRequest {
+  string validator_address = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAggregateVoteResponse is response type for the Query/AggregateVote RPC method.
+message QueryAggregateVoteResponse {
+  AggregateVote aggregate_vote = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryAggregateVotesRequest is request type for the Query/AggregateVotes RPC method.
+message QueryAggregateVotesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAggregateVotesResponse is response type for the Query/AggregateVotes RPC method.
+message QueryAggregateVotesResponse {
+  repeated AggregateVote aggregate_votes = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryMissCountRequest is request type for the Query/MissCount RPC method.
+message QueryMissCountRequest { string validator_address = 1; }
+
+// QueryMissCountResponse is response type for the Query/MissCount RPC method.
+message QueryMissCountResponse { uint64 miss_count = 1; }
+
+// QueryRewardPoolRequest is request type for the Query/RewardPool RPC method.
+message QueryRewardPoolRequest {}
+
+// QueryRewardPoolResponse is response type for the Query/RewardPool RPC method.
+message QueryRewardPoolResponse {
+  repeated cosmos.base.v1beta1.Coin balance = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}

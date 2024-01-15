@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package settlus.settlement;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "settlus/settlement/settlement.proto";
+
+option go_package = "github.com/settlus/chain/x/settlement/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/settlus/settlement/params";
+  }
+
+  // Queries a UTXR by tenant_id and request_id.
+  rpc UTXR(QueryUTXRRRequest) returns (QueryUTXRResponse) {
+    option (google.api.http).get =
+        "/settlus/settlement/utxr/{tenant_id}/{request_id}";
+  }
+
+  // Queries a list of TxRecord items.
+  rpc UTXRs(QueryUTXRsRequest) returns (QueryUTXRsResponse) {
+    option (google.api.http).get = "/settlus/settlement/utxrs/{tenant_id}";
+  }
+
+  // Queries a tenant by tenant_id.
+  rpc Tenant(QueryTenantRequest) returns (QueryTenantResponse) {
+    option (google.api.http).get = "/settlus/settlement/tenant/{tenant_id}";
+  }
+
+  // Queries a all tenants.
+  rpc Tenants(QueryTenantsRequest) returns (QueryTenantsResponse) {
+    option (google.api.http).get = "/settlus/settlement/tenants";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryGetUTXRRequest is request type for the Query/UTXR RPC method.
+message QueryUTXRRRequest {
+  uint64 tenant_id = 1;
+  string request_id = 2;
+}
+
+// QueryGetUTXRResponse is response type for the Query/UTXR RPC method.
+message QueryUTXRResponse { UTXR utxr = 1 [ (gogoproto.nullable) = false ]; }
+
+// QueryAllUTXRRequest is request type for the Query/AllUTXR RPC method.
+message QueryUTXRsRequest {
+  uint64 tenant_id = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryAllUTXRResponse is response type for the Query/UTXRAll RPC method.
+message QueryUTXRsResponse {
+  repeated UTXR utxrs = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryTenantRequest is request type for the Query/Tenant RPC method.
+message QueryTenantRequest { uint64 tenant_id = 1; }
+
+// QueryTenantResponse is response type for the Query/Tenant RPC method.
+message QueryTenantResponse {
+  TenantWithTreasury tenant = 1 [ (gogoproto.nullable) = false ];
+}
+
+message TenantWithTreasury {
+  Tenant tenant = 1;
+  Treasury treasury = 2;
+}
+
+message Treasury {
+  string address = 1;
+  cosmos.base.v1beta1.Coin balance = 2 [
+    (gogoproto.nullable) = true
+  ];
+}
+
+// QueryTenantsRequest is request type for the Query/Tenants RPC method.
+message QueryTenantsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryTenantsResponse is response type for the Query/Tenants RPC method.
+message QueryTenantsResponse {
+  repeated TenantWithTreasury tenants = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
