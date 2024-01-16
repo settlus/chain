@@ -279,8 +279,8 @@ Validators may elect to delegate voting rights to another key to prevent the blo
 To do so, they must submit a `MsgFeederDelegationConsent`, delegating their oracle voting rights to a `Delegate` that
 sign `MsgPrevote` and `MsgVote` on behalf of the validator.
 
-The `Validator` field contains the operator address of the validator (prefixed `setlvaloper-`).
-The `FeederAddress` field is the account address (prefixed `setl-`) of the delegate account that will be submitting
+The `Validator` field contains the operator address of the validator (prefixed `settlusvaloper1`).
+The `FeederAddress` field is the account address (prefixed `settlus1-`) of the delegate account that will be submitting
 votes and prevotes on behalf of the `Validator`.
 
 ```go
