@@ -1,5 +1,5 @@
 name: Build
-#  This workflow is run on pushes to main & every Pull Requests where a .go, .mod, .sum have been changed
+#  This workflow is run on pushes to main & every Pull Requests except changes to tools/interop-node.
 on:
   pull_request:
     paths-ignore:
