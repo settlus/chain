@@ -20,8 +20,6 @@ client:
     path: ts-client
   hooks:
     path: react/src/hooks
-  openapi:
-    path: spec/static/openapi.yml
 build:
   main: cmd/chaind
   binary: chaind

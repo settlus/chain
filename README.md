@@ -37,6 +37,11 @@ make test
 make proto-gen
 ```
 
+### Generate Swagger
+```shell
+make proto-swagger-gen
+```
+
 ### Local network test
 Export personal github token to run dockerfile in local
 ```shell
