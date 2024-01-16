@@ -19,7 +19,7 @@ ignite chain serve --skip-proto
 ## Development
 ### Build
 ```shell
-make chaind
+make
 ```
 
 ### Lint
