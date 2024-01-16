@@ -39,9 +39,9 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
 
 .PHONY: all chaind test lint clean proto-gen
 
-all: chaind
+all: build
 
-chaind: go.sum
+build: go.sum
 	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/chaind ./cmd/chaind
 
 test:
