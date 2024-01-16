@@ -174,7 +174,8 @@ func (m *QueryGetNftOwnerRequest) GetTokenIdHex() string {
 	return ""
 }
 
-// QueryGetNftOwnerResponse is response type for the Query/GetNftOwner RPC method.
+// QueryGetNftOwnerResponse is response type for the Query/GetNftOwner RPC
+// method.
 type QueryGetNftOwnerResponse struct {
 	OwnerAddress string `protobuf:"bytes,1,opt,name=owner_address,json=ownerAddress,proto3" json:"owner_address,omitempty"`
 }

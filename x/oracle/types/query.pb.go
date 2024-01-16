@@ -205,7 +205,8 @@ func (m *QueryBlockDataResponse) GetBlockData() *BlockData {
 	return nil
 }
 
-// QueryAllBlockDataRequest is request type for the Query/AllBlockData RPC method.
+// QueryAllBlockDataRequest is request type for the Query/AllBlockData RPC
+// method.
 type QueryAllBlockDataRequest struct {
 }
 
@@ -242,7 +243,8 @@ func (m *QueryAllBlockDataRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryAllBlockDataRequest proto.InternalMessageInfo
 
-// QueryAllBlockDataResponse is response type for the Query/AllBlockData RPC method.
+// QueryAllBlockDataResponse is response type for the Query/AllBlockData RPC
+// method.
 type QueryAllBlockDataResponse struct {
 	BlockData []BlockData `protobuf:"bytes,2,rep,name=block_data,json=blockData,proto3" json:"block_data"`
 }
@@ -287,7 +289,8 @@ func (m *QueryAllBlockDataResponse) GetBlockData() []BlockData {
 	return nil
 }
 
-// QueryFeederDelegationRequest is request type for the Query/FeederDelegation RPC method.
+// QueryFeederDelegationRequest is request type for the Query/FeederDelegation
+// RPC method.
 type QueryFeederDelegationRequest struct {
 	ValidatorAddress string `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
 }
@@ -332,7 +335,8 @@ func (m *QueryFeederDelegationRequest) GetValidatorAddress() string {
 	return ""
 }
 
-// QueryFeederDelegationResponse is response type for the Query/FeederDelegation RPC method.
+// QueryFeederDelegationResponse is response type for the Query/FeederDelegation
+// RPC method.
 type QueryFeederDelegationResponse struct {
 	FeederDelegation *FeederDelegation `protobuf:"bytes,1,opt,name=feeder_delegation,json=feederDelegation,proto3" json:"feeder_delegation,omitempty"`
 }
@@ -377,7 +381,8 @@ func (m *QueryFeederDelegationResponse) GetFeederDelegation() *FeederDelegation 
 	return nil
 }
 
-// QueryAggregatePrevoteRequest is request type for the Query/AggregatePrevote RPC method.
+// QueryAggregatePrevoteRequest is request type for the Query/AggregatePrevote
+// RPC method.
 type QueryAggregatePrevoteRequest struct {
 	ValidatorAddress string             `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
 	Pagination       *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -430,7 +435,8 @@ func (m *QueryAggregatePrevoteRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryAggregatePrevoteResponse is response type for the Query/AggregatePrevote RPC method.
+// QueryAggregatePrevoteResponse is response type for the Query/AggregatePrevote
+// RPC method.
 type QueryAggregatePrevoteResponse struct {
 	AggregatePrevote *AggregatePrevote   `protobuf:"bytes,1,opt,name=aggregate_prevote,json=aggregatePrevote,proto3" json:"aggregate_prevote,omitempty"`
 	Pagination       *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -483,7 +489,8 @@ func (m *QueryAggregatePrevoteResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryAggregatePrevotesRequest is request type for the Query/AggregatePrevotes RPC method.
+// QueryAggregatePrevotesRequest is request type for the Query/AggregatePrevotes
+// RPC method.
 type QueryAggregatePrevotesRequest struct {
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -528,7 +535,8 @@ func (m *QueryAggregatePrevotesRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryAggregatePrevotesResponse is response type for the Query/AggregatePrevotes RPC method.
+// QueryAggregatePrevotesResponse is response type for the
+// Query/AggregatePrevotes RPC method.
 type QueryAggregatePrevotesResponse struct {
 	AggregatePrevotes []*AggregatePrevote `protobuf:"bytes,1,rep,name=aggregate_prevotes,json=aggregatePrevotes,proto3" json:"aggregate_prevotes,omitempty"`
 	Pagination        *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -581,7 +589,8 @@ func (m *QueryAggregatePrevotesResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryAggregateVoteRequest is request type for the Query/AggregateVote RPC method.
+// QueryAggregateVoteRequest is request type for the Query/AggregateVote RPC
+// method.
 type QueryAggregateVoteRequest struct {
 	ValidatorAddress string             `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
 	Pagination       *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -634,7 +643,8 @@ func (m *QueryAggregateVoteRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryAggregateVoteResponse is response type for the Query/AggregateVote RPC method.
+// QueryAggregateVoteResponse is response type for the Query/AggregateVote RPC
+// method.
 type QueryAggregateVoteResponse struct {
 	AggregateVote *AggregateVote      `protobuf:"bytes,1,opt,name=aggregate_vote,json=aggregateVote,proto3" json:"aggregate_vote,omitempty"`
 	Pagination    *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -687,7 +697,8 @@ func (m *QueryAggregateVoteResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryAggregateVotesRequest is request type for the Query/AggregateVotes RPC method.
+// QueryAggregateVotesRequest is request type for the Query/AggregateVotes RPC
+// method.
 type QueryAggregateVotesRequest struct {
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -732,7 +743,8 @@ func (m *QueryAggregateVotesRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryAggregateVotesResponse is response type for the Query/AggregateVotes RPC method.
+// QueryAggregateVotesResponse is response type for the Query/AggregateVotes RPC
+// method.
 type QueryAggregateVotesResponse struct {
 	AggregateVotes []*AggregateVote    `protobuf:"bytes,1,rep,name=aggregate_votes,json=aggregateVotes,proto3" json:"aggregate_votes,omitempty"`
 	Pagination     *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
