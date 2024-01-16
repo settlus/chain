@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/cmd/chaind/cmd"
-	cmdcfg "github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/cmd"
+	cmdcfg "github.com/settlus/chain/cmd/settlusd/config"
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"

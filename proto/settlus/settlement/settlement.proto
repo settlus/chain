@@ -38,7 +38,8 @@ message UTXR {
   string request_id = 1;
   string recipient = 2 [
     (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
-    (gogoproto.nullable) = false];
+    (gogoproto.nullable) = false
+  ];
   cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
   uint64 payout_block = 4;
 }

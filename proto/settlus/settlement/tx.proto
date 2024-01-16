@@ -12,11 +12,15 @@ service Msg {
   rpc Record(MsgRecord) returns (MsgRecordResponse);
   rpc Cancel(MsgCancel) returns (MsgCancelResponse);
   rpc CreateTenant(MsgCreateTenant) returns (MsgCreateTenantResponse);
-  rpc CreateTenantWithMintableContract(MsgCreateTenantWithMintableContract) returns (MsgCreateTenantResponse);
+  rpc CreateTenantWithMintableContract(MsgCreateTenantWithMintableContract)
+      returns (MsgCreateTenantResponse);
   rpc AddTenantAdmin(MsgAddTenantAdmin) returns (MsgAddTenantAdminResponse);
-  rpc RemoveTenantAdmin(MsgRemoveTenantAdmin) returns (MsgRemoveTenantAdminResponse);
-  rpc UpdateTenantPayoutPeriod(MsgUpdateTenantPayoutPeriod) returns (MsgUpdateTenantPayoutPeriodResponse);
-  rpc DepositToTreasury(MsgDepositToTreasury) returns (MsgDepositToTreasuryResponse);
+  rpc RemoveTenantAdmin(MsgRemoveTenantAdmin)
+      returns (MsgRemoveTenantAdminResponse);
+  rpc UpdateTenantPayoutPeriod(MsgUpdateTenantPayoutPeriod)
+      returns (MsgUpdateTenantPayoutPeriodResponse);
+  rpc DepositToTreasury(MsgDepositToTreasury)
+      returns (MsgDepositToTreasuryResponse);
 }
 
 // MsgRecordRevenue is the RecordRevenue request type.
@@ -33,7 +37,8 @@ message MsgRecord {
   string metadata = 8 [ (gogoproto.nullable) = true ];
 }
 
-// MsgRecordResponse defines the response structure for executing a MsgRecord message.
+// MsgRecordResponse defines the response structure for executing a MsgRecord
+// message.
 message MsgRecordResponse {
   uint64 utxr_id = 1;
   string recipient = 2;
@@ -48,7 +53,8 @@ message MsgCancel {
   string request_id = 3;
 }
 
-// MsgCancelResponse defines the response structure for executing a MsgCancel message.
+// MsgCancelResponse defines the response structure for executing a MsgCancel
+// message.
 message MsgCancelResponse {}
 
 // MsgCreateTenant is the CreateTenant request type.
@@ -60,12 +66,12 @@ message MsgCreateTenant {
   uint64 payout_period = 3;
 }
 
-// MsgCreateTenantResponse defines the response structure for executing a MsgCreateTenant message.
-message MsgCreateTenantResponse {
-  uint64 tenant_id = 1;
-}
+// MsgCreateTenantResponse defines the response structure for executing a
+// MsgCreateTenant message.
+message MsgCreateTenantResponse { uint64 tenant_id = 1; }
 
-// MsgCreateTenantWithMintableContract is the CreateTenantWithMintableContract request type.
+// MsgCreateTenantWithMintableContract is the CreateTenantWithMintableContract
+// request type.
 message MsgCreateTenantWithMintableContract {
   option (cosmos.msg.v1.signer) = "sender";
 
@@ -84,7 +90,8 @@ message MsgAddTenantAdmin {
   string new_admin = 3;
 }
 
-// MsgAddTenantAdminResponse defines the response structure for executing a MsgAddTenantAdmin message.
+// MsgAddTenantAdminResponse defines the response structure for executing a
+// MsgAddTenantAdmin message.
 message MsgAddTenantAdminResponse {}
 
 // MsgRemoveTenantAdmin is the RemoveTenantAdmin request type.
@@ -96,7 +103,8 @@ message MsgRemoveTenantAdmin {
   string admin_to_remove = 3;
 }
 
-// MsgRemoveTenantAdminResponse defines the response structure for executing a MsgRemoveTenantAdmin message.
+// MsgRemoveTenantAdminResponse defines the response structure for executing a
+// MsgRemoveTenantAdmin message.
 message MsgRemoveTenantAdminResponse {}
 
 // MsgUpdateTenantPayoutPeriod is the UpdateTenantPayoutPeriod request type.
@@ -108,7 +116,8 @@ message MsgUpdateTenantPayoutPeriod {
   uint64 payout_period = 3;
 }
 
-// MsgUpdateTenantPayoutPeriodResponse defines the response structure for executing a MsgUpdateTenantPayoutPeriod message.
+// MsgUpdateTenantPayoutPeriodResponse defines the response structure for
+// executing a MsgUpdateTenantPayoutPeriod message.
 message MsgUpdateTenantPayoutPeriodResponse {}
 
 // MsgPayout is the Payout request type.
@@ -120,5 +129,6 @@ message MsgDepositToTreasury {
   cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
 }
 
-// MsgPayoutResponse defines the response structure for executing a MsgPayout message.
+// MsgPayoutResponse defines the response structure for executing a MsgPayout
+// message.
 message MsgDepositToTreasuryResponse {}

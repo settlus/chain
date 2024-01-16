@@ -64,7 +64,7 @@ for oracle feeder.
 					Address:          "settlus1uad3rkzpcgrvytqnd5d77lrhxgv83qad782h92",
 					SignerMode:       "local",
 					Key:              "0123456789abcdef",
-					ValidatorAddress: "setlvaloper1x0foobar",
+					ValidatorAddress: "settlusvaloper1x0foobar",
 				},
 				Chains: []cfg.ChainConfig{
 					{

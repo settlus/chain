@@ -17,8 +17,9 @@ service Query {
 
   // Queries a list of GetNftOwner items.
   rpc GetNftOwner(QueryGetNftOwnerRequest) returns (QueryGetNftOwnerResponse) {
-    option (google.api.http).get = "/settlus/nftownership/get_nft_owner/"
-                                   "{chain_id}/{contract_address}/{token_id_hex}";
+    option (google.api.http).get =
+        "/settlus/nftownership/get_nft_owner/"
+        "{chain_id}/{contract_address}/{token_id_hex}";
   }
 }
 
@@ -38,5 +39,6 @@ message QueryGetNftOwnerRequest {
   string token_id_hex = 3;
 }
 
-// QueryGetNftOwnerResponse is response type for the Query/GetNftOwner RPC method.
+// QueryGetNftOwnerResponse is response type for the Query/GetNftOwner RPC
+// method.
 message QueryGetNftOwnerResponse { string owner_address = 1; }

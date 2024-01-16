@@ -9,16 +9,17 @@ import (
 )
 
 const (
-	apiFile   = "/static/openapi.yml"
+	apiFile   = "/swagger-ui/swagger.json"
 	indexFile = "template/index.tpl"
 )
 
-//go:embed static
+//go:embed swagger-ui
 var Static embed.FS
 
 //go:embed template
 var template embed.FS
 
+// RegisterOpenAPIService registers an OpenAPI service at /
 func RegisterOpenAPIService(appName string, rtr *mux.Router) {
 	rtr.Handle(apiFile, http.FileServer(http.FS(Static)))
 	rtr.HandleFunc("/", handler(appName))

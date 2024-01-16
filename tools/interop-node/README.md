@@ -49,7 +49,7 @@ ignite chain serve
 
 Create feeder account.
 ```shell
-chaind keys add foo
+settlusd keys add foo
 - address: settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy
   name: foo
   pubkey: '{"@type":"/ethermint.crypto.v1.ethsecp256k1.PubKey","key":"A8KPbBSg2xj/OFCkgcN0doTTGD4MikLFmfjQy4CjQ/lw"}'
@@ -58,12 +58,12 @@ chaind keys add foo
 
 Fund the feeder account.
 ```shell
-chaind tx bank send YOUR_KEY_WITH_FUND settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy 10setl --fees 0.001setl --keyring-backend test
+settlusd tx bank send YOUR_KEY_WITH_FUND settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy 10setl --fees 0.001setl --keyring-backend test
 ```
 
 Get private key of the feeder account
 ```shell
-chaind keys export foo --unarmored-hex --unsafe --keyring-backend test
+settlusd keys export foo --unarmored-hex --unsafe --keyring-backend test
 
 WARNING: The private key will be exported as an unarmored hexadecimal string. USE AT YOUR OWN RISK. Continue? [y/N]: y
 1b8dac2949968eae623859330172283d27dda8b496f1dae2cbed9b1bcce51cb1
@@ -71,7 +71,7 @@ WARNING: The private key will be exported as an unarmored hexadecimal string. US
 
 Get the validator address.
 ```shell
-chaind q staking validators
+settlusd q staking validators
 
 ...
   min_self_delegation: "1"
@@ -82,12 +82,12 @@ chaind q staking validators
 
 Set oracle feeder delegation.
 ```shell
-chaind tx oracle feeder-delegation-consent settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy --from YOUR_VALIDATOR --fees 0.01setl --keyring-backend test
+settlusd tx oracle feeder-delegation-consent settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy --from YOUR_VALIDATOR --fees 0.01setl --keyring-backend test
 ```
 
 Check if the oracle feeder delegation is set.
 ```shell
-chaind q oracle feeder-delegation settlusvaloper12g8w5dr5jyncct8jwdxwsy2g9ktdrjjluy76df
+settlusd q oracle feeder-delegation settlusvaloper12g8w5dr5jyncct8jwdxwsy2g9ktdrjjluy76df
 
 feeder_delegation:
   feeder_address: settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy

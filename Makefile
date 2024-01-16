@@ -7,7 +7,7 @@ current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 DOCKER := $(shell which docker)
 SETTLUS_BINARY = settlusd
 
-.PHONY: all chaind test lint clean proto-gen
+.PHONY: all build test lint clean proto-gen
 
 all: build
 
@@ -97,9 +97,17 @@ lint:
 
 protoVer=v0.7
 protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(protoImageName)
 
-proto-all: proto-format proto-lint proto-gen
+SWAGGER_DIR=./swagger-proto
+THIRD_PARTY_DIR=$(SWAGGER_DIR)/third_party
+DEPS_COSMOS_SDK_VERSION := $(shell cat go.sum | grep 'github.com/settlus/cosmos-sdk' | grep -v -e 'go.mod' | tail -n 1 | awk '{ print $$2; }')
+DEPS_IBC_GO_VERSION := $(shell cat go.sum | grep 'github.com/cosmos/ibc-go' | grep -v -e 'go.mod' | tail -n 1 | awk '{ print $$2; }')
+DEPS_COSMOS_PROTO := $(shell cat go.sum | grep 'github.com/cosmos/cosmos-proto' | grep -v -e 'go.mod' | tail -n 1 | awk '{ print $$2; }')
+DEPS_COSMOS_GOGOPROTO := $(shell cat go.sum | grep 'github.com/cosmos/gogoproto' | grep -v -e 'go.mod' | tail -n 1 | awk '{ print $$2; }')
+DEPS_COSMOS_ICS23 := go/$(shell cat go.sum | grep 'github.com/cosmos/ics23/go' | grep -v -e 'go.mod' | tail -n 1 | awk '{ print $$2; }')
+
+proto-all: proto-format proto-lint proto-gen proto-swagger-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
@@ -110,6 +118,45 @@ proto-format:
 
 proto-lint:
 	@$(protoImage) buf lint --error-format=json
+
+proto-swagger-gen:
+	@echo "Downloading Protobuf dependencies"
+	@make proto-download-deps
+	@echo "Generating Protobuf Swagger"
+	$(protoImage) sh ./scripts/protoc-swagger-gen.sh
+
+proto-download-deps:
+	mkdir -p "$(THIRD_PARTY_DIR)/cosmos_tmp" && \
+	cd "$(THIRD_PARTY_DIR)/cosmos_tmp" && \
+	git init && \
+	git remote add origin "https://github.com/settlus/cosmos-sdk.git" && \
+	git config core.sparseCheckout true && \
+	printf "proto\nthird_party\n" > .git/info/sparse-checkout && \
+	git pull origin "$(DEPS_COSMOS_SDK_VERSION)" && \
+	rm -f ./proto/buf.* && \
+	mv ./proto/* ..
+	rm -rf "$(THIRD_PARTY_DIR)/cosmos_tmp"
+
+	mkdir -p "$(THIRD_PARTY_DIR)/cosmos_proto_tmp" && \
+	cd "$(THIRD_PARTY_DIR)/cosmos_proto_tmp" && \
+	git init && \
+	git remote add origin "https://github.com/cosmos/cosmos-proto.git" && \
+	git config core.sparseCheckout true && \
+	printf "proto\n" > .git/info/sparse-checkout && \
+	git pull origin "$(DEPS_COSMOS_PROTO_VERSION)" && \
+	rm -f ./proto/buf.* && \
+	mv ./proto/* ..
+	rm -rf "$(THIRD_PARTY_DIR)/cosmos_proto_tmp"
+
+	mkdir -p "$(THIRD_PARTY_DIR)/gogoproto" && \
+	curl -SSL "https://raw.githubusercontent.com/cosmos/gogoproto/$(DEPS_COSMOS_GOGOPROTO)/gogoproto/gogo.proto" > "$(THIRD_PARTY_DIR)/gogoproto/gogo.proto"
+
+	mkdir -p "$(THIRD_PARTY_DIR)/google/api" && \
+	curl -sSL https://raw.githubusercontent.com/googleapis/googleapis/master/google/api/annotations.proto > "$(THIRD_PARTY_DIR)/google/api/annotations.proto"
+	curl -sSL https://raw.githubusercontent.com/googleapis/googleapis/master/google/api/http.proto > "$(THIRD_PARTY_DIR)/google/api/http.proto"
+
+proto-clean:
+	rm -rf $(SWAGGER_DIR) tmp-swagger-gen
 
 ###############################################################################
 ###                                Localnet                                 ###
@@ -126,5 +173,6 @@ localnet-stop:
 	rm -rf $(CURDIR)/.testnets
 
 localnet-start: localnet-stop
-	$(BUILDDIR)/chaind testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
+	make build
+	$(BUILDDIR)/build testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
 	docker-compose -f $(LOCALNET_SETUP_FILE) up -d

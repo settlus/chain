@@ -130,8 +130,8 @@ func (fc *FeederConfig) Validate() error {
 		return fmt.Errorf("validator_address must not be empty")
 	}
 
-	if !strings.HasPrefix(fc.ValidatorAddress, "setlvaloper") {
-		return fmt.Errorf("validator_address must start with setlvaloper: %s", fc.ValidatorAddress)
+	if !strings.HasPrefix(fc.ValidatorAddress, "settlusvaloper1") {
+		return fmt.Errorf("validator_address must start with settlusvaloper1: %s", fc.ValidatorAddress)
 	}
 
 	if fc.SignerMode != AwsKms && fc.SignerMode != Local {

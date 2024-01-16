@@ -131,7 +131,8 @@ func (m *MsgRecord) GetMetadata() string {
 	return ""
 }
 
-// MsgRecordResponse defines the response structure for executing a MsgRecord message.
+// MsgRecordResponse defines the response structure for executing a MsgRecord
+// message.
 type MsgRecordResponse struct {
 	UtxrId    uint64 `protobuf:"varint,1,opt,name=utxr_id,json=utxrId,proto3" json:"utxr_id,omitempty"`
 	Recipient string `protobuf:"bytes,2,opt,name=recipient,proto3" json:"recipient,omitempty"`
@@ -245,7 +246,8 @@ func (m *MsgCancel) GetRequestId() string {
 	return ""
 }
 
-// MsgCancelResponse defines the response structure for executing a MsgCancel message.
+// MsgCancelResponse defines the response structure for executing a MsgCancel
+// message.
 type MsgCancelResponse struct {
 }
 
@@ -343,7 +345,8 @@ func (m *MsgCreateTenant) GetPayoutPeriod() uint64 {
 	return 0
 }
 
-// MsgCreateTenantResponse defines the response structure for executing a MsgCreateTenant message.
+// MsgCreateTenantResponse defines the response structure for executing a
+// MsgCreateTenant message.
 type MsgCreateTenantResponse struct {
 	TenantId uint64 `protobuf:"varint,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 }
@@ -388,7 +391,8 @@ func (m *MsgCreateTenantResponse) GetTenantId() uint64 {
 	return 0
 }
 
-// MsgCreateTenantWithMintableContract is the CreateTenantWithMintableContract request type.
+// MsgCreateTenantWithMintableContract is the CreateTenantWithMintableContract
+// request type.
 type MsgCreateTenantWithMintableContract struct {
 	Sender       string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Denom        string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
@@ -547,7 +551,8 @@ func (m *MsgAddTenantAdmin) GetNewAdmin() string {
 	return ""
 }
 
-// MsgAddTenantAdminResponse defines the response structure for executing a MsgAddTenantAdmin message.
+// MsgAddTenantAdminResponse defines the response structure for executing a
+// MsgAddTenantAdmin message.
 type MsgAddTenantAdminResponse struct {
 }
 
@@ -645,7 +650,8 @@ func (m *MsgRemoveTenantAdmin) GetAdminToRemove() string {
 	return ""
 }
 
-// MsgRemoveTenantAdminResponse defines the response structure for executing a MsgRemoveTenantAdmin message.
+// MsgRemoveTenantAdminResponse defines the response structure for executing a
+// MsgRemoveTenantAdmin message.
 type MsgRemoveTenantAdminResponse struct {
 }
 
@@ -743,7 +749,8 @@ func (m *MsgUpdateTenantPayoutPeriod) GetPayoutPeriod() uint64 {
 	return 0
 }
 
-// MsgUpdateTenantPayoutPeriodResponse defines the response structure for executing a MsgUpdateTenantPayoutPeriod message.
+// MsgUpdateTenantPayoutPeriodResponse defines the response structure for
+// executing a MsgUpdateTenantPayoutPeriod message.
 type MsgUpdateTenantPayoutPeriodResponse struct {
 }
 
@@ -841,7 +848,8 @@ func (m *MsgDepositToTreasury) GetAmount() types.Coin {
 	return types.Coin{}
 }
 
-// MsgPayoutResponse defines the response structure for executing a MsgPayout message.
+// MsgPayoutResponse defines the response structure for executing a MsgPayout
+// message.
 type MsgDepositToTreasuryResponse struct {
 }
 

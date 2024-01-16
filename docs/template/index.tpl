@@ -23,4 +23,4 @@
         </script>
     </body>
 </html>
-© 2023 Overdare, Inc.
+© 2023 Settlus

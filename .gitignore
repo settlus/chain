@@ -6,9 +6,12 @@ release/
 .DS_Store
 build/
 .env
-.chaind
+.settlusd
 .testnets/
 .deps
 
 # ignite generated
 ts-client/
+
+tmp-swagger-gen
+swagger-proto

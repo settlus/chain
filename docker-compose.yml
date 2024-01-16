@@ -5,7 +5,7 @@ services:
     container_name: node0
     image: "settlus/localnet"
     volumes:
-      - ./.testnets/node0/chaind:/root/.settlus:Z    
+      - ./.testnets/node0/settlusd:/root/.settlus:Z    
     command: 
       - start
     networks:
@@ -17,7 +17,7 @@ services:
     container_name: node1
     image: "settlus/localnet"
     volumes:
-      - ./.testnets/node1/chaind:/root/.settlus:Z  
+      - ./.testnets/node1/settlusd:/root/.settlus:Z  
     command:
       - start
     networks:
@@ -29,7 +29,7 @@ services:
     container_name: node2
     image: "settlus/localnet"
     volumes:
-      - ./.testnets/node2/chaind:/root/.settlus:Z  
+      - ./.testnets/node2/settlusd:/root/.settlus:Z  
     command:
       - start
     networks:
@@ -41,7 +41,7 @@ services:
     container_name: node3
     image: "settlus/localnet"
     volumes:
-      - ./.testnets/node3/chaind:/root/.settlus:Z  
+      - ./.testnets/node3/settlusd:/root/.settlus:Z  
     command:
       - start
     networks:
