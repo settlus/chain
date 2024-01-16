@@ -1,59 +1,99 @@
 #!/usr/bin/make -f
 
-BUILDDIR ?= $(CURDIR)/build
-
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%h')
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 DOCKER := $(shell which docker)
-
-# don't override user values
-ifeq (,$(VERSION))
-  VERSION := $(shell git describe --exact-match 2>/dev/null)
-  # if VERSION is empty, then populate it with branch's name and raw commit hash
-  ifeq (,$(VERSION))
-    VERSION := $(BRANCH)-$(COMMIT)
-  endif
-endif
-
-ldflags = -w -s
-ldflags += $(LDFLAGS)
-ldflags := $(strip $(ldflags))
-
-build_tags = $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
-
-whitespace := $(subst ,, )
-comma := ,
-build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
-
-# process linker flags
-ldflags += -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=settlus \
-	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-	-X github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)
-
-BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
+SETTLUS_BINARY = settlusd
 
 .PHONY: all chaind test lint clean proto-gen
 
 all: build
 
-build: go.sum
-	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/settlusd ./cmd/settlusd
+###############################################################################
+###                                  Build                                  ###
+###############################################################################
+
+VERSION ?= $(shell echo $(shell git describe --tags --always) | sed 's/^v//')
+
+# process build tags
+
+build_tags = netgo
+
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
+  build_tags += gcc
+endif
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
+
+# process linker flags
+
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
+          -X github.com/cosmos/cosmos-sdk/version.AppName=$(SETTLUS_BINARY) \
+          -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+          -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+
+# add build tags to linker flags
+whitespace := $(subst ,, )
+comma := ,
+build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+ldflags += -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -w -s
+endif
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
+
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+# check for nostrip option
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -trimpath
+endif
+
+# check if no optimization option is passed
+# used for remote debugging
+ifneq (,$(findstring nooptimization,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -gcflags "all=-N -l"
+endif
+
+BUILD_TARGETS := build install
+BUILDDIR ?= $(CURDIR)/build
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+
+build: BUILD_ARGS=-o $(BUILDDIR)/
+
+build-linux-amd64:
+	GOOS=linux GOARCH=amd64 CGO_ENABLED="1" LEDGER_ENABLED=false $(MAKE) build
+
+build-linux-arm64:
+	GOOS=linux GOARCH=arm64 LEDGER_ENABLED=false $(MAKE) build
+
+$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+	go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+
+$(BUILDDIR)/:
+	mkdir -p $(BUILDDIR)/
 
 test:
 	go test -mod=readonly ./...
 
-lint:
-	@golangci-lint run ./...
-
 clean:
 	@rm -rf $(BUILDDIR)
 
-# Protobuf generation
+.PHONY: build build-linux-amd64 build-linux-arm64
+
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
+
+lint:
+	@golangci-lint run ./...
+
+###############################################################################
+###                                Protobuf                                 ###
+###############################################################################
 
 protoVer=v0.7
 protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
@@ -71,7 +111,10 @@ proto-format:
 proto-lint:
 	@$(protoImage) buf lint --error-format=json
 
-# Local network command
+###############################################################################
+###                                Localnet                                 ###
+###############################################################################
+
 LOCALNET_SETUP_FILE=docker-compose.yml
 LOCALNET_DOCKER_TAG=settlus/localnet
 

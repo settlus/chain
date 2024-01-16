@@ -64,4 +64,10 @@ jobs:
       - name: Download Go Dependency
         run : go mod download
       - name: Build
-        run: GOARCH=${{ matrix.go-arch }} make build
+        run: mkdir -p build && GOARCH=${{ matrix.go-arch }} go build -o ./build/ ./...
+      - name: Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary
+          path: ./build/*
+        if: github.event_name != 'pull_request'
