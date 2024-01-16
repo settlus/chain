@@ -92,63 +92,75 @@ message QueryBlockDataRequest { string chain_id = 1; }
 // QueryBlockDataResponse is response type for the Query/BlockData RPC method.
 message QueryBlockDataResponse { BlockData block_data = 1; }
 
-// QueryAllBlockDataRequest is request type for the Query/AllBlockData RPC method.
+// QueryAllBlockDataRequest is request type for the Query/AllBlockData RPC
+// method.
 message QueryAllBlockDataRequest {}
 
-// QueryAllBlockDataResponse is response type for the Query/AllBlockData RPC method.
+// QueryAllBlockDataResponse is response type for the Query/AllBlockData RPC
+// method.
 message QueryAllBlockDataResponse {
   repeated BlockData block_data = 2 [ (gogoproto.nullable) = false ];
 }
 
-// QueryFeederDelegationRequest is request type for the Query/FeederDelegation RPC method.
+// QueryFeederDelegationRequest is request type for the Query/FeederDelegation
+// RPC method.
 message QueryFeederDelegationRequest { string validator_address = 1; }
 
-// QueryFeederDelegationResponse is response type for the Query/FeederDelegation RPC method.
+// QueryFeederDelegationResponse is response type for the Query/FeederDelegation
+// RPC method.
 message QueryFeederDelegationResponse {
   FeederDelegation feeder_delegation = 1;
 }
 
-// QueryAggregatePrevoteRequest is request type for the Query/AggregatePrevote RPC method.
+// QueryAggregatePrevoteRequest is request type for the Query/AggregatePrevote
+// RPC method.
 message QueryAggregatePrevoteRequest {
   string validator_address = 1;
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryAggregatePrevoteResponse is response type for the Query/AggregatePrevote RPC method.
+// QueryAggregatePrevoteResponse is response type for the Query/AggregatePrevote
+// RPC method.
 message QueryAggregatePrevoteResponse {
   AggregatePrevote aggregate_prevote = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryAggregatePrevotesRequest is request type for the Query/AggregatePrevotes RPC method.
+// QueryAggregatePrevotesRequest is request type for the Query/AggregatePrevotes
+// RPC method.
 message QueryAggregatePrevotesRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
-// QueryAggregatePrevotesResponse is response type for the Query/AggregatePrevotes RPC method.
+// QueryAggregatePrevotesResponse is response type for the
+// Query/AggregatePrevotes RPC method.
 message QueryAggregatePrevotesResponse {
   repeated AggregatePrevote aggregate_prevotes = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryAggregateVoteRequest is request type for the Query/AggregateVote RPC method.
+// QueryAggregateVoteRequest is request type for the Query/AggregateVote RPC
+// method.
 message QueryAggregateVoteRequest {
   string validator_address = 1;
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryAggregateVoteResponse is response type for the Query/AggregateVote RPC method.
+// QueryAggregateVoteResponse is response type for the Query/AggregateVote RPC
+// method.
 message QueryAggregateVoteResponse {
   AggregateVote aggregate_vote = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryAggregateVotesRequest is request type for the Query/AggregateVotes RPC method.
+// QueryAggregateVotesRequest is request type for the Query/AggregateVotes RPC
+// method.
 message QueryAggregateVotesRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryAggregateVotesResponse is response type for the Query/AggregateVotes RPC method.
+// QueryAggregateVotesResponse is response type for the Query/AggregateVotes RPC
+// method.
 message QueryAggregateVotesResponse {
   repeated AggregateVote aggregate_votes = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;

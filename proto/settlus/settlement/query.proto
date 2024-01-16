@@ -84,9 +84,7 @@ message TenantWithTreasury {
 
 message Treasury {
   string address = 1;
-  cosmos.base.v1beta1.Coin balance = 2 [
-    (gogoproto.nullable) = true
-  ];
+  cosmos.base.v1beta1.Coin balance = 2 [ (gogoproto.nullable) = true ];
 }
 
 // QueryTenantsRequest is request type for the Query/Tenants RPC method.
