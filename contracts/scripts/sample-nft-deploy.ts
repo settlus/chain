@@ -32,7 +32,7 @@ const mintNFT = async (contractName: string, contractAddress: string, receiverAd
             console.log(`Failed: ${contractName} ${i}: ${error}`)
         }
     }
-    console.log(`\ncheck nft ownership with \n$ chaind q nftownership get-nft-owner settlus_5371-1 ${contractAddress} 0x0`)
+    console.log(`\ncheck nft ownership with \n$ settlusd q nftownership get-nft-owner settlus_5371-1 ${contractAddress} 0x0`)
 }
 
 async function main() {
