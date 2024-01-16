@@ -21,8 +21,8 @@ client:
   hooks:
     path: react/src/hooks
 build:
-  main: cmd/chaind
-  binary: chaind
+  main: cmd/settlusd
+  binary: settlusd
   proto:
     path: proto
     third_party_paths:
@@ -118,7 +118,7 @@ validators:
         api: "eth,net,web3,txpool,debug,personal"
       minimum-gas-prices: 1
     config:
-      fees: 210000000asetl
+      fees: 200000asetl
       moniker: treasury-node
       p2p:
         seeds: ""
@@ -130,4 +130,4 @@ validators:
         timeout_precommit: "1s"
         timeout_precommit_delta: "500ms"
         timeout_commit: "5s"
-    home: $HOME/.settlus
+    home: $HOME/.settlusd

@@ -27,7 +27,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/evmos/encoding"
 	"github.com/settlus/chain/evmos/utils"
 

@@ -12,7 +12,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/config"
 )
 
 var (

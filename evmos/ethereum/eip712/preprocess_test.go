@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/cmd/chaind/config"
+	"github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/evmos/encoding"
 	"github.com/settlus/chain/evmos/ethereum/eip712"
 	utiltx "github.com/settlus/chain/evmos/testutil/tx"
