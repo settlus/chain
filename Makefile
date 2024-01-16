@@ -42,7 +42,7 @@ BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
 all: build
 
 build: go.sum
-	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/chaind ./cmd/chaind
+	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/settlusd ./cmd/settlusd
 
 test:
 	go test -mod=readonly ./...

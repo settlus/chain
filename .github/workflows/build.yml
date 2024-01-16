@@ -54,7 +54,7 @@ jobs:
     if: ${{ always() && (needs.lint.result == 'success' || needs.test.result == 'success') }}
     strategy:
       matrix:
-        go-arch: ["amd64", "arm", "arm64"]
+        go-arch: ["amd64", "arm64"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
