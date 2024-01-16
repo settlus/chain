@@ -286,9 +286,9 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"web3", "chain", "nftownership", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"settlus", "nftownership", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_GetNftOwner_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"web3", "chain", "nftownership", "get_nft_owner", "chain_id", "contract_address", "token_id_hex"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_GetNftOwner_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"settlus", "nftownership", "get_nft_owner", "chain_id", "contract_address", "token_id_hex"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
