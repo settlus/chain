@@ -12,12 +12,12 @@ option go_package = "github.com/settlus/chain/x/nftownership/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/web3/chain/nftownership/params";
+    option (google.api.http).get = "/settlus/nftownership/params";
   }
 
   // Queries a list of GetNftOwner items.
   rpc GetNftOwner(QueryGetNftOwnerRequest) returns (QueryGetNftOwnerResponse) {
-    option (google.api.http).get = "/web3/chain/nftownership/get_nft_owner/"
+    option (google.api.http).get = "/settlus/nftownership/get_nft_owner/"
                                    "{chain_id}/{contract_address}/{token_id_hex}";
   }
 }
