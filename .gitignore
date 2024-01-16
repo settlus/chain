@@ -12,3 +12,6 @@ build/
 
 # ignite generated
 ts-client/
+
+tmp-swagger-gen
+swagger-proto
