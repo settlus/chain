@@ -1,5 +1,5 @@
 name: Docker
-# Build & Push builds the Settlus docker image on every push to main
+# builds the Settlus docker image on push to main & tags,
 # and pushes the image to https://ghcr.io/settlus/chain
 on:
   pull_request:
