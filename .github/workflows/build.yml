@@ -61,13 +61,26 @@ jobs:
         with:
           go-version: "1.21"
           check-latest: true
+      - uses: technote-space/get-diff-action@v6.1.2
+        id: git_diff
+        with:
+          PATTERNS: |
+            **/**.go
+            go.mod
+            go.sum
+            **/go.mod
+            **/go.sum
+            **/Makefile
+            Makefile
       - name: Download Go Dependency
+        if: env.GIT_DIFF
         run : go mod download
       - name: Build
+        if: env.GIT_DIFF
         run: GOARCH=${{ matrix.go-arch }} make build
       - name: Archive
         uses: actions/upload-artifact@v4
         with:
           name: binary
           path: ./build/*
-        if: github.event_name != 'pull_request'
+        if: env.GIT_DIFF && github.event_name != 'pull_request'
