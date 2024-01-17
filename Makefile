@@ -1,57 +1,94 @@
 #!/usr/bin/make -f
 
-BUILDDIR ?= $(CURDIR)/build
-
+# Git information
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%h')
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
-DOCKER := $(shell which docker)
 
-# don't override user values
-ifeq (,$(VERSION))
-  VERSION := $(shell git describe --exact-match 2>/dev/null)
-  # if VERSION is empty, then populate it with branch's name and raw commit hash
-  ifeq (,$(VERSION))
-    VERSION := $(BRANCH)-$(COMMIT)
-  endif
+# Path and directory variables
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+CURRENT_DIR := $(notdir $(patsubst %/,%,$(dir $(MKFILE_PATH))))
+
+# Docker configuration
+DOCKER_CMD := $(shell which docker)
+
+# Binary configuration
+SETTLUS_BINARY := settlusd
+
+.PHONY: all
+
+all: build
+
+###############################################################################
+###                                  Build                                  ###
+###############################################################################
+
+# Versioning
+VERSION ?= $(shell git describe --tags --always | sed 's/^v//')
+
+# Build tags processing
+build_tags := netgo
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
+  build_tags += gcc
 endif
+build_tags += $(BUILD_TAGS)
+build_tags := $(strip $(build_tags))
 
-ldflags = -w -s
+# Linker flags setup
+ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
+           -X github.com/cosmos/cosmos-sdk/version.AppName=$(SETTLUS_BINARY) \
+           -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+           -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+
+# Build tags to linker flags
+build_tags_comma_sep := $(subst $(subst ,, ),,,$(build_tags))
+ldflags += -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+
+# Additional linker flags
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -w -s
+endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
 
-build_tags = $(BUILD_TAGS)
-build_tags := $(strip $(build_tags))
+# Final build flags setup
+BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -trimpath
+endif
+ifneq (,$(findstring nooptimization,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -gcflags "all=-N -l"
+endif
 
-whitespace := $(subst ,, )
-comma := ,
-build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+# Build targets
+BUILD_TARGETS := build install
+BUILDDIR ?= $(CURDIR)/build
 
-# process linker flags
-ldflags += -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=settlus \
-	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-	-X github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)
+build: BUILD_ARGS=-o $(BUILDDIR)/
+$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+	@echo "Building..."
+	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./... || (echo "Build failed"; exit 1)
 
-BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)' -trimpath
-
-.PHONY: all settlusd test lint clean proto-gen
-
-all: settlusd
-
-settlusd: go.sum
-	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/settlusd ./cmd/settlusd
+$(BUILDDIR)/:
+	mkdir -p $(BUILDDIR)/
 
 test:
-	go test -mod=readonly ./...
+	@echo "Running tests..."
+	@go test -mod=readonly ./... || (echo "Tests failed"; exit 1)
+
+clean:
+	@echo "Cleaning up..."
+	@rm -rf $(BUILDDIR)
+
+.PHONY: build test clean
+
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
 
 lint:
 	@golangci-lint run ./...
 
-clean:
-	@rm -rf $(BUILDDIR)
+.PHONY: lint
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -120,6 +157,8 @@ proto-download-deps:
 proto-clean:
 	rm -rf $(SWAGGER_DIR) tmp-swagger-gen
 
+.PHONY: proto-all proto-gen proto-format proto-lint proto-swagger-gen proto-download-deps proto-clean
+
 ###############################################################################
 ###                                Localnet                                 ###
 ###############################################################################
@@ -128,13 +167,15 @@ LOCALNET_SETUP_FILE=docker-compose.yml
 LOCALNET_DOCKER_TAG=settlus/localnet
 
 localnet-build:
-	docker build --build-arg GITHUB_TOKEN=${GITHUB_TOKEN} --tag $(LOCALNET_DOCKER_TAG) $(CURDIR)/.
+	docker build --tag $(LOCALNET_DOCKER_TAG) $(CURDIR)/.
 
 localnet-stop:
 	docker-compose -f $(LOCALNET_SETUP_FILE) down -v
 	rm -rf $(CURDIR)/.testnets
 
 localnet-start: localnet-stop
-	make settlusd
-	$(BUILDDIR)/settlusd testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
+	make build
+	$(BUILDDIR)/build testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
 	docker-compose -f $(LOCALNET_SETUP_FILE) up -d
+
+.PHONY: localnet-build localnet-start localnet-stop
