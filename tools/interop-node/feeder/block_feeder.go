@@ -118,6 +118,7 @@ func (feeder *BlockFeeder) HandlePrevote(ctx context.Context, height int64) erro
 
 	if err := feeder.sendPrevote(ctx, blockDataStr, salt); err != nil {
 		feeder.logger.Error(fmt.Sprintf("failed to send prevote: %v", err))
+		return fmt.Errorf("failed to send prevote: %w", err)
 	}
 
 	feeder.lastPreVote = BlockVoteInfo{
