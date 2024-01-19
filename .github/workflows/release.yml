@@ -25,6 +25,6 @@ jobs:
       - name: Create release
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release build
+          args: build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
