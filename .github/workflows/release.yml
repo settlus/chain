@@ -2,7 +2,6 @@ name: Release
 # This workflow helps with creating releases.
 # This job will only be triggered when a tag (vX.X.x) is pushed
 on:
-  pull_request:
   push:
     # Sequence of patterns matched against refs/tags
     tags:

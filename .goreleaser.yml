@@ -91,7 +91,7 @@ archives:
       - settlusd-windows
       - settlusd-linux
       - settlusd-linux-arm64
-  
+
 checksum:
   name_template: 'checksums.txt'
 changelog:
