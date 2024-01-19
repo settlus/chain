@@ -21,9 +21,9 @@ jobs:
         with:
           go-version: "1.21"
           check-latest: true
-      - name: Create release
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          args: build
-        env:
+      - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          echo 'GITHUB_TOKEN=${{secrets.GITHUB_TOKEN}}' > .release-env
+      - name: Create release
+        run: make release
