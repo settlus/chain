@@ -1,8 +1,6 @@
 package types
 
 import (
-	"strings"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
@@ -20,13 +18,8 @@ func PadBytes(pad int, b []byte) []byte {
 	return padded
 }
 
+// ValidateHexString checks if a string is a valid hex string
 func ValidateHexString(s string) bool {
-	s = strings.TrimPrefix(s, "0x")
-
-	if len(s)%2 == 1 {
-		s = "0" + s
-	}
-
 	_, err := hexutil.Decode(s)
 	return err == nil
 }
