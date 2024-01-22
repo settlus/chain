@@ -15,3 +15,12 @@ ts-client/
 
 tmp-swagger-gen
 swagger-proto
+
+# Build
+vendor
+/build
+dist
+
+# Go
+go.work
+go.work.sum
