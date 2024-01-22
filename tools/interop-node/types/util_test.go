@@ -46,53 +46,44 @@ func Test_PadBytes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := types.PadBytes(tt.args.pad, tt.args.b); !bytes.Equal(got, tt.want) {
-				t.Errorf("PadBytes() = %v, want %v", got, tt.want)
+				t.Errorf("PadBytes() = %v, ok %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func Test_ValidateHexString(t *testing.T) {
-	type args struct {
-		s string
-	}
 	tests := []struct {
 		name string
-		args args
-		want bool
+		s    string
+		ok   bool
 	}{
 		{
 			name: "valid even hex string",
-			args: args{
-				s: "0x01",
-			},
-			want: true,
+			s:    "0x01",
+			ok:   true,
 		},
 		{
 			name: "valid odd hex string",
-			args: args{
-				s: "0x0",
-			},
-			want: false,
+			s:    "0x0",
+			ok:   false,
 		},
 		{
 			name: "invalid hex string",
-			args: args{
-				s: "0x0g",
-			},
-			want: false,
+			s:    "0x0g",
+			ok:   false,
 		},
 		{
 			name: "invalid hex string",
-			args: args{
-				s: "x1",
-			},
-			want: false,
+			s:    "x1",
+			ok:   false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			types.ValidateHexString(tt.args.s)
+			if ok := types.ValidateHexString(tt.s); ok != tt.ok {
+				t.Errorf("ValidateHexString() = %v, ok %v", types.ValidateHexString(tt.s), tt.ok)
+			}
 		})
 	}
 }
