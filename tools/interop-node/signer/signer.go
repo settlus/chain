@@ -2,7 +2,6 @@ package signer
 
 import (
 	"context"
-	"fmt"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
@@ -15,12 +14,8 @@ type Signer interface {
 }
 
 func NewSigner(ctx context.Context, config *configtypes.Config) Signer {
-	switch config.Feeder.SignerMode {
-	case configtypes.AwsKms:
-		return NewKmsSigner(ctx, config.Feeder.Key)
-	case configtypes.Local:
-		return NewLocalSigner(config.Feeder.Key)
-	default:
-		panic(fmt.Sprintf("invalid signer mode, must be one of: %s, %s", configtypes.AwsKms, configtypes.Local))
+	if config.Feeder.AWSKMSKey != "" {
+		return NewKmsSigner(ctx, config.Feeder.AWSKMSKey)
 	}
+	return NewLocalSigner(config.Feeder.PrivateKey)
 }

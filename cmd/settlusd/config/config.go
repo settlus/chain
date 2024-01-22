@@ -1,9 +1,11 @@
 package config
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	evmtypes "github.com/settlus/chain/evmos/types"
 	"math/big"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	evmtypes "github.com/settlus/chain/evmos/types"
 )
 
 const (

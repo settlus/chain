@@ -11,6 +11,7 @@ import (
 	"github.com/settlus/chain/tools/interop-node/client"
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/feeder"
+	"github.com/settlus/chain/tools/interop-node/signer"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
 	"github.com/settlus/chain/tools/interop-node/types"
 	"github.com/settlus/chain/x/interop"
@@ -42,7 +43,23 @@ func NewServer(
 ) (*Server, error) {
 	logger = logger.With("server", "interop-node")
 
-	sc, err := client.NewSettlusClient(config, ctx, logger)
+	s := signer.NewSigner(ctx, config)
+	var address string
+	var err error
+	if config.Feeder.AWSKMSKey != "" {
+		address, err = types.GetAddressFromPubKey(s.PubKey())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		address, err = types.GetAddressFromPrivKey(config.Feeder.PrivateKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	config.Feeder.Address = address
+
+	sc, err := client.NewSettlusClient(config, ctx, s, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settlus client: %w", err)
 	}
