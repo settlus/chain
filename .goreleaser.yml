@@ -1,0 +1,161 @@
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: "settlusd-darwin-arm64"
+    main: ./cmd/settlusd
+    binary: bin/settlusd
+    env:
+      - CGO_ENABLED=1
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    flags:
+      - -tags=cgo
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=settlusd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "settlusd-linux"
+    main: ./cmd/settlusd
+    binary: bin/settlusd
+    env:
+      - CGO_ENABLED=1
+      - CC=gcc
+      - CXX=g++
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -tags=cgo
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=settlusd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "settlusd-linux-arm64"
+    main: ./cmd/settlusd
+    binary: bin/settlusd
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+    goos:
+      - linux
+    goarch:
+      - arm64
+    flags:
+      - -tags=cgo
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=settlusd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "settlusd-windows"
+    main: ./cmd/settlusd
+    binary: bin/settlusd
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    goos:
+      - windows
+    goarch:
+      - amd64
+    flags:
+      - -tags=cgo
+      - -buildmode=exe
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=settlusd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "interop-node-darwin-arm64"
+    main: ./tools/interop-node
+    binary: bin/interop-node
+    env:
+      - CGO_ENABLED=1
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    goos:
+      - darwin
+    goarch:
+      - arm64
+    flags:
+      - -tags=cgo
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=interop-node -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "interop-node-linux"
+    main: ./tools/interop-node
+    binary: bin/interop-node
+    env:
+      - CGO_ENABLED=1
+      - CC=gcc
+      - CXX=g++
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -tags=cgo
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=interop-node -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "interop-node-linux-arm64"
+    main: ./tools/interop-node
+    binary: bin/interop-node
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
+    goos:
+      - linux
+    goarch:
+      - arm64
+    flags:
+      - -tags=cgo
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=interop-node -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "interop-node-windows"
+    main: ./tools/interop-node
+    binary: bin/interop-node
+    env:
+      - CGO_ENABLED=1
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    goos:
+      - windows
+    goarch:
+      - amd64
+    flags:
+      - -tags=cgo
+      - -buildmode=exe
+    ldflags:
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=settlus -X github.com/cosmos/cosmos-sdk/version.AppName=interop-node -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  
+archives:
+  - id: settlusd
+    name_template: 'settlus_{{ .Version }}_{{- title .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        format: zip
+    builds:
+      - settlusd-darwin-arm64
+      - settlusd-windows
+      - settlusd-linux
+      - settlusd-linux-arm64
+
+  - id: interop-node 
+    name_template: 'interop-node_{{ .Version }}_{{- title .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        format: zip
+    builds:
+      - interop-node-darwin-arm64
+      - interop-node-windows
+      - interop-node-linux
+      - interop-node-linux-arm64
+
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+snapshot:
+  name_template: "{{ .Tag }}-next"

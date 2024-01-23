@@ -2,14 +2,10 @@ name: CI
 #  This workflow is run on pushes to main & every Pull Requests except changes to tools/interop-node.
 on:
   pull_request:
-    paths-ignore:
-      - 'tools/interop-node/**'
   push:
     branches:
       - main
       - release/**
-    paths-ignore:
-      - 'tools/interop-node/**'
 
 permissions:
   contents: read
@@ -72,15 +68,10 @@ jobs:
             **/go.sum
             **/Makefile
             Makefile
+            .github/workflows/build.yml
       - name: Download Go Dependency
         if: env.GIT_DIFF
         run : go mod download
       - name: Build
         if: env.GIT_DIFF
-        run: GOARCH=${{ matrix.go-arch }} make build
-      - name: Archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries-${{ matrix.go-arch }}
-          path: ./build/*
-        if: env.GIT_DIFF && github.event_name != 'pull_request'
+        run: GOOS=linux GOARCH=${{ matrix.go-arch }} make build
