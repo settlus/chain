@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/feeder"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
-	"github.com/settlus/chain/tools/interop-node/types"
 	"github.com/settlus/chain/x/interop"
 )
 
@@ -156,20 +156,21 @@ func (s *Server) OwnerOf(ctx context.Context, req *interop.OwnerOfRequest) (*int
 	}, err
 }
 
+// validateOwnerOfRequest validates the owner of request
 func validateOwnerOfRequest(req *interop.OwnerOfRequest) bool {
 	if req == nil || req.ChainId == "" || req.ContractAddr == "" || req.TokenIdHex == "" || req.BlockHash == "" {
 		return false
 	}
 
-	if !types.ValidateHexString(req.ContractAddr) {
+	if _, err := hexutil.Decode(req.ContractAddr); err != nil {
 		return false
 	}
 
-	if !types.ValidateHexString(req.BlockHash) {
+	if _, err := hexutil.Decode(req.BlockHash); err != nil {
 		return false
 	}
 
-	if !types.ValidateHexString(req.TokenIdHex) {
+	if _, err := hexutil.Decode(req.TokenIdHex); err != nil {
 		return false
 	}
 
