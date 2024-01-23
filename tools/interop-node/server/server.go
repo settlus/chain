@@ -44,22 +44,11 @@ func NewServer(
 	logger = logger.With("server", "interop-node")
 
 	s := signer.NewSigner(ctx, config)
-	switch config.Feeder.SignerMode {
-	case cfg.AwsKms:
-		address, err := types.GetAddressFromPubKey(s.PubKey())
-		if err != nil {
-			return nil, err
-		}
-		config.Feeder.Address = address
-	case cfg.Local:
-		address, err := types.GetAddressFromPrivKey(config.Feeder.Key)
-		if err != nil {
-			return nil, err
-		}
-		config.Feeder.Address = address
-	default:
-		return nil, fmt.Errorf("invalid signer mode, must be one of: %s, %s", cfg.AwsKms, cfg.Local)
+	address, err := types.GetAddressFromPubKey(s.PubKey())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get address from pubkey: %w", err)
 	}
+	config.Feeder.Address = address
 
 	sc, err := client.NewSettlusClient(config, ctx, s, logger)
 	if err != nil {

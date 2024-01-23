@@ -102,41 +102,6 @@ func Test_ValidateHexString(t *testing.T) {
 	}
 }
 
-func Test_GetAccAddressFromPrivKey(t *testing.T) {
-	config := sdk.GetConfig()
-	config.SetBech32PrefixForAccount(settlusconfig.Bech32Prefix, settlusconfig.Bech32PrefixAccPub)
-
-	tests := []struct {
-		name    string
-		privKey string
-		want    string
-		wantErr bool
-	}{
-		{
-			name:    "valid private key",
-			privKey: "290a6eedf1144d433e9b6a7071b97c9029efcf51a320dbc26b89ad7f39b706fb",
-			want:    "settlus1mnd2teke7w0heukka3cctuqkq3kzzazrygtv4e",
-			wantErr: false,
-		},
-		{
-			name:    "invalid private key",
-			privKey: "foo",
-			want:    "",
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if actual, err := types.GetAddressFromPrivKey(tt.privKey); err != nil && !tt.wantErr {
-				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
-			} else if actual != tt.want {
-				t.Errorf("actual = %v, want %v", actual, tt.want)
-			}
-		})
-	}
-}
-
 func Test_GetAddressFromPubKey(t *testing.T) {
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(settlusconfig.Bech32Prefix, settlusconfig.Bech32PrefixAccPub)

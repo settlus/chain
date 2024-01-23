@@ -6,10 +6,7 @@ import (
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
 )
 
 func PadBytes(pad int, b []byte) []byte {
@@ -35,16 +32,6 @@ func ValidateHexString(s string) bool {
 
 	_, err := hexutil.Decode(s)
 	return err == nil
-}
-
-// GetAddressFromPrivKey returns the address of a private key
-func GetAddressFromPrivKey(privKey string) (string, error) {
-	key := &ethsecp256k1.PrivKey{Key: common.FromHex(privKey)}
-	if key.PubKey() == nil {
-		return "", fmt.Errorf("failed to create private key")
-	}
-
-	return GetAddressFromPubKey(key.PubKey())
 }
 
 // GetAddressFromPubKey returns the address of a public key
