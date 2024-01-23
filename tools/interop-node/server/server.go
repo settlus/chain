@@ -14,6 +14,7 @@ import (
 	"github.com/settlus/chain/tools/interop-node/feeder"
 	"github.com/settlus/chain/tools/interop-node/signer"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
+	"github.com/settlus/chain/tools/interop-node/types"
 	"github.com/settlus/chain/x/interop"
 )
 
