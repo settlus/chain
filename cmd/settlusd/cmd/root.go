@@ -209,7 +209,10 @@ func initAppConfig() (string, interface{}) {
 		panic(fmt.Errorf("unknown app config type %T", customAppConfig))
 	}
 
+	srvCfg.Telemetry.Enabled = false
+	srvCfg.Telemetry.PrometheusRetentionTime = 60
 	srvCfg.API.Enable = true
+	srvCfg.API.Swagger = true
 	srvCfg.JSONRPC.Address = "0.0.0.0:8545"
 	srvCfg.JSONRPC.WsAddress = "0.0.0.0:8546"
 	srvCfg.IAVLDisableFastNode = false
