@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	settlusconfig "github.com/settlus/chain/cmd/settlusd/config"
+	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
 	"github.com/settlus/chain/tools/interop-node/types"
 )
 
@@ -128,6 +130,41 @@ func Test_GetAccAddressFromPrivKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if actual, err := types.GetAddressFromPrivKey(tt.privKey); err != nil && !tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+			} else if actual != tt.want {
+				t.Errorf("actual = %v, want %v", actual, tt.want)
+			}
+		})
+	}
+}
+
+func Test_GetAddressFromPubKey(t *testing.T) {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(settlusconfig.Bech32Prefix, settlusconfig.Bech32PrefixAccPub)
+
+	tests := []struct {
+		name    string
+		pubKey  string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "valid public key",
+			pubKey:  "023A67CE381ACA142344D9458BDAA8BC960CF852AB9D674765ABA8A70475804611",
+			want:    "settlus1mnd2teke7w0heukka3cctuqkq3kzzazrygtv4e",
+			wantErr: false,
+		},
+		{
+			name:    "invalid public key",
+			pubKey:  "foo",
+			want:    "",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if actual, err := types.GetAddressFromPubKey(&ethsecp256k1.PubKey{Key: common.FromHex(tt.pubKey)}); err != nil && !tt.wantErr {
+				t.Errorf("error = %v", err)
 			} else if actual != tt.want {
 				t.Errorf("actual = %v, want %v", actual, tt.want)
 			}

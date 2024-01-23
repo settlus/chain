@@ -11,6 +11,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	AwsKms = "aws-kms"
+	Local  = "local"
+)
+
 type RuntimeConfig struct {
 	HomeDir    string
 	ConfigFile string
@@ -110,9 +115,9 @@ func (sc *SettlusConfig) Validate() error {
 
 type FeederConfig struct {
 	Topics           string `yaml:"topics"`
-	Address          string `yaml:"address"`
-	AWSKMSKey        string `yaml:"aws_kms_key"`
-	PrivateKey       string `yaml:"private_key"`
+	SignerMode       string `yaml:"signer_mode"`
+	Address          string `yaml:"address"` // derived from private key or aws kms key id, no need to set manually
+	Key              string `yaml:"key"`     // aws kms key id or private key
 	ValidatorAddress string `yaml:"validator_address"`
 }
 
@@ -129,12 +134,20 @@ func (fc *FeederConfig) Validate() error {
 		return fmt.Errorf("validator_address must start with settlusvaloper1: %s", fc.ValidatorAddress)
 	}
 
-	if fc.AWSKMSKey == "" && fc.PrivateKey == "" {
-		return fmt.Errorf("either kms_key or private_key must be provided")
+	if fc.SignerMode != AwsKms && fc.SignerMode != Local {
+		return fmt.Errorf("invalid signer_mode, must be one of: %s, %s", AwsKms, Local)
 	}
 
-	if fc.AWSKMSKey != "" && fc.PrivateKey != "" {
-		return fmt.Errorf("only one of kms_key or private_key must be provided")
+	if fc.Key == "" {
+		return fmt.Errorf("key must not be empty")
+	}
+
+	if fc.SignerMode == AwsKms && len(fc.Key) != 36 {
+		return fmt.Errorf("invalid aws kms key id: %s", fc.Key)
+	}
+
+	if fc.SignerMode == Local && len(fc.Key) != 64 {
+		return fmt.Errorf("invalid private key: %s", fc.Key)
 	}
 
 	return nil

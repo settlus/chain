@@ -9,7 +9,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/client"
-	"github.com/settlus/chain/tools/interop-node/config"
+	cfg "github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/feeder"
 	"github.com/settlus/chain/tools/interop-node/signer"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
@@ -26,7 +26,7 @@ type Server struct {
 	interop.UnimplementedInteropServer
 
 	ctx    context.Context
-	config *config.Config
+	config *cfg.Config
 	logger log.Logger
 
 	sc *client.SettlusClient
@@ -37,27 +37,29 @@ type Server struct {
 
 // NewServer creates a new interop server
 func NewServer(
-	config *config.Config,
+	config *cfg.Config,
 	ctx context.Context,
 	logger log.Logger,
 ) (*Server, error) {
 	logger = logger.With("server", "interop-node")
 
 	s := signer.NewSigner(ctx, config)
-	var address string
-	var err error
-	if config.Feeder.AWSKMSKey != "" {
-		address, err = types.GetAddressFromPubKey(s.PubKey())
+	switch config.Feeder.SignerMode {
+	case cfg.AwsKms:
+		address, err := types.GetAddressFromPubKey(s.PubKey())
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		address, err = types.GetAddressFromPrivKey(config.Feeder.PrivateKey)
+		config.Feeder.Address = address
+	case cfg.Local:
+		address, err := types.GetAddressFromPrivKey(config.Feeder.Key)
 		if err != nil {
 			return nil, err
 		}
+		config.Feeder.Address = address
+	default:
+		return nil, fmt.Errorf("invalid signer mode, must be one of: %s, %s", cfg.AwsKms, cfg.Local)
 	}
-	config.Feeder.Address = address
 
 	sc, err := client.NewSettlusClient(config, ctx, s, logger)
 	if err != nil {
