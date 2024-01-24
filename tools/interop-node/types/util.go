@@ -1,9 +1,10 @@
 package types
 
 import (
-	"strings"
+	"fmt"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func PadBytes(pad int, b []byte) []byte {
@@ -20,13 +21,12 @@ func PadBytes(pad int, b []byte) []byte {
 	return padded
 }
 
-func ValidateHexString(s string) bool {
-	s = strings.TrimPrefix(s, "0x")
-
-	if len(s)%2 == 1 {
-		s = "0" + s
+// GetAddressFromPubKey returns the address of a public key
+func GetAddressFromPubKey(pubKey cryptotypes.PubKey) (string, error) {
+	acc := authtypes.NewBaseAccount(pubKey.Address().Bytes(), pubKey, 0, 0)
+	if err := acc.Validate(); err != nil {
+		return "", fmt.Errorf("failed to validate account: %w", err)
 	}
 
-	_, err := hexutil.Decode(s)
-	return err == nil
+	return acc.GetAddress().String(), nil
 }

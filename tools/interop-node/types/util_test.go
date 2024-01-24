@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+
+	settlusconfig "github.com/settlus/chain/cmd/settlusd/config"
+	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
 	"github.com/settlus/chain/tools/interop-node/types"
 )
 
@@ -46,53 +51,43 @@ func Test_PadBytes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := types.PadBytes(tt.args.pad, tt.args.b); !bytes.Equal(got, tt.want) {
-				t.Errorf("PadBytes() = %v, want %v", got, tt.want)
+				t.Errorf("PadBytes() = %v, ok %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_ValidateHexString(t *testing.T) {
-	type args struct {
-		s string
-	}
+func Test_GetAddressFromPubKey(t *testing.T) {
+	config := sdk.GetConfig()
+	config.SetBech32PrefixForAccount(settlusconfig.Bech32Prefix, settlusconfig.Bech32PrefixAccPub)
+
 	tests := []struct {
-		name string
-		args args
-		want bool
+		name    string
+		pubKey  string
+		want    string
+		wantErr bool
 	}{
 		{
-			name: "valid even hex string",
-			args: args{
-				s: "0x01",
-			},
-			want: true,
+			name:    "valid public key",
+			pubKey:  "023A67CE381ACA142344D9458BDAA8BC960CF852AB9D674765ABA8A70475804611",
+			want:    "settlus1mnd2teke7w0heukka3cctuqkq3kzzazrygtv4e",
+			wantErr: false,
 		},
 		{
-			name: "valid odd hex string",
-			args: args{
-				s: "0x0",
-			},
-			want: false,
-		},
-		{
-			name: "invalid hex string",
-			args: args{
-				s: "0x0g",
-			},
-			want: false,
-		},
-		{
-			name: "invalid hex string",
-			args: args{
-				s: "x1",
-			},
-			want: false,
+			name:    "invalid public key",
+			pubKey:  "foo",
+			want:    "",
+			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			types.ValidateHexString(tt.args.s)
+			if actual, err := types.GetAddressFromPubKey(&ethsecp256k1.PubKey{Key: common.FromHex(tt.pubKey)}); err != nil && !tt.wantErr {
+				t.Errorf("error = %v", err)
+			} else if actual != tt.want {
+				t.Errorf("actual = %v, want %v", actual, tt.want)
+			}
 		})
 	}
 }

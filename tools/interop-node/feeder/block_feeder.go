@@ -10,7 +10,6 @@ import (
 	"github.com/settlus/chain/tools/interop-node/client"
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
-
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 

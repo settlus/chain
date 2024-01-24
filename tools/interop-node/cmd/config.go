@@ -61,9 +61,8 @@ for oracle feeder.
 				},
 				Feeder: cfg.FeederConfig{
 					Topics:           "block",
-					Address:          "settlus1uad3rkzpcgrvytqnd5d77lrhxgv83qad782h92",
-					SignerMode:       "local",
-					Key:              "0123456789abcdef",
+					SignerMode:       cfg.Local,
+					Key:              "",
 					ValidatorAddress: "settlusvaloper1x0foobar",
 				},
 				Chains: []cfg.ChainConfig{
