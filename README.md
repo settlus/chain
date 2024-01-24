@@ -44,7 +44,7 @@ make proto-swagger-gen
 
 ### Local network test
 ```shell
-make localnet-build # first time only
+make localnet-build
 make localnet-start
 
 # stop local network test

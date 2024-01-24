@@ -67,7 +67,7 @@ genesis:
       params:
         bond_denom: asetl
         min_commission_rate: "0.0"
-        max_validators: 80
+        max_validators: 40
     settlement:
       params:
         gas_price:
@@ -130,4 +130,4 @@ validators:
         timeout_precommit: "1s"
         timeout_precommit_delta: "500ms"
         timeout_commit: "5s"
-    home: $HOME/.settlusd
+    home: $HOME/.settlus

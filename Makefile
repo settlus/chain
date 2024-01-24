@@ -173,7 +173,7 @@ localnet-stop:
 
 localnet-start: localnet-stop
 	make build
-	$(BUILDDIR)/build testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
+	$(BUILDDIR)/settlusd testnet init-files --keyring-backend test --starting-ip-address 192.168.11.2
 	docker-compose -f $(LOCALNET_SETUP_FILE) up -d
 
 .PHONY: localnet-build localnet-start localnet-stop
