@@ -3,7 +3,7 @@ module github.com/settlus/chain
 go 1.21
 
 require (
-	cosmossdk.io/errors v1.0.0-beta.7
+	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.0.1
 	github.com/armon/go-metrics v0.4.1
 	github.com/aws/aws-sdk-go-v2 v1.23.1
