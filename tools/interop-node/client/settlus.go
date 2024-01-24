@@ -29,7 +29,6 @@ import (
 
 	"github.com/settlus/chain/app"
 	"github.com/settlus/chain/evmos/encoding"
-
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/signer"
 )
@@ -63,7 +62,7 @@ type SettlusClient struct {
 }
 
 // NewSettlusClient creates a new SettlusClient instance
-func NewSettlusClient(config *config.Config, ctx context.Context, logger cometlog.Logger) (*SettlusClient, error) {
+func NewSettlusClient(config *config.Config, ctx context.Context, s signer.Signer, logger cometlog.Logger) (*SettlusClient, error) {
 	rpcClient, gRpcClient, err := getSettlusRpcs(config.Settlus.RpcUrl, config.Settlus.GrpcUrl, config.Settlus.Insecure)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settlus rpc clients: %w", err)
@@ -89,7 +88,7 @@ func NewSettlusClient(config *config.Config, ctx context.Context, logger cometlo
 		chainId:       config.Settlus.ChainId,
 		gasLimit:      config.Settlus.GasLimit,
 		fees:          fees,
-		signer:        signer.NewSigner(ctx, config),
+		signer:        s,
 		accountnumber: account.GetAccountNumber(),
 		sequence:      account.GetSequence(),
 		logger:        logger,

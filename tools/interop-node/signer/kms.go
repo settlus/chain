@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"fmt"
 	"math/big"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -43,7 +44,7 @@ func NewKmsSigner(ctx context.Context, key string) Signer {
 	}
 
 	if err := signer.loadPubKey(); err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to load public key during kms signer initialization: %w", err))
 	}
 
 	return signer

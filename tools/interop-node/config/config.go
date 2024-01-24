@@ -115,9 +115,9 @@ func (sc *SettlusConfig) Validate() error {
 
 type FeederConfig struct {
 	Topics           string `yaml:"topics"`
-	Address          string `yaml:"address"`
 	SignerMode       string `yaml:"signer_mode"`
-	Key              string `yaml:"key"`
+	Address          string `yaml:"address"` // derived from private key or aws kms key id, no need to set manually
+	Key              string `yaml:"key"`     // aws kms key id or private key
 	ValidatorAddress string `yaml:"validator_address"`
 }
 
@@ -138,8 +138,16 @@ func (fc *FeederConfig) Validate() error {
 		return fmt.Errorf("invalid signer_mode, must be one of: %s, %s", AwsKms, Local)
 	}
 
-	if fc.Address == "" {
-		return fmt.Errorf("address must not be empty")
+	if fc.Key == "" {
+		return fmt.Errorf("key must not be empty")
+	}
+
+	if fc.SignerMode == AwsKms && len(fc.Key) != 36 {
+		return fmt.Errorf("invalid aws kms key id: %s", fc.Key)
+	}
+
+	if fc.SignerMode == Local && len(fc.Key) != 64 {
+		return fmt.Errorf("invalid private key: %s", fc.Key)
 	}
 
 	return nil

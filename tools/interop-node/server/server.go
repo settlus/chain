@@ -10,9 +10,11 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/client"
-	"github.com/settlus/chain/tools/interop-node/config"
+	cfg "github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/feeder"
+	"github.com/settlus/chain/tools/interop-node/signer"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
+	"github.com/settlus/chain/tools/interop-node/types"
 	"github.com/settlus/chain/x/interop"
 )
 
@@ -25,7 +27,7 @@ type Server struct {
 	interop.UnimplementedInteropServer
 
 	ctx    context.Context
-	config *config.Config
+	config *cfg.Config
 	logger log.Logger
 
 	sc *client.SettlusClient
@@ -36,13 +38,20 @@ type Server struct {
 
 // NewServer creates a new interop server
 func NewServer(
-	config *config.Config,
+	config *cfg.Config,
 	ctx context.Context,
 	logger log.Logger,
 ) (*Server, error) {
 	logger = logger.With("server", "interop-node")
 
-	sc, err := client.NewSettlusClient(config, ctx, logger)
+	s := signer.NewSigner(ctx, config)
+	address, err := types.GetAddressFromPubKey(s.PubKey())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get address from pubkey: %w", err)
+	}
+	config.Feeder.Address = address
+
+	sc, err := client.NewSettlusClient(config, ctx, s, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create settlus client: %w", err)
 	}
