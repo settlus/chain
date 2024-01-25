@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -143,6 +144,14 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 				return
 			}
 
+			// check whether block data already exists
+			if hash, err := sub.repo.GetBlockHash(common.Bytes2Hex(event.BlockNumber.Bytes())); err == nil {
+				if hash != "" && hash != common.Bytes2Hex(event.BlockHash) {
+					sub.logger.Error("BlockHash mismatch", "db", hash, "new", common.Bytes2Hex(event.BlockHash))
+				}
+				continue
+			}
+
 			if err := sub.repo.PutBlockData(event.BlockHash, event.BlockNumber.Bytes(), event.NftTransferred); err != nil {
 				sub.logger.Error("Failed to putBlockData", "error", err)
 				continue
@@ -154,6 +163,8 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 				BlockHash:   common.Bytes2Hex(event.BlockHash),
 			}
 
+			sub.logger.Info("put new block", "number", event.BlockNumber.Int64(), "hash", common.Bytes2Hex(event.BlockHash))
+
 		case <-ctx.Done():
 			close(sub.dbCh)
 		}
@@ -161,28 +172,33 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 }
 
 func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
-	ethCh := make(chan *ethtypes.Header)
-	_, err := sub.client.SubscribeNewHead(ctx, ethCh)
-	if err != nil {
-		panic(err)
-	}
+	ticker := time.NewTicker(5000 * time.Millisecond)
 
 	for {
 		select {
-		case ethHeader := <-ethCh:
-			block, err := sub.client.BlockByHash(ctx, ethHeader.Hash())
+		case <-ticker.C:
+			num, err := sub.client.BlockNumber(ctx)
 			if err != nil {
-				sub.logger.Error(err.Error(), "from", "block fetch", "number", ethHeader.Number)
+				sub.logger.Error(err.Error(), "from", "latest block")
+				continue
+			}
+			block, err := sub.client.BlockByNumber(ctx, big.NewInt(int64(num)))
+			if err != nil {
+				sub.logger.Error(err.Error(), "from", "block fetch", "number", num)
 				continue
 			}
 			event, err := sub.parseBlock(block)
 			if err != nil {
-				sub.logger.Error(err.Error(), "from", "parse block", "number", ethHeader.Number)
+				sub.logger.Error(err.Error(), "from", "parse block", "number", num)
 				continue
 			}
+
 			sub.dbCh <- event
-			sub.logger.Info("put new block", "number", block.Number(), "hash", block.Hash())
 		case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
+				sub.logger.Error(err.Error())
+			}
+			sub.logger.Info("fetchLoop done")
 			close(sub.dbCh)
 			return
 		}
