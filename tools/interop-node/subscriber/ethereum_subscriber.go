@@ -179,28 +179,25 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			num, err := sub.client.BlockNumber(ctx)
+			blockNumber, err := sub.client.BlockNumber(ctx)
 			if err != nil {
 				sub.logger.Error(err.Error(), "from", "latest block")
 				continue
 			}
-			block, err := sub.client.BlockByNumber(ctx, big.NewInt(int64(num)))
+			block, err := sub.client.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 			if err != nil {
-				sub.logger.Error(err.Error(), "from", "block fetch", "number", num)
+				sub.logger.Error(err.Error(), "from", "block fetch", "number", blockNumber)
 				continue
 			}
 			event, err := sub.parseBlock(block)
 			if err != nil {
-				sub.logger.Error(err.Error(), "from", "parse block", "number", num)
+				sub.logger.Error(err.Error(), "from", "parse block", "number", blockNumber)
 				continue
 			}
 
 			sub.dbCh <- event
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				sub.logger.Error(err.Error())
-			}
-			sub.logger.Info("fetchLoop done")
+			sub.logger.Info("fetchLoop stopped")
 			close(sub.dbCh)
 			return
 		}
