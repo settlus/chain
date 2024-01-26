@@ -10,7 +10,7 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(notdir $(patsubst %/,%,$(dir $(MKFILE_PATH))))
 
 # Docker configuration
-DOCKER_CMD := $(shell which docker)
+DOCKER := $(shell which docker)
 
 # Binary configuration
 SETTLUS_BINARY := settlusd
