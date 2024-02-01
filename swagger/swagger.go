@@ -1,4 +1,4 @@
-package docs
+package swagger
 
 import (
 	"embed"

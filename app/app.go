@@ -123,7 +123,7 @@ import (
 	transferkeeper "github.com/settlus/chain/evmos/x/ibc/transfer/keeper"
 
 	"github.com/settlus/chain/app/ante"
-	"github.com/settlus/chain/docs"
+	"github.com/settlus/chain/swagger"
 	nftownershipmodule "github.com/settlus/chain/x/nftownership"
 	nftownershipmodulekeeper "github.com/settlus/chain/x/nftownership/keeper"
 	nftownershipmoduletypes "github.com/settlus/chain/x/nftownership/types"
@@ -976,7 +976,7 @@ func (app *App) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig
 
 	// register app's OpenAPI routes.
 	if apiConfig.Swagger {
-		docs.RegisterOpenAPIService(Name, apiSvr.Router)
+		swagger.RegisterOpenAPIService(Name, apiSvr.Router)
 	}
 }
 

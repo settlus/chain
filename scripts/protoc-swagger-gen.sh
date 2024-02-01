@@ -35,8 +35,8 @@ cd ..
 # combine swagger files
 # uses nodejs package `swagger-combine`.
 # all the individual swagger files need to be configured in `config.json` for merging
-mkdir -p ./docs/swagger-ui
-swagger-combine ./docs/config.json -o ./docs/swagger-ui/swagger.json -f json --continueOnConflictingPaths true --includeDefinitions true
+mkdir -p ./swagger/swagger-ui
+swagger-combine ./swagger/config.json -o ./swagger/swagger-ui/swagger.json -f json --continueOnConflictingPaths true --includeDefinitions true
 
 # clean swagger files
 rm -rf ./tmp-swagger-gen
