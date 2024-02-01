@@ -171,7 +171,7 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 	}
 }
 
-const fetchInterval = 5 * time.Second
+const fetchInterval = 100 * time.Millisecond
 
 func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 	ticker := time.NewTicker(fetchInterval)

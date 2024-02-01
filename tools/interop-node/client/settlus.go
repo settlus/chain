@@ -265,17 +265,17 @@ func (sc *SettlusClient) buildTx(msg sdk.Msg) ([]byte, error) {
 }
 
 // sendTx sends a transaction to the Settlus node
-func (sc *SettlusClient) sendTx(ctx context.Context, tx []byte) (*coretypes.ResultBroadcastTx, error) {
-	res, err := sc.client.BroadcastTxSync(ctx, tx)
+func (sc *SettlusClient) sendTx(ctx context.Context, tx []byte) (*coretypes.ResultBroadcastTxCommit, error) {
+	res, err := sc.client.BroadcastTxCommit(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to broadcast tx: %w", err)
 	}
 
-	if res.Code != 0 {
-		if res.Code == errors.ErrWrongSequence.ABCICode() {
-			return res, fmt.Errorf("failed to broadcast tx, sequence number mismatch, %s", res.Log)
+	if res.DeliverTx.Code != 0 {
+		if res.DeliverTx.Code == errors.ErrWrongSequence.ABCICode() {
+			return res, fmt.Errorf("failed to broadcast tx, sequence number mismatch, %s", res.DeliverTx.Log)
 		}
-		return nil, fmt.Errorf("failed to broadcast tx code: %d, log: %s", res.Code, res.Log)
+		return nil, fmt.Errorf("failed to broadcast tx code: %d, log: %s", res.DeliverTx.Code, res.DeliverTx.Log)
 	}
 
 	// If the tx was successful, increment the sequence
@@ -299,7 +299,7 @@ func (sc *SettlusClient) BuildAndSendTxWithRetry(ctx context.Context, msg sdk.Ms
 			return nil
 		}
 
-		if res != nil && res.Code == errors.ErrWrongSequence.ABCICode() {
+		if res != nil && res.DeliverTx.Code == errors.ErrWrongSequence.ABCICode() {
 			if err := sc.updateSequenceFromError(res); err != nil {
 				return fmt.Errorf("failed tup update sequence number: %w", err)
 			}
@@ -317,8 +317,8 @@ func (sc *SettlusClient) BuildAndSendTxWithRetry(ctx context.Context, msg sdk.Ms
 }
 
 // updateSequenceFromError updates the sequence number from the error log
-func (sc *SettlusClient) updateSequenceFromError(res *coretypes.ResultBroadcastTx) error {
-	chunk := strings.Split(res.Log, "expected ")[1]
+func (sc *SettlusClient) updateSequenceFromError(res *coretypes.ResultBroadcastTxCommit) error {
+	chunk := strings.Split(res.DeliverTx.Log, "expected ")[1]
 	sequence := strings.Split(chunk, ",")[0]
 	sequenceInt, err := strconv.ParseUint(sequence, 10, 64)
 	if err != nil {
