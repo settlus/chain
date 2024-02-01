@@ -124,6 +124,7 @@ import (
 
 	"github.com/settlus/chain/app/ante"
 	"github.com/settlus/chain/swagger"
+	"github.com/settlus/chain/x/nftownership"
 	nftownershipmodule "github.com/settlus/chain/x/nftownership"
 	nftownershipmodulekeeper "github.com/settlus/chain/x/nftownership/keeper"
 	nftownershipmoduletypes "github.com/settlus/chain/x/nftownership/types"
@@ -537,6 +538,7 @@ func New(
 		distrtypes.ModuleName,
 	)
 
+	interopNodePort := cast.ToUint16(appOpts.Get(nftownership.FlagInteropNodePort))
 	app.NftOwnershipKeeper = nftownershipmodulekeeper.NewKeeper(
 		appCodec,
 		keys[nftownershipmoduletypes.StoreKey],
@@ -544,6 +546,7 @@ func New(
 		app.AccountKeeper,
 		app.EvmKeeper,
 		app.OracleKeeper,
+		interopNodePort,
 	)
 
 	app.SettlementKeeper = settlementmodulekeeper.NewKeeper(

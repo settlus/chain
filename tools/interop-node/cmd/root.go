@@ -57,6 +57,7 @@ func initConfig() {
 	}
 	viper.SetConfigFile(config.ConfigFile)
 	viper.SetEnvPrefix("interop")
+	viper.SetDefault("port", DefaultPort)
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("no config exists at default location", err)

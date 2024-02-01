@@ -32,6 +32,7 @@ type Config struct {
 	Chains   []ChainConfig `yaml:"chains"`
 	DBHome   string        `yaml:"db_home"`
 	LogLevel string        `yaml:"log_level"`
+	Port     uint16        `yaml:"port"`
 }
 
 func (c *Config) Validate() error {
@@ -55,6 +56,10 @@ func (c *Config) Validate() error {
 
 	if len(c.LogLevel) == 0 {
 		return fmt.Errorf("log_level must not be empty")
+	}
+
+	if c.Port == 0 {
+		return fmt.Errorf("port must not be 0")
 	}
 
 	return nil

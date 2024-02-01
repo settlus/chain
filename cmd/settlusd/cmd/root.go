@@ -42,6 +42,7 @@ import (
 	evmosserver "github.com/settlus/chain/evmos/server"
 	servercfg "github.com/settlus/chain/evmos/server/config"
 	srvflags "github.com/settlus/chain/evmos/server/flags"
+	"github.com/settlus/chain/x/nftownership"
 
 	"github.com/settlus/chain/app"
 	settluscfg "github.com/settlus/chain/cmd/settlusd/config"
@@ -146,6 +147,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	nftownership.AddModuleInitFlags(startCmd)
 }
 
 func queryCommand() *cobra.Command {

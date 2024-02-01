@@ -27,6 +27,11 @@ var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
+// Module init related flags
+const (
+	FlagInteropNodePort = "interop-node-port"
+)
+
 // ----------------------------------------------------------------------------
 // AppModuleBasic
 // ----------------------------------------------------------------------------
@@ -38,6 +43,11 @@ type AppModuleBasic struct {
 
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{cdc: cdc}
+}
+
+// AddModuleInitFlags implements servertypes.ModuleInitFlags interface.
+func AddModuleInitFlags(startCmd *cobra.Command) {
+	startCmd.Flags().Uint64(FlagInteropNodePort, 8000, "Set port of interop node")
 }
 
 // Name returns the name of the module as a string
