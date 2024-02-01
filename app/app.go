@@ -130,6 +130,10 @@ import (
 	oraclemodule "github.com/settlus/chain/x/oracle"
 	oraclemodulekeeper "github.com/settlus/chain/x/oracle/keeper"
 	oraclemoduletypes "github.com/settlus/chain/x/oracle/types"
+	poa "github.com/settlus/chain/x/posa"
+	posaclient "github.com/settlus/chain/x/posa/client"
+	posakeeper "github.com/settlus/chain/x/posa/keeper"
+	posatypes "github.com/settlus/chain/x/posa/types"
 	settlementmodule "github.com/settlus/chain/x/settlement"
 	settlementmodulekeeper "github.com/settlus/chain/x/settlement/keeper"
 	settlementmoduletypes "github.com/settlus/chain/x/settlement/types"
@@ -162,6 +166,8 @@ var (
 				ibcclientclient.UpdateClientProposalHandler, ibcclientclient.UpgradeProposalHandler,
 				// Evmos proposal types
 				erc20client.RegisterCoinProposalHandler, erc20client.RegisterERC20ProposalHandler, erc20client.ToggleTokenConversionProposalHandler,
+				// Settlus proposal types
+				posaclient.CreateValidatorProposalHandler,
 			},
 		),
 		params.AppModuleBasic{},
@@ -185,6 +191,7 @@ var (
 		settlementmodule.AppModuleBasic{},
 		nftownershipmodule.AppModuleBasic{},
 		oraclemodule.AppModuleBasic{},
+		posamodule.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -205,6 +212,7 @@ var (
 		settlementmoduletypes.ModuleName:   nil,
 		nftownershipmoduletypes.ModuleName: nil,
 		oraclemoduletypes.ModuleName:       nil,
+		posatypes.ModuleName:               nil,
 	}
 )
 
@@ -275,6 +283,7 @@ type App struct {
 	SettlementKeeper   *settlementmodulekeeper.SettlementKeeper
 	NftOwnershipKeeper *nftownershipmodulekeeper.Keeper
 	OracleKeeper       *oraclemodulekeeper.Keeper
+	PoaKeeper          posakeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -330,6 +339,7 @@ func New(
 		settlementmoduletypes.StoreKey,
 		nftownershipmoduletypes.StoreKey,
 		oraclemoduletypes.StoreKey,
+		posatypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -492,7 +502,8 @@ func New(
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper))
+		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper)).
+		AddRoute(posatypes.RouterKey, poa.NewPoSAProposalHandler(app.appCodec, &app.PoaKeeper))
 
 	govConfig := govtypes.DefaultConfig()
 	/*
@@ -555,6 +566,14 @@ func New(
 		app.Erc20Keeper,
 		app.EvmKeeper,
 		app.NftOwnershipKeeper,
+	)
+
+	app.PoaKeeper = posakeeper.NewKeeper(
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
 	)
 
 	// NOTE: app.Erc20Keeper is already initialized elsewhere
@@ -661,6 +680,7 @@ func New(
 		settlementmodule.NewAppModule(appCodec, app.SettlementKeeper, app.AccountKeeper, app.BankKeeper),
 		nftownershipmodule.NewAppModule(appCodec, *app.NftOwnershipKeeper, app.AccountKeeper, app.EvmKeeper),
 		oraclemodule.NewAppModule(appCodec, *app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
+		posamodule.NewAppModule(app.PoaKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -698,6 +718,7 @@ func New(
 		settlementmoduletypes.ModuleName,
 		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
+		posatypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -730,6 +751,7 @@ func New(
 		settlementmoduletypes.ModuleName,
 		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
+		posatypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -768,7 +790,7 @@ func New(
 		settlementmoduletypes.ModuleName,
 		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
-
+		posatypes.ModuleName,
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
 	)
@@ -1068,6 +1090,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(settlementmoduletypes.ModuleName)
 	paramsKeeper.Subspace(nftownershipmoduletypes.ModuleName)
 	paramsKeeper.Subspace(oraclemoduletypes.ModuleName)
+	paramsKeeper.Subspace(posatypes.ModuleName)
 
 	return paramsKeeper
 }

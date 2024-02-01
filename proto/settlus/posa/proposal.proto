@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package settlus.posa;
+
+import "google/protobuf/any.proto";
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/settlus/chain/x/posa/types";
+
+message CreateValidatorProposal {
+  option (gogoproto.equal) = false;
+
+  string title = 1;
+  string description = 2;
+  ValidatorInfo info = 3;
+}
+
+message ValidatorInfo {
+  option (gogoproto.equal) = false;
+
+  string moniker = 1;
+  string min_self_delegation = 2;
+  string delegator_address = 3;
+  string validator_address = 4;
+  string pubkey = 5;
+  string amount = 6;
+  bool isProbono = 7;
+  string max_delegation = 8;
+}

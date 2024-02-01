@@ -1,0 +1,10 @@
+syntax = "proto3";
+package settlus.posa;
+
+import "gogoproto/gogo.proto";
+import "settlus/posa/params.proto";
+
+option go_package = "github.com/settlus/chain/x/posa/types";
+
+// GenesisState defines the poa module's genesis state.
+message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
