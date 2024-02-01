@@ -39,7 +39,7 @@ require (
 	github.com/tidwall/gjson v1.17.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/zondax/hid v0.9.1
+	github.com/zondax/hid v0.9.2
 	go.opencensus.io v0.24.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	golang.org/x/net v0.20.0
