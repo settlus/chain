@@ -1,12 +1,15 @@
 syntax = "proto3";
-package settlus.interop;
+package interop;
 
 option go_package = "github.com/settlus/chain/x/interop";
 
+// Interop is the inter-blockchain communication service for the Settlus chain.
 service Interop {
+  // OwnerOf returns the owner of a token on a foreign chain.
   rpc OwnerOf(OwnerOfRequest) returns (OwnerOfResponse) {}
 }
 
+// OwnerOfRequest is the request for the OwnerOf RPC.
 message OwnerOfRequest {
   string chain_id = 1;
   string contract_addr = 2;
@@ -14,4 +17,5 @@ message OwnerOfRequest {
   string block_hash = 4;
 }
 
+// OwnerOfResponse is the response for the OwnerOf RPC.
 message OwnerOfResponse { string owner = 1; }

@@ -370,8 +370,11 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// Prevote sends a prevote message for the oracle consensus.
 	Prevote(ctx context.Context, in *MsgPrevote, opts ...grpc.CallOption) (*MsgPrevoteResponse, error)
+	// Vote sends a vote message for the oracle consensus.
 	Vote(ctx context.Context, in *MsgVote, opts ...grpc.CallOption) (*MsgVoteResponse, error)
+	// FeederDelegationConsent sends a message to delegate feeder to a validator.
 	FeederDelegationConsent(ctx context.Context, in *MsgFeederDelegationConsent, opts ...grpc.CallOption) (*MsgFeederDelegationConsentResponse, error)
 }
 
@@ -412,8 +415,11 @@ func (c *msgClient) FeederDelegationConsent(ctx context.Context, in *MsgFeederDe
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// Prevote sends a prevote message for the oracle consensus.
 	Prevote(context.Context, *MsgPrevote) (*MsgPrevoteResponse, error)
+	// Vote sends a vote message for the oracle consensus.
 	Vote(context.Context, *MsgVote) (*MsgVoteResponse, error)
+	// FeederDelegationConsent sends a message to delegate feeder to a validator.
 	FeederDelegationConsent(context.Context, *MsgFeederDelegationConsent) (*MsgFeederDelegationConsentResponse, error)
 }
 

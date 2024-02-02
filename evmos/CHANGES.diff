@@ -1,0 +1,4770 @@
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/cosmos/eip712.go chain/evmos/app/ante/cosmos/eip712.go
+--- evmos/app/ante/cosmos/eip712.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/cosmos/eip712.go	2024-01-31 14:50:14
+@@ -32,11 +32,12 @@
+ 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+ 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+ 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+-	"github.com/evmos/evmos/v12/types"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/ethereum/eip712"
++	"github.com/settlus/chain/evmos/types"
++
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var evmosCodec codec.ProtoCodecMarshaler
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/cosmos/fees.go chain/evmos/app/ante/cosmos/fees.go
+--- evmos/app/ante/cosmos/fees.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/cosmos/fees.go	2024-01-26 14:00:28
+@@ -25,7 +25,8 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+-	anteutils "github.com/evmos/evmos/v12/app/ante/utils"
++
++	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
+ )
+ 
+ // DeductFeeDecorator deducts fees from the first signer of the tx.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/cosmos/min_price.go chain/evmos/app/ante/cosmos/min_price.go
+--- evmos/app/ante/cosmos/min_price.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/cosmos/min_price.go	2024-01-31 14:50:14
+@@ -21,7 +21,8 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+-	evmante "github.com/evmos/evmos/v12/app/ante/evm"
++
++	evmante "github.com/settlus/chain/evmos/app/ante/evm"
+ )
+ 
+ // MinGasPriceDecorator will check if the transaction's fee is at least as large
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/cosmos/reject_msgs.go chain/evmos/app/ante/cosmos/reject_msgs.go
+--- evmos/app/ante/cosmos/reject_msgs.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/cosmos/reject_msgs.go	2024-01-31 14:53:50
+@@ -19,7 +19,8 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // RejectMessagesDecorator prevents invalid msg types from being executed
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/eth.go chain/evmos/app/ante/evm/eth.go
+--- evmos/app/ante/evm/eth.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/eth.go	2024-01-26 14:00:28
+@@ -26,11 +26,11 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 
+-	anteutils "github.com/evmos/evmos/v12/app/ante/utils"
+-	"github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/keeper"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
++	"github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/keeper"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+@@ -170,6 +170,7 @@
+ 	blockHeight := big.NewInt(ctx.BlockHeight())
+ 	homestead := ethCfg.IsHomestead(blockHeight)
+ 	istanbul := ethCfg.IsIstanbul(blockHeight)
++	sanghai := ethCfg.IsShanghai(uint64(ctx.BlockTime().Unix()))
+ 	var events sdk.Events
+ 
+ 	// Use the lowest priority of all the messages as the final one.
+@@ -199,7 +200,7 @@
+ 			gasWanted += txData.GetGas()
+ 		}
+ 
+-		fees, err := keeper.VerifyFee(txData, evmDenom, baseFee, homestead, istanbul, ctx.IsCheckTx())
++		fees, err := keeper.VerifyFee(txData, evmDenom, baseFee, homestead, istanbul, sanghai, ctx.IsCheckTx())
+ 		if err != nil {
+ 			return ctx, errorsmod.Wrapf(err, "failed to verify the fees")
+ 		}
+@@ -304,11 +305,11 @@
+ 					"base fee is supported but evm block context value is nil",
+ 				)
+ 			}
+-			if coreMsg.GasFeeCap().Cmp(baseFee) < 0 {
++			if coreMsg.GasFeeCap.Cmp(baseFee) < 0 {
+ 				return ctx, errorsmod.Wrapf(
+ 					errortypes.ErrInsufficientFee,
+ 					"max fee per gas less than block base fee (%s < %s)",
+-					coreMsg.GasFeeCap(), baseFee,
++					coreMsg.GasFeeCap, baseFee,
+ 				)
+ 			}
+ 		}
+@@ -326,12 +327,12 @@
+ 
+ 		// check that caller has enough balance to cover asset transfer for **topmost** call
+ 		// NOTE: here the gas consumed is from the context with the infinite gas meter
+-		if coreMsg.Value().Sign() > 0 && !evm.Context.CanTransfer(stateDB, coreMsg.From(), coreMsg.Value()) {
++		if coreMsg.Value.Sign() > 0 && !evm.Context.CanTransfer(stateDB, coreMsg.From, coreMsg.Value) {
+ 			return ctx, errorsmod.Wrapf(
+ 				errortypes.ErrInsufficientFunds,
+ 				"failed to transfer %s from address %s using the EVM block context transfer function",
+-				coreMsg.Value(),
+-				coreMsg.From(),
++				coreMsg.Value,
++				coreMsg.From,
+ 			)
+ 		}
+ 	}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/fee_checker.go chain/evmos/app/ante/evm/fee_checker.go
+--- evmos/app/ante/evm/fee_checker.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/fee_checker.go	2024-01-31 14:50:14
+@@ -24,9 +24,10 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+-	anteutils "github.com/evmos/evmos/v12/app/ante/utils"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // NewDynamicFeeChecker returns a `TxFeeChecker` that applies a dynamic fee to
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/fee_market.go chain/evmos/app/ante/evm/fee_market.go
+--- evmos/app/ante/evm/fee_market.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/fee_market.go	2024-01-31 14:50:14
+@@ -21,7 +21,8 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+-	"github.com/evmos/evmos/v12/types"
++
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // GasWantedDecorator keeps track of the gasWanted amount on the current block in transient store
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/fees.go chain/evmos/app/ante/evm/fees.go
+--- evmos/app/ante/evm/fees.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/fees.go	2024-01-31 14:50:14
+@@ -23,7 +23,8 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // EthMinGasPriceDecorator will check if the transaction's fee is at least as large
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/interfaces.go chain/evmos/app/ante/evm/interfaces.go
+--- evmos/app/ante/evm/interfaces.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/interfaces.go	2024-01-31 14:50:14
+@@ -25,9 +25,9 @@
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 	"github.com/ethereum/go-ethereum/params"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // EVMKeeper defines the expected keeper interface used on the AnteHandler
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/setup_ctx.go chain/evmos/app/ante/evm/setup_ctx.go
+--- evmos/app/ante/evm/setup_ctx.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/setup_ctx.go	2024-01-31 14:50:14
+@@ -26,7 +26,8 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // EthSetupContextDecorator is adapted from SetUpContextDecorator from cosmos-sdk, it ignores gas consumption
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/evm/sigverify.go chain/evmos/app/ante/evm/sigverify.go
+--- evmos/app/ante/evm/sigverify.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/evm/sigverify.go	2024-01-31 14:50:14
+@@ -22,7 +22,8 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // EthSigVerificationDecorator validates an ethereum signatures
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/handler_options.go chain/evmos/app/ante/handler_options.go
+--- evmos/app/ante/handler_options.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/handler_options.go	2024-01-26 14:00:28
+@@ -27,14 +27,14 @@
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	ibcante "github.com/cosmos/ibc-go/v6/modules/core/ante"
+ 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+-	anteutils "github.com/evmos/evmos/v12/app/ante/utils"
+ 
+-	cosmosante "github.com/evmos/evmos/v12/app/ante/cosmos"
+-	evmante "github.com/evmos/evmos/v12/app/ante/evm"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
+ 
++	cosmosante "github.com/settlus/chain/evmos/app/ante/cosmos"
++	evmante "github.com/settlus/chain/evmos/app/ante/evm"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++
+ 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+-	vestingtypes "github.com/evmos/evmos/v12/x/vesting/types"
+ )
+ 
+ // HandlerOptions defines the list of module keepers required to run the Evmos
+@@ -45,7 +45,7 @@
+ 	BankKeeper             evmtypes.BankKeeper
+ 	DistributionKeeper     anteutils.DistributionKeeper
+ 	IBCKeeper              *ibckeeper.Keeper
+-	StakingKeeper          vestingtypes.StakingKeeper
++	StakingKeeper          anteutils.StakingKeeper
+ 	FeeMarketKeeper        evmante.FeeMarketKeeper
+ 	EvmKeeper              evmante.EVMKeeper
+ 	FeegrantKeeper         ante.FeegrantKeeper
+@@ -107,7 +107,6 @@
+ 		evmante.NewEthSigVerificationDecorator(options.EvmKeeper),
+ 		evmante.NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper),
+ 		evmante.NewCanTransferDecorator(options.EvmKeeper),
+-		evmante.NewEthVestingTransactionDecorator(options.AccountKeeper, options.BankKeeper, options.EvmKeeper),
+ 		evmante.NewEthGasConsumeDecorator(options.BankKeeper, options.DistributionKeeper, options.EvmKeeper, options.StakingKeeper, options.MaxTxGasWanted),
+ 		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper),
+ 		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
+@@ -132,7 +131,6 @@
+ 		cosmosante.NewMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper),
+ 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
+ 		cosmosante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.DistributionKeeper, options.FeegrantKeeper, options.StakingKeeper, options.TxFeeChecker),
+-		cosmosante.NewVestingDelegationDecorator(options.AccountKeeper, options.StakingKeeper, options.Cdc),
+ 		// SetPubKeyDecorator must be called before all signature verification decorators
+ 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
+ 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
+@@ -159,7 +157,6 @@
+ 		ante.NewValidateMemoDecorator(options.AccountKeeper),
+ 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
+ 		cosmosante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.DistributionKeeper, options.FeegrantKeeper, options.StakingKeeper, options.TxFeeChecker),
+-		cosmosante.NewVestingDelegationDecorator(options.AccountKeeper, options.StakingKeeper, options.Cdc),
+ 		// SetPubKeyDecorator must be called before all signature verification decorators
+ 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
+ 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/app/ante/sigverify.go chain/evmos/app/ante/sigverify.go
+--- evmos/app/ante/sigverify.go	2024-01-25 17:48:18
++++ chain/evmos/app/ante/sigverify.go	2024-01-26 14:00:28
+@@ -28,7 +28,7 @@
+ 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ var _ authante.SignatureVerificationGasConsumer = SigVerificationGasConsumer
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/config.go chain/evmos/client/config.go
+--- evmos/client/config.go	2024-01-25 17:48:18
++++ chain/evmos/client/config.go	2024-01-31 14:50:14
+@@ -27,7 +27,7 @@
+ 
+ 	"github.com/cosmos/cosmos-sdk/client/flags"
+ 
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // InitConfig adds the chain-id, encoding and output flags to the persistent flag set.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/debug/debug.go chain/evmos/client/debug/debug.go
+--- evmos/client/debug/debug.go	2024-01-25 17:48:18
++++ chain/evmos/client/debug/debug.go	2024-01-31 14:50:14
+@@ -28,11 +28,12 @@
+ 	"github.com/cosmos/cosmos-sdk/version"
+ 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+-	evmos "github.com/evmos/evmos/v12/types"
+ 	"github.com/pkg/errors"
+ 	"github.com/spf13/cobra"
+ 	"github.com/tendermint/tendermint/libs/bytes"
++
++	"github.com/settlus/chain/evmos/ethereum/eip712"
++	evmos "github.com/settlus/chain/evmos/types"
+ )
+ 
+ // Cmd creates a main CLI command
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/export.go chain/evmos/client/export.go
+--- evmos/client/export.go	2024-01-25 17:48:18
++++ chain/evmos/client/export.go	2024-01-31 14:50:14
+@@ -28,8 +28,9 @@
+ 	"github.com/spf13/cobra"
+ 
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	"github.com/evmos/evmos/v12/crypto/hd"
++
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/hd"
+ )
+ 
+ // UnsafeExportEthKeyCommand exports a key with the given name as a private key in hex format.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/import.go chain/evmos/client/import.go
+--- evmos/client/import.go	2024-01-25 17:48:18
++++ chain/evmos/client/import.go	2024-01-31 14:50:14
+@@ -24,9 +24,10 @@
+ 	"github.com/cosmos/cosmos-sdk/client/input"
+ 	"github.com/cosmos/cosmos-sdk/crypto"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+ 
+-	"github.com/evmos/evmos/v12/crypto/hd"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++
++	"github.com/settlus/chain/evmos/crypto/hd"
+ )
+ 
+ // UnsafeImportKeyCommand imports private keys from a keyfile.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/keys/add.go chain/evmos/client/keys/add.go
+--- evmos/client/keys/add.go	2024-01-25 17:48:18
++++ chain/evmos/client/keys/add.go	2024-01-31 14:50:14
+@@ -22,9 +22,9 @@
+ 	"fmt"
+ 	"sort"
+ 
+-	cryptohd "github.com/evmos/evmos/v12/crypto/hd"
++	cryptohd "github.com/settlus/chain/evmos/crypto/hd"
+ 
+-	bip39 "github.com/cosmos/go-bip39"
++	"github.com/cosmos/go-bip39"
+ 	"github.com/spf13/cobra"
+ 
+ 	"github.com/cosmos/cosmos-sdk/client"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/keys.go chain/evmos/client/keys.go
+--- evmos/client/keys.go	2024-01-25 17:48:18
++++ chain/evmos/client/keys.go	2024-01-31 14:50:14
+@@ -25,8 +25,9 @@
+ 	"github.com/tendermint/tendermint/libs/cli"
+ 
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+-	clientkeys "github.com/evmos/evmos/v12/client/keys"
+-	"github.com/evmos/evmos/v12/crypto/hd"
++
++	clientkeys "github.com/settlus/chain/evmos/client/keys"
++	"github.com/settlus/chain/evmos/crypto/hd"
+ )
+ 
+ // KeyCommands registers a sub-tree of commands to interact with
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/client/testnet.go chain/evmos/client/testnet.go
+--- evmos/client/testnet.go	2024-01-25 17:48:18
++++ chain/evmos/client/testnet.go	2024-01-31 14:50:14
+@@ -53,13 +53,13 @@
+ 	mintypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+ 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+ 
+-	"github.com/evmos/evmos/v12/crypto/hd"
+-	"github.com/evmos/evmos/v12/server/config"
+-	srvflags "github.com/evmos/evmos/v12/server/flags"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/crypto/hd"
++	"github.com/settlus/chain/evmos/server/config"
++	srvflags "github.com/settlus/chain/evmos/server/flags"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ 
+-	"github.com/evmos/evmos/v12/testutil/network"
++	"github.com/settlus/chain/evmos/testutil/network"
+ )
+ 
+ var (
+@@ -330,6 +330,8 @@
+ 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
+ 			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
+ 			sdk.OneInt(),
++			sdk.ZeroInt(),
++			false,
+ 		)
+ 		if err != nil {
+ 			return err
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/codec/amino.go chain/evmos/crypto/codec/amino.go
+--- evmos/crypto/codec/amino.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/codec/amino.go	2024-01-31 14:50:14
+@@ -22,7 +22,7 @@
+ 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ // RegisterCrypto registers all crypto dependency types with the provided Amino
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/codec/codec.go chain/evmos/crypto/codec/codec.go
+--- evmos/crypto/codec/codec.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/codec/codec.go	2024-01-31 14:50:14
+@@ -19,7 +19,7 @@
+ 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ // RegisterInterfaces register the Evmos key concrete types.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/ethsecp256k1/ethsecp256k1.go chain/evmos/crypto/ethsecp256k1/ethsecp256k1.go
+--- evmos/crypto/ethsecp256k1/ethsecp256k1.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/ethsecp256k1/ethsecp256k1.go	2024-01-26 14:00:28
+@@ -27,8 +27,9 @@
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+ 	tmcrypto "github.com/tendermint/tendermint/crypto"
++
++	"github.com/settlus/chain/evmos/ethereum/eip712"
+ )
+ 
+ const (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/hd/algorithm.go chain/evmos/crypto/hd/algorithm.go
+--- evmos/crypto/hd/algorithm.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/hd/algorithm.go	2024-01-31 14:50:14
+@@ -18,7 +18,7 @@
+ import (
+ 	"github.com/btcsuite/btcd/chaincfg"
+ 	"github.com/btcsuite/btcutil/hdkeychain"
+-	bip39 "github.com/tyler-smith/go-bip39"
++	"github.com/tyler-smith/go-bip39"
+ 
+ 	"github.com/ethereum/go-ethereum/accounts"
+ 	"github.com/ethereum/go-ethereum/crypto"
+@@ -27,7 +27,7 @@
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ const (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/hd/algorithm_test.go chain/evmos/crypto/hd/algorithm_test.go
+--- evmos/crypto/hd/algorithm_test.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/hd/algorithm_test.go	2024-01-26 13:59:20
+@@ -15,9 +15,9 @@
+ 	"github.com/cosmos/cosmos-sdk/codec/types"
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+ 
+-	cryptocodec "github.com/evmos/evmos/v12/crypto/codec"
+-	enccodec "github.com/evmos/evmos/v12/encoding/codec"
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	cryptocodec "github.com/settlus/chain/evmos/crypto/codec"
++	enccodec "github.com/settlus/chain/evmos/encoding/codec"
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ var TestCodec amino.Codec
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/hd/benchmark_test.go chain/evmos/crypto/hd/benchmark_test.go
+--- evmos/crypto/hd/benchmark_test.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/hd/benchmark_test.go	2024-01-26 13:59:20
+@@ -4,7 +4,8 @@
+ 	"testing"
+ 
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+-	"github.com/evmos/evmos/v12/types"
++
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func BenchmarkEthSecp256k1Algo_Derive(b *testing.B) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/crypto/keyring/options.go chain/evmos/crypto/keyring/options.go
+--- evmos/crypto/keyring/options.go	2024-01-25 17:48:18
++++ chain/evmos/crypto/keyring/options.go	2024-01-26 15:04:02
+@@ -18,12 +18,8 @@
+ 
+ import (
+ 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+-	cosmosLedger "github.com/cosmos/cosmos-sdk/crypto/ledger"
+-	"github.com/cosmos/cosmos-sdk/crypto/types"
+ 
+-	"github.com/evmos/evmos-ledger-go/ledger"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	"github.com/evmos/evmos/v12/crypto/hd"
++	"github.com/settlus/chain/evmos/crypto/hd"
+ )
+ 
+ // AppName defines the Ledger app used for signing. Evmos uses the Ethereum app
+@@ -35,15 +31,7 @@
+ 	SupportedAlgorithms = keyring.SigningAlgoList{hd.EthSecp256k1}
+ 	// SupportedAlgorithmsLedger defines the list of signing algorithms used on Evmos for the Ledger device:
+ 	//  - secp256k1 (in order to comply with Cosmos SDK)
+-	// The Ledger derivation function is responsible for all signing and address generation.
+ 	SupportedAlgorithmsLedger = keyring.SigningAlgoList{hd.EthSecp256k1}
+-	// LedgerDerivation defines the Evmos Ledger Go derivation (Ethereum app with EIP-712 signing)
+-	LedgerDerivation = ledger.EvmosLedgerDerivation()
+-	// CreatePubkey uses the ethsecp256k1 pubkey with Ethereum address generation and keccak hashing
+-	CreatePubkey = func(key []byte) types.PubKey { return &ethsecp256k1.PubKey{Key: key} }
+-	// SkipDERConversion represents whether the signed Ledger output should skip conversion from DER to BER.
+-	// This is set to true for signing performed by the Ledger Ethereum app.
+-	SkipDERConversion = true
+ )
+ 
+ // EthSecp256k1Option defines a function keys options for the ethereum Secp256k1 curve.
+@@ -52,9 +40,5 @@
+ 	return func(options *keyring.Options) {
+ 		options.SupportedAlgos = SupportedAlgorithms
+ 		options.SupportedAlgosLedger = SupportedAlgorithmsLedger
+-		options.LedgerDerivation = func() (cosmosLedger.SECP256K1, error) { return LedgerDerivation() }
+-		options.LedgerCreateKey = CreatePubkey
+-		options.LedgerAppName = AppName
+-		options.LedgerSigSkipDERConv = SkipDERConversion
+ 	}
+ }
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/encoding/codec/codec.go chain/evmos/encoding/codec/codec.go
+--- evmos/encoding/codec/codec.go	2024-01-25 17:48:18
++++ chain/evmos/encoding/codec/codec.go	2024-01-31 14:50:14
+@@ -21,8 +21,8 @@
+ 	"github.com/cosmos/cosmos-sdk/std"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	cryptocodec "github.com/evmos/evmos/v12/crypto/codec"
+-	"github.com/evmos/evmos/v12/types"
++	cryptocodec "github.com/settlus/chain/evmos/crypto/codec"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // RegisterLegacyAminoCodec registers Interfaces from types, crypto, and SDK std.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/encoding/config.go chain/evmos/encoding/config.go
+--- evmos/encoding/config.go	2024-01-25 17:48:18
++++ chain/evmos/encoding/config.go	2024-01-31 14:50:14
+@@ -22,7 +22,7 @@
+ 	"github.com/cosmos/cosmos-sdk/types/module"
+ 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+ 
+-	enccodec "github.com/evmos/evmos/v12/encoding/codec"
++	enccodec "github.com/settlus/chain/evmos/encoding/codec"
+ )
+ 
+ // MakeConfig creates an EncodingConfig for testing
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/encoding/config_test.go chain/evmos/encoding/config_test.go
+--- evmos/encoding/config_test.go	2024-01-25 17:48:18
++++ chain/evmos/encoding/config_test.go	2024-01-26 13:59:21
+@@ -8,10 +8,10 @@
+ 
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/encoding"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/encoding"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func TestTxEncoding(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ethereum/eip712/eip712_fuzzer_test.go chain/evmos/ethereum/eip712/eip712_fuzzer_test.go
+--- evmos/ethereum/eip712/eip712_fuzzer_test.go	2024-01-25 17:48:18
++++ chain/evmos/ethereum/eip712/eip712_fuzzer_test.go	2024-01-26 13:59:22
+@@ -4,11 +4,12 @@
+ 	"fmt"
+ 	"strings"
+ 
+-	rand "github.com/tendermint/tendermint/libs/rand"
++	"github.com/tendermint/tendermint/libs/rand"
+ 
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+ 	"github.com/tidwall/gjson"
+ 	"github.com/tidwall/sjson"
++
++	"github.com/settlus/chain/evmos/ethereum/eip712"
+ )
+ 
+ type EIP712FuzzTestParams struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ethereum/eip712/eip712_test.go chain/evmos/ethereum/eip712/eip712_test.go
+--- evmos/ethereum/eip712/eip712_test.go	2024-01-25 17:48:18
++++ chain/evmos/ethereum/eip712/eip712_test.go	2024-01-26 13:59:22
+@@ -11,22 +11,25 @@
+ 	chainparams "github.com/cosmos/cosmos-sdk/simapp/params"
+ 	"github.com/ethereum/go-ethereum/crypto"
+ 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+ 	"github.com/tidwall/gjson"
+ 	"github.com/tidwall/sjson"
+ 
++	"github.com/settlus/chain/evmos/ethereum/eip712"
++
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+ 
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++
+ 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
+ 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+ 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/cmd/config"
+-	"github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/utils"
++
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/cmd/settlusd/config"
++	"github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/utils"
+ 
+ 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+ 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ethereum/eip712/encoding.go chain/evmos/ethereum/eip712/encoding.go
+--- evmos/ethereum/eip712/encoding.go	2024-01-25 17:48:18
++++ chain/evmos/ethereum/eip712/encoding.go	2024-01-31 14:50:14
+@@ -25,8 +25,9 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
+ 
+-	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	"github.com/ethereum/go-ethereum/signer/core/apitypes"
++
++	evmostypes "github.com/settlus/chain/evmos/types"
+ 
+ 	"github.com/cosmos/cosmos-sdk/codec"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ethereum/eip712/encoding_legacy.go chain/evmos/ethereum/eip712/encoding_legacy.go
+--- evmos/ethereum/eip712/encoding_legacy.go	2024-01-25 17:48:18
++++ chain/evmos/ethereum/eip712/encoding_legacy.go	2024-01-31 14:50:14
+@@ -25,8 +25,9 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
+ 
+-	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
+-	evmos "github.com/evmos/evmos/v12/types"
++	"github.com/ethereum/go-ethereum/signer/core/apitypes"
++
++	evmos "github.com/settlus/chain/evmos/types"
+ )
+ 
+ type aminoMessage struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ethereum/eip712/preprocess.go chain/evmos/ethereum/eip712/preprocess.go
+--- evmos/ethereum/eip712/preprocess.go	2024-01-25 17:48:18
++++ chain/evmos/ethereum/eip712/preprocess.go	2024-01-31 14:50:14
+@@ -23,7 +23,8 @@
+ 	cosmoskr "github.com/cosmos/cosmos-sdk/crypto/keyring"
+ 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+ 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+-	"github.com/evmos/evmos/v12/types"
++
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // PreprocessLedgerTx reformats Ledger-signed Cosmos transactions to match the fork expected by Ethermint
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ethereum/eip712/preprocess_test.go chain/evmos/ethereum/eip712/preprocess_test.go
+--- evmos/ethereum/eip712/preprocess_test.go	2024-01-25 17:48:18
++++ chain/evmos/ethereum/eip712/preprocess_test.go	2024-01-31 14:51:39
+@@ -14,14 +14,15 @@
+ 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/cmd/config"
+-	"github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/utils"
+ 	"github.com/stretchr/testify/require"
++
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/cmd/settlusd/config"
++	"github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/ethereum/eip712"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/utils"
+ )
+ 
+ // Testing Constants
+@@ -31,7 +32,7 @@
+ 		encoding.MakeConfig(app.ModuleBasics).TxConfig,
+ 	)
+ )
+-var feePayerAddress = "evmos17xpfvakm2amg962yls6f84z3kell8c5ljcjw34"
++var feePayerAddress = "settlus12g8w5dr5jyncct8jwdxwsy2g9ktdrjjlcs5f0a"
+ 
+ type TestCaseStruct struct {
+ 	txBuilder              client.TxBuilder
+@@ -203,7 +204,7 @@
+ 
+ 	msgSend := banktypes.MsgSend{
+ 		FromAddress: feePayerAddress,
+-		ToAddress:   "evmos12luku6uxehhak02py4rcz65zu0swh7wjun6msa",
++		ToAddress:   "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp",
+ 		Amount: sdk.NewCoins(
+ 			sdk.NewCoin(
+ 				utils.BaseDenom,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ibc/module_test.go chain/evmos/ibc/module_test.go
+--- evmos/ibc/module_test.go	2024-01-25 17:48:18
++++ chain/evmos/ibc/module_test.go	2024-01-26 13:59:21
+@@ -26,8 +26,9 @@
+ // OnChanOpenInit implements the Module interface
+ // It calls the underlying app's OnChanOpenInit callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnChanOpenInit(
+ 	ctx sdk.Context,
+ 	order channeltypes.Order,
+@@ -45,8 +46,9 @@
+ // OnChanOpenTry implements the Module interface.
+ // It calls the underlying app's OnChanOpenTry callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnChanOpenTry(
+ 	ctx sdk.Context,
+ 	order channeltypes.Order,
+@@ -64,8 +66,9 @@
+ // OnChanOpenAck implements the Module interface.
+ // It calls the underlying app's OnChanOpenAck callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnChanOpenAck(
+ 	ctx sdk.Context,
+ 	portID,
+@@ -80,8 +83,9 @@
+ // OnChanOpenConfirm implements the Module interface.
+ // It calls the underlying app's OnChanOpenConfirm callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnChanOpenConfirm(
+ 	ctx sdk.Context,
+ 	portID,
+@@ -94,8 +98,9 @@
+ // OnChanCloseInit implements the Module interface
+ // It calls the underlying app's OnChanCloseInit callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnChanCloseInit(
+ 	ctx sdk.Context,
+ 	portID,
+@@ -108,8 +113,9 @@
+ // OnChanCloseConfirm implements the Module interface.
+ // It calls the underlying app's OnChanCloseConfirm callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnChanCloseConfirm(
+ 	ctx sdk.Context,
+ 	portID,
+@@ -122,8 +128,9 @@
+ // OnRecvPacket implements the Module interface.
+ // It calls the underlying app's OnRecvPacket callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnRecvPacket(
+ 	ctx sdk.Context,
+ 	packet channeltypes.Packet,
+@@ -136,8 +143,9 @@
+ // OnAcknowledgementPacket implements the Module interface.
+ // It calls the underlying app's OnAcknowledgementPacket callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnAcknowledgementPacket(
+ 	ctx sdk.Context,
+ 	packet channeltypes.Packet,
+@@ -151,8 +159,9 @@
+ // OnTimeoutPacket implements the Module interface.
+ // It calls the underlying app's OnTimeoutPacket callback.
+ //
+-//nolint:all // escaping govet since we can copy locks here as it is a test
+ //	and escaping revive for unused parameters which are okay since they indicate the expected mocked interface
++//
++//nolint:all // escaping govet since we can copy locks here as it is a test
+ func (m MockIBCModule) OnTimeoutPacket(
+ 	ctx sdk.Context,
+ 	packet channeltypes.Packet,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ibc/testing/app.go chain/evmos/ibc/testing/app.go
+--- evmos/ibc/testing/app.go	2024-01-25 17:48:18
++++ chain/evmos/ibc/testing/app.go	2024-01-26 14:00:28
+@@ -35,22 +35,22 @@
+ 
+ 	ibcgotesting "github.com/cosmos/ibc-go/v6/testing"
+ 
+-	evmosapp "github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/utils"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/utils"
+ )
+ 
+-var DefaultTestingAppInit func() (ibcgotesting.TestingApp, map[string]json.RawMessage) = evmosapp.SetupTestingApp
++var DefaultTestingAppInit func() (ibcgotesting.TestingApp, map[string]json.RawMessage) = app.SetupTestingApp
+ 
+ // SetupWithGenesisValSet initializes a new SimApp with a validator set and genesis accounts
+ // that also act as delegators. For simplicity, each validator is bonded with a delegation
+ // of one consensus engine unit (10^6) in the default token of the simapp from first genesis
+ // account. A Nop logger is set in SimApp.
+ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, chainID string, balances ...banktypes.Balance) ibcgotesting.TestingApp {
+-	app, genesisState := DefaultTestingAppInit()
++	evmosApp, genesisState := DefaultTestingAppInit()
+ 	// set genesis accounts
+ 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
+-	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
++	genesisState[authtypes.ModuleName] = evmosApp.AppCodec().MustMarshalJSON(authGenesis)
+ 
+ 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
+ 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
+@@ -84,7 +84,7 @@
+ 	// set bond demon to be aevmos
+ 	stakingParams.BondDenom = utils.BaseDenom
+ 	stakingGenesis := stakingtypes.NewGenesisState(stakingParams, validators, delegations)
+-	genesisState[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
++	genesisState[stakingtypes.ModuleName] = evmosApp.AppCodec().MustMarshalJSON(stakingGenesis)
+ 
+ 	totalSupply := sdk.NewCoins()
+ 	for _, b := range balances {
+@@ -100,30 +100,30 @@
+ 
+ 	// update total supply
+ 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+-	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
++	genesisState[banktypes.ModuleName] = evmosApp.AppCodec().MustMarshalJSON(bankGenesis)
+ 
+ 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+ 	require.NoError(t, err)
+ 
+ 	// init chain will set the validator set and initialize the genesis accounts
+-	app.InitChain(
++	evmosApp.InitChain(
+ 		abci.RequestInitChain{
+ 			ChainId:         chainID,
+ 			Validators:      []abci.ValidatorUpdate{},
+-			ConsensusParams: evmosapp.DefaultConsensusParams,
++			ConsensusParams: app.DefaultConsensusParams,
+ 			AppStateBytes:   stateBytes,
+ 		},
+ 	)
+ 
+ 	// commit genesis changes
+-	app.Commit()
+-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
++	evmosApp.Commit()
++	evmosApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+ 		ChainID:            chainID,
+-		Height:             app.LastBlockHeight() + 1,
+-		AppHash:            app.LastCommitID().Hash,
++		Height:             evmosApp.LastBlockHeight() + 1,
++		AppHash:            evmosApp.LastCommitID().Hash,
+ 		ValidatorsHash:     valSet.Hash(),
+ 		NextValidatorsHash: valSet.Hash(),
+ 	}})
+ 
+-	return app
++	return evmosApp
+ }
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ibc/testing/chain.go chain/evmos/ibc/testing/chain.go
+--- evmos/ibc/testing/chain.go	2024-01-25 17:48:18
++++ chain/evmos/ibc/testing/chain.go	2024-01-31 14:51:39
+@@ -34,10 +34,10 @@
+ 	ibcgotesting "github.com/cosmos/ibc-go/v6/testing"
+ 	"github.com/cosmos/ibc-go/v6/testing/mock"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/utils"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/utils"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // ChainIDPrefix defines the default chain ID prefix for Evmos test chains
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ibc/testing/coordinator.go chain/evmos/ibc/testing/coordinator.go
+--- evmos/ibc/testing/coordinator.go	2024-01-25 17:48:18
++++ chain/evmos/ibc/testing/coordinator.go	2024-01-26 14:00:28
+@@ -26,8 +26,9 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+ 	ibchelpers "github.com/cosmos/ibc-go/v6/testing/simapp/helpers"
+-	"github.com/evmos/evmos/v12/app"
+ 	"github.com/stretchr/testify/require"
++
++	"github.com/settlus/chain/app"
+ )
+ 
+ const DefaultFeeAmt = int64(150_000_000_000_000_000) // 0.15 EVMOS
+@@ -140,7 +141,7 @@
+ 	// ensure the chain has the latest time
+ 	chain.Coordinator.UpdateTimeForChain(chain)
+ 
+-	if evmosChain, ok := chain.App.(*app.Evmos); ok {
++	if evmosChain, ok := chain.App.(*app.App); ok {
+ 		bondDenom = evmosChain.StakingKeeper.BondDenom(chain.GetContext())
+ 	} else {
+ 		bondDenom = chain.GetSimApp().StakingKeeper.BondDenom(chain.GetContext())
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ibc/utils.go chain/evmos/ibc/utils.go
+--- evmos/ibc/utils.go	2024-01-25 17:48:18
++++ chain/evmos/ibc/utils.go	2024-01-26 14:00:28
+@@ -24,7 +24,7 @@
+ 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+ 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+ 
+-	"github.com/evmos/evmos/v12/utils"
++	"github.com/settlus/chain/evmos/utils"
+ )
+ 
+ // GetTransferSenderRecipient returns the sender and recipient sdk.AccAddresses
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/ibc/utils_test.go chain/evmos/ibc/utils_test.go
+--- evmos/ibc/utils_test.go	2024-01-25 17:48:18
++++ chain/evmos/ibc/utils_test.go	2024-01-26 13:59:21
+@@ -3,7 +3,6 @@
+ import (
+ 	"testing"
+ 
+-	"github.com/evmos/evmos/v12/x/claims/types"
+ 	"github.com/stretchr/testify/require"
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+@@ -11,7 +10,8 @@
+ 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+ 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+ 	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+-	teststypes "github.com/evmos/evmos/v12/types/tests"
++
++	teststypes "github.com/settlus/chain/evmos/types/tests"
+ )
+ 
+ func init() {
+@@ -199,20 +199,6 @@
+ 				),
+ 			},
+ 			"10000",
+-			false,
+-		},
+-		{
+-			"valid - IBCTriggerAmt",
+-			channeltypes.Packet{
+-				Data: transfertypes.ModuleCdc.MustMarshalJSON(
+-					&transfertypes.FungibleTokenPacketData{
+-						Sender:   "cosmos1qql8ag4cluz6r4dz28p3w00dnc9w8ueulg2gmc",
+-						Receiver: "evmos1x2w87cvt5mqjncav4lxy8yfreynn273xn5335v",
+-						Amount:   types.IBCTriggerAmt,
+-					},
+-				),
+-			},
+-			types.IBCTriggerAmt,
+ 			false,
+ 		},
+ 	}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/indexer/kv_indexer.go chain/evmos/indexer/kv_indexer.go
+--- evmos/indexer/kv_indexer.go	2024-01-25 17:48:18
++++ chain/evmos/indexer/kv_indexer.go	2024-01-31 14:50:14
+@@ -24,14 +24,15 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+ 	"github.com/ethereum/go-ethereum/common"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	"github.com/tendermint/tendermint/libs/log"
+ 	tmtypes "github.com/tendermint/tendermint/types"
+ 	dbm "github.com/tendermint/tm-db"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++
++	evmostypes "github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ const (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/indexer/kv_indexer_test.go chain/evmos/indexer/kv_indexer_test.go
+--- evmos/indexer/kv_indexer_test.go	2024-01-25 17:48:18
++++ chain/evmos/indexer/kv_indexer_test.go	2024-01-26 13:59:21
+@@ -8,18 +8,19 @@
+ 	"github.com/cosmos/cosmos-sdk/simapp/params"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	evmenc "github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/indexer"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/utils"
+-	"github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/stretchr/testify/require"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	tmlog "github.com/tendermint/tendermint/libs/log"
+ 	tmtypes "github.com/tendermint/tendermint/types"
+ 	dbm "github.com/tendermint/tm-db"
++
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	evmenc "github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/indexer"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/utils"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func TestKVIndexer(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/apis.go chain/evmos/rpc/apis.go
+--- evmos/rpc/apis.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/apis.go	2024-01-31 14:50:14
+@@ -23,16 +23,16 @@
+ 
+ 	"github.com/ethereum/go-ethereum/rpc"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/debug"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/eth"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/eth/filters"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/miner"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/net"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/personal"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/txpool"
+-	"github.com/evmos/evmos/v12/rpc/namespaces/ethereum/web3"
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/rpc/backend"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/debug"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/eth"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/eth/filters"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/miner"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/net"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/personal"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/txpool"
++	"github.com/settlus/chain/evmos/rpc/namespaces/ethereum/web3"
++	"github.com/settlus/chain/evmos/types"
+ 
+ 	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/account_info.go chain/evmos/rpc/backend/account_info.go
+--- evmos/rpc/backend/account_info.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/account_info.go	2024-01-31 14:50:14
+@@ -28,9 +28,10 @@
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/pkg/errors"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // GetCode returns the contract code at the given address and block number.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/account_info_test.go chain/evmos/rpc/backend/account_info_test.go
+--- evmos/rpc/backend/account_info_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/account_info_test.go	2024-01-26 13:59:21
+@@ -11,10 +11,10 @@
+ 	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
+ 	"google.golang.org/grpc/metadata"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestGetCode() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/backend.go chain/evmos/rpc/backend/backend.go
+--- evmos/rpc/backend/backend.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/backend.go	2024-01-31 14:50:14
+@@ -26,16 +26,18 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
++	"github.com/ethereum/go-ethereum/common/math"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/params"
+ 	"github.com/ethereum/go-ethereum/rpc"
+ 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/server/config"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/tendermint/tendermint/libs/log"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/server/config"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // BackendI implements the Cosmos and EVM backend.
+@@ -110,7 +112,7 @@
+ 	CurrentHeader() *ethtypes.Header
+ 	PendingTransactions() ([]*sdk.Tx, error)
+ 	GetCoinbase() (sdk.AccAddress, error)
+-	FeeHistory(blockCount rpc.DecimalOrHex, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
++	FeeHistory(blockCount math.HexOrDecimal64, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
+ 	SuggestGasTipCap(baseFee *big.Int) (*big.Int, error)
+ 
+ 	// Tx Info
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/backend_suite_test.go chain/evmos/rpc/backend/backend_suite_test.go
+--- evmos/rpc/backend/backend_suite_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/backend_suite_test.go	2024-01-26 13:59:21
+@@ -18,15 +18,15 @@
+ 	"github.com/stretchr/testify/suite"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/crypto/hd"
+-	"github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/indexer"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/utils"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/crypto/hd"
++	"github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/indexer"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/utils"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ type BackendTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/blocks.go chain/evmos/rpc/backend/blocks.go
+--- evmos/rpc/backend/blocks.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/blocks.go	2024-01-31 14:50:14
+@@ -28,12 +28,13 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/trie"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/pkg/errors"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 	"google.golang.org/grpc"
+ 	"google.golang.org/grpc/metadata"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // BlockNumber returns the current block number in abci app state. Because abci
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/blocks_test.go chain/evmos/rpc/backend/blocks_test.go
+--- evmos/rpc/backend/blocks_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/blocks_test.go	2024-01-26 13:59:21
+@@ -16,10 +16,10 @@
+ 	tmtypes "github.com/tendermint/tendermint/types"
+ 	"google.golang.org/grpc/metadata"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	ethrpc "github.com/evmos/evmos/v12/rpc/types"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	ethrpc "github.com/settlus/chain/evmos/rpc/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestBlockNumber() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/call_tx.go chain/evmos/rpc/backend/call_tx.go
+--- evmos/rpc/backend/call_tx.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/call_tx.go	2024-01-31 14:50:14
+@@ -29,12 +29,13 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/core/vm"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/pkg/errors"
+ 	"google.golang.org/grpc/codes"
+ 	"google.golang.org/grpc/status"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // Resend accepts an existing transaction and a new gas price and limit. It will remove
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/call_tx_test.go chain/evmos/rpc/backend/call_tx_test.go
+--- evmos/rpc/backend/call_tx_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/call_tx_test.go	2024-01-26 13:59:21
+@@ -10,11 +10,12 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/rlp"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"google.golang.org/grpc/metadata"
++
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestResend() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/chain_info.go chain/evmos/rpc/backend/chain_info.go
+--- evmos/rpc/backend/chain_info.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/chain_info.go	2024-01-31 14:50:14
+@@ -22,14 +22,16 @@
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
++	"github.com/ethereum/go-ethereum/common/math"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/params"
+ 	"github.com/ethereum/go-ethereum/rpc"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.
+@@ -155,7 +157,7 @@
+ 
+ // FeeHistory returns data relevant for fee estimation based on the specified range of blocks.
+ func (b *Backend) FeeHistory(
+-	userBlockCount rpc.DecimalOrHex, // number blocks to fetch, maximum is 100
++	userBlockCount math.HexOrDecimal64, // number blocks to fetch, maximum is 100
+ 	lastBlock rpc.BlockNumber, // the block to start search , to oldest
+ 	rewardPercentiles []float64, // percentiles to fetch reward
+ ) (*rpctypes.FeeHistoryResult, error) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/chain_info_test.go chain/evmos/rpc/backend/chain_info_test.go
+--- evmos/rpc/backend/chain_info_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/chain_info_test.go	2024-01-31 14:51:39
+@@ -5,6 +5,7 @@
+ 	"math/big"
+ 
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
++	"github.com/ethereum/go-ethereum/common/math"
+ 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+ 
+ 	"google.golang.org/grpc/metadata"
+@@ -14,11 +15,11 @@
+ 	"github.com/tendermint/tendermint/abci/types"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpc "github.com/evmos/evmos/v12/rpc/types"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpc "github.com/settlus/chain/evmos/rpc/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestBaseFee() {
+@@ -324,7 +325,7 @@
+ 	testCases := []struct {
+ 		name           string
+ 		registerMock   func(validator sdk.AccAddress)
+-		userBlockCount ethrpc.DecimalOrHex
++		userBlockCount math.HexOrDecimal64
+ 		latestBlock    ethrpc.BlockNumber
+ 		expFeeHistory  *rpc.FeeHistoryResult
+ 		validator      sdk.AccAddress
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/client_test.go chain/evmos/rpc/backend/client_test.go
+--- evmos/rpc/backend/client_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/client_test.go	2024-01-26 13:59:21
+@@ -10,16 +10,17 @@
+ 
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpc "github.com/evmos/evmos/v12/rpc/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	mock "github.com/stretchr/testify/mock"
++	"github.com/stretchr/testify/mock"
+ 	"github.com/stretchr/testify/require"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	"github.com/tendermint/tendermint/libs/bytes"
+ 	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 	"github.com/tendermint/tendermint/types"
++
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpc "github.com/settlus/chain/evmos/rpc/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // Client defines a mocked object that implements the Tendermint JSON-RPC Client
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/evm_query_client_test.go chain/evmos/rpc/backend/evm_query_client_test.go
+--- evmos/rpc/backend/evm_query_client_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/evm_query_client_test.go	2024-01-31 14:51:39
+@@ -13,16 +13,17 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpc "github.com/evmos/evmos/v12/rpc/types"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	mock "github.com/stretchr/testify/mock"
++	"github.com/stretchr/testify/mock"
+ 	"github.com/stretchr/testify/require"
+ 	"google.golang.org/grpc"
+ 	"google.golang.org/grpc/codes"
+ 	"google.golang.org/grpc/metadata"
+ 	"google.golang.org/grpc/status"
++
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpc "github.com/settlus/chain/evmos/rpc/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // QueryClient defines a mocked object that implements the ethermint GRPC
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/feemarket_query_client_test.go chain/evmos/rpc/backend/feemarket_query_client_test.go
+--- evmos/rpc/backend/feemarket_query_client_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/feemarket_query_client_test.go	2024-01-26 13:59:21
+@@ -2,9 +2,10 @@
+ 
+ import (
+ 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpc "github.com/evmos/evmos/v12/rpc/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
++
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpc "github.com/settlus/chain/evmos/rpc/types"
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ var _ feemarkettypes.QueryClient = &mocks.FeeMarketQueryClient{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/filters_test.go chain/evmos/rpc/backend/filters_test.go
+--- evmos/rpc/backend/filters_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/filters_test.go	2024-01-26 13:59:21
+@@ -5,10 +5,11 @@
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	ethrpc "github.com/evmos/evmos/v12/rpc/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	tmtypes "github.com/tendermint/tendermint/types"
++
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	ethrpc "github.com/settlus/chain/evmos/rpc/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestGetLogs() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/mocks/evm_query_client.go chain/evmos/rpc/backend/mocks/evm_query_client.go
+--- evmos/rpc/backend/mocks/evm_query_client.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/mocks/evm_query_client.go	2024-01-26 13:59:21
+@@ -9,7 +9,7 @@
+ 
+ 	mock "github.com/stretchr/testify/mock"
+ 
+-	types "github.com/evmos/evmos/v12/x/evm/types"
++	types "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // EVMQueryClient is an autogenerated mock type for the EVMQueryClient type
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/mocks/feemarket_query_client.go chain/evmos/rpc/backend/mocks/feemarket_query_client.go
+--- evmos/rpc/backend/mocks/feemarket_query_client.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/mocks/feemarket_query_client.go	2024-01-26 13:59:21
+@@ -9,7 +9,7 @@
+ 
+ 	mock "github.com/stretchr/testify/mock"
+ 
+-	types "github.com/evmos/evmos/v12/x/feemarket/types"
++	types "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // FeeMarketQueryClient is an autogenerated mock type for the QueryClient type
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/node_info.go chain/evmos/rpc/backend/node_info.go
+--- evmos/rpc/backend/node_info.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/node_info.go	2024-01-31 14:50:14
+@@ -33,12 +33,13 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/server/config"
+-	"github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	tmtypes "github.com/tendermint/tendermint/types"
++
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/server/config"
++	"github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // Accounts returns the list of accounts available to this node.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/node_info_test.go chain/evmos/rpc/backend/node_info_test.go
+--- evmos/rpc/backend/node_info_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/node_info_test.go	2024-01-26 13:59:21
+@@ -8,12 +8,13 @@
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	"github.com/evmos/evmos/v12/types"
+ 	"github.com/spf13/viper"
+ 	tmrpcclient "github.com/tendermint/tendermint/rpc/client"
+ 	"google.golang.org/grpc/metadata"
++
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestRPCMinGasPrice() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/sign_tx.go chain/evmos/rpc/backend/sign_tx.go
+--- evmos/rpc/backend/sign_tx.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/sign_tx.go	2024-01-31 14:50:14
+@@ -30,7 +30,7 @@
+ 	"github.com/ethereum/go-ethereum/crypto"
+ 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // SendTransaction sends transaction based on received args using Node's key to sign it
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/sign_tx_test.go chain/evmos/rpc/backend/sign_tx_test.go
+--- evmos/rpc/backend/sign_tx_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/sign_tx_test.go	2024-01-26 13:59:21
+@@ -14,10 +14,10 @@
+ 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+ 	"google.golang.org/grpc/metadata"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestSendTransaction() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/tracing.go chain/evmos/rpc/backend/tracing.go
+--- evmos/rpc/backend/tracing.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/tracing.go	2024-01-31 14:50:14
+@@ -22,10 +22,11 @@
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/pkg/errors"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // TraceTransaction returns the structured logs created during the execution of EVM
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/tracing_test.go chain/evmos/rpc/backend/tracing_test.go
+--- evmos/rpc/backend/tracing_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/tracing_test.go	2024-01-26 13:59:21
+@@ -6,15 +6,16 @@
+ 	"github.com/cosmos/cosmos-sdk/crypto"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	"github.com/evmos/evmos/v12/indexer"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	tmlog "github.com/tendermint/tendermint/libs/log"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 	"github.com/tendermint/tendermint/types"
+ 	dbm "github.com/tendermint/tm-db"
++
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/indexer"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestTraceTransaction() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/tx_info.go chain/evmos/rpc/backend/tx_info.go
+--- evmos/rpc/backend/tx_info.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/tx_info.go	2024-01-31 14:50:14
+@@ -27,11 +27,12 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/pkg/errors"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
++
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // GetTransactionByHash returns the Ethereum format transaction identified by Ethereum transaction hash
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/tx_info_test.go chain/evmos/rpc/backend/tx_info_test.go
+--- evmos/rpc/backend/tx_info_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/tx_info_test.go	2024-01-26 13:59:21
+@@ -7,17 +7,18 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+-	"github.com/evmos/evmos/v12/indexer"
+-	"github.com/evmos/evmos/v12/rpc/backend/mocks"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	tmlog "github.com/tendermint/tendermint/libs/log"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 	"github.com/tendermint/tendermint/types"
+ 	dbm "github.com/tendermint/tm-db"
+ 	"google.golang.org/grpc/metadata"
++
++	"github.com/settlus/chain/evmos/indexer"
++	"github.com/settlus/chain/evmos/rpc/backend/mocks"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *BackendTestSuite) TestGetTransactionByHash() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/backend/utils.go chain/evmos/rpc/backend/utils.go
+--- evmos/rpc/backend/utils.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/backend/utils.go	2024-01-31 14:50:14
+@@ -37,9 +37,10 @@
+ 	"github.com/tendermint/tendermint/libs/log"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
+ 
+-	"github.com/evmos/evmos/v12/rpc/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/tendermint/tendermint/proto/tendermint/crypto"
++
++	"github.com/settlus/chain/evmos/rpc/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ type txGasAndReward struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/debug/api.go chain/evmos/rpc/namespaces/ethereum/debug/api.go
+--- evmos/rpc/namespaces/ethereum/debug/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/debug/api.go	2024-01-31 14:50:14
+@@ -29,7 +29,7 @@
+ 
+ 	"github.com/davecgh/go-spew/spew"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ 
+ 	stderrors "github.com/pkg/errors"
+ 
+@@ -39,9 +39,10 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	"github.com/ethereum/go-ethereum/consensus/ethash"
+ 	"github.com/ethereum/go-ethereum/rlp"
+-	"github.com/evmos/evmos/v12/rpc/backend"
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+ 	"github.com/tendermint/tendermint/libs/log"
++
++	"github.com/settlus/chain/evmos/rpc/backend"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
+ )
+ 
+ // HandlerT keeps track of the cpu profiler and trace execution
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/eth/api.go chain/evmos/rpc/namespaces/ethereum/eth/api.go
+--- evmos/rpc/namespaces/ethereum/eth/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/eth/api.go	2024-01-31 14:50:14
+@@ -26,13 +26,14 @@
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
++	"github.com/ethereum/go-ethereum/common/math"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend"
++	"github.com/settlus/chain/evmos/rpc/backend"
+ 
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // The Ethereum API allows applications to connect to an Evmos node that is
+@@ -92,7 +93,7 @@
+ 	ProtocolVersion() hexutil.Uint
+ 	GasPrice() (*hexutil.Big, error)
+ 	EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *rpctypes.BlockNumber) (hexutil.Uint64, error)
+-	FeeHistory(blockCount rpc.DecimalOrHex, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
++	FeeHistory(blockCount math.HexOrDecimal64, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
+ 	MaxPriorityFeePerGas() (*hexutil.Big, error)
+ 	ChainId() (*hexutil.Big, error)
+ 
+@@ -323,7 +324,7 @@
+ 	return e.backend.EstimateGas(args, blockNrOptional)
+ }
+ 
+-func (e *PublicAPI) FeeHistory(blockCount rpc.DecimalOrHex,
++func (e *PublicAPI) FeeHistory(blockCount math.HexOrDecimal64,
+ 	lastBlock rpc.BlockNumber,
+ 	rewardPercentiles []float64,
+ ) (*rpctypes.FeeHistoryResult, error) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/eth/filters/api.go chain/evmos/rpc/namespaces/ethereum/eth/filters/api.go
+--- evmos/rpc/namespaces/ethereum/eth/filters/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/eth/filters/api.go	2024-01-31 14:50:14
+@@ -22,8 +22,9 @@
+ 	"time"
+ 
+ 	"github.com/cosmos/cosmos-sdk/client"
+-	"github.com/evmos/evmos/v12/rpc/types"
+ 
++	"github.com/settlus/chain/evmos/rpc/types"
++
+ 	"github.com/tendermint/tendermint/libs/log"
+ 
+ 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+@@ -35,7 +36,7 @@
+ 	"github.com/ethereum/go-ethereum/eth/filters"
+ 	"github.com/ethereum/go-ethereum/rpc"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // FilterAPI gathers
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/eth/filters/filter_system.go chain/evmos/rpc/namespaces/ethereum/eth/filters/filter_system.go
+--- evmos/rpc/namespaces/ethereum/eth/filters/filter_system.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/eth/filters/filter_system.go	2024-01-31 14:50:14
+@@ -37,8 +37,8 @@
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/rpc/ethereum/pubsub"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/rpc/ethereum/pubsub"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/eth/filters/filters.go chain/evmos/rpc/namespaces/ethereum/eth/filters/filters.go
+--- evmos/rpc/namespaces/ethereum/eth/filters/filters.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/eth/filters/filters.go	2024-01-31 14:50:14
+@@ -21,8 +21,8 @@
+ 	"fmt"
+ 	"math/big"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend"
+-	"github.com/evmos/evmos/v12/rpc/types"
++	"github.com/settlus/chain/evmos/rpc/backend"
++	"github.com/settlus/chain/evmos/rpc/types"
+ 
+ 	"github.com/pkg/errors"
+ 	"github.com/tendermint/tendermint/libs/log"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/miner/api.go chain/evmos/rpc/namespaces/ethereum/miner/api.go
+--- evmos/rpc/namespaces/ethereum/miner/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/miner/api.go	2024-01-31 14:50:14
+@@ -17,7 +17,8 @@
+ 
+ import (
+ 	"github.com/cosmos/cosmos-sdk/server"
+-	"github.com/evmos/evmos/v12/rpc/backend"
++
++	"github.com/settlus/chain/evmos/rpc/backend"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/net/api.go chain/evmos/rpc/namespaces/ethereum/net/api.go
+--- evmos/rpc/namespaces/ethereum/net/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/net/api.go	2024-01-31 14:50:14
+@@ -20,8 +20,9 @@
+ 	"fmt"
+ 
+ 	"github.com/cosmos/cosmos-sdk/client"
+-	"github.com/evmos/evmos/v12/types"
+ 	rpcclient "github.com/tendermint/tendermint/rpc/client"
++
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // PublicAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/personal/api.go chain/evmos/rpc/namespaces/ethereum/personal/api.go
+--- evmos/rpc/namespaces/ethereum/personal/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/personal/api.go	2024-01-31 14:50:14
+@@ -21,10 +21,10 @@
+ 	"os"
+ 	"time"
+ 
+-	"github.com/evmos/evmos/v12/rpc/backend"
++	"github.com/settlus/chain/evmos/rpc/backend"
+ 
+-	"github.com/evmos/evmos/v12/crypto/hd"
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/crypto/hd"
++	"github.com/settlus/chain/evmos/types"
+ 
+ 	"github.com/tendermint/tendermint/libs/log"
+ 
+@@ -36,7 +36,7 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	"github.com/ethereum/go-ethereum/crypto"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // PrivateAccountAPI is the personal_ prefixed set of APIs in the Web3 JSON-RPC spec.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/txpool/api.go chain/evmos/rpc/namespaces/ethereum/txpool/api.go
+--- evmos/rpc/namespaces/ethereum/txpool/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/txpool/api.go	2024-01-31 14:50:14
+@@ -20,7 +20,7 @@
+ 
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 
+-	"github.com/evmos/evmos/v12/rpc/types"
++	"github.com/settlus/chain/evmos/rpc/types"
+ )
+ 
+ // PublicAPI offers and API for the transaction pool. It only operates on data that is non-confidential.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/namespaces/ethereum/web3/api.go chain/evmos/rpc/namespaces/ethereum/web3/api.go
+--- evmos/rpc/namespaces/ethereum/web3/api.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/namespaces/ethereum/web3/api.go	2024-01-31 14:50:14
+@@ -16,7 +16,7 @@
+ package web3
+ 
+ import (
+-	"github.com/evmos/evmos/v12/version"
++	"github.com/settlus/chain/evmos/version"
+ 
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	"github.com/ethereum/go-ethereum/crypto"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/types/block.go chain/evmos/rpc/types/block.go
+--- evmos/rpc/types/block.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/types/block.go	2024-01-31 14:50:14
+@@ -32,7 +32,7 @@
+ 
+ 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+ 
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // BlockNumber represents decoding hex string to block values
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/types/events.go chain/evmos/rpc/types/events.go
+--- evmos/rpc/types/events.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/types/events.go	2024-01-31 14:50:14
+@@ -21,10 +21,11 @@
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
++
++	"github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // EventFormat is the format version of the events.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/types/events_test.go chain/evmos/rpc/types/events_test.go
+--- evmos/rpc/types/events_test.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/types/events_test.go	2024-01-26 13:59:21
+@@ -5,9 +5,10 @@
+ 	"testing"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 	"github.com/stretchr/testify/require"
+ 	abci "github.com/tendermint/tendermint/abci/types"
++
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func TestParseTxResult(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/types/query_client.go chain/evmos/rpc/types/query_client.go
+--- evmos/rpc/types/query_client.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/types/query_client.go	2024-01-31 14:50:14
+@@ -25,8 +25,8 @@
+ 
+ 	"github.com/cosmos/cosmos-sdk/client"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // QueryClient defines a gRPC Client used for:
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/types/utils.go chain/evmos/rpc/types/utils.go
+--- evmos/rpc/types/utils.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/types/utils.go	2024-01-31 14:50:14
+@@ -29,8 +29,8 @@
+ 	"github.com/cosmos/cosmos-sdk/client"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/rpc/websockets.go chain/evmos/rpc/websockets.go
+--- evmos/rpc/websockets.go	2024-01-25 17:48:18
++++ chain/evmos/rpc/websockets.go	2024-01-31 14:50:14
+@@ -42,11 +42,11 @@
+ 	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
+ 	tmtypes "github.com/tendermint/tendermint/types"
+ 
+-	"github.com/evmos/evmos/v12/rpc/ethereum/pubsub"
+-	rpcfilters "github.com/evmos/evmos/v12/rpc/namespaces/ethereum/eth/filters"
+-	"github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/server/config"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/rpc/ethereum/pubsub"
++	rpcfilters "github.com/settlus/chain/evmos/rpc/namespaces/ethereum/eth/filters"
++	"github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/server/config"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ type WebsocketsServer interface {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/server/indexer_cmd.go chain/evmos/server/indexer_cmd.go
+--- evmos/server/indexer_cmd.go	2024-01-25 17:48:18
++++ chain/evmos/server/indexer_cmd.go	2024-01-31 14:50:14
+@@ -22,10 +22,11 @@
+ 
+ 	"github.com/cosmos/cosmos-sdk/client"
+ 	"github.com/cosmos/cosmos-sdk/server"
+-	"github.com/evmos/evmos/v12/indexer"
+ 	tmnode "github.com/tendermint/tendermint/node"
+ 	sm "github.com/tendermint/tendermint/state"
+ 	tmstore "github.com/tendermint/tendermint/store"
++
++	"github.com/settlus/chain/evmos/indexer"
+ )
+ 
+ func NewIndexTxCmd() *cobra.Command {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/server/indexer_service.go chain/evmos/server/indexer_service.go
+--- evmos/server/indexer_service.go	2024-01-25 17:48:18
++++ chain/evmos/server/indexer_service.go	2024-01-31 14:50:14
+@@ -23,7 +23,7 @@
+ 	rpcclient "github.com/tendermint/tendermint/rpc/client"
+ 	"github.com/tendermint/tendermint/types"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ const (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/server/json_rpc.go chain/evmos/server/json_rpc.go
+--- evmos/server/json_rpc.go	2024-01-25 17:48:18
++++ chain/evmos/server/json_rpc.go	2024-01-31 14:50:14
+@@ -27,10 +27,11 @@
+ 	"github.com/cosmos/cosmos-sdk/server/types"
+ 	ethlog "github.com/ethereum/go-ethereum/log"
+ 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+-	"github.com/evmos/evmos/v12/rpc"
+ 
+-	"github.com/evmos/evmos/v12/server/config"
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/rpc"
++
++	"github.com/settlus/chain/evmos/server/config"
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ // StartJSONRPC starts the JSON-RPC server
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/server/start.go chain/evmos/server/start.go
+--- evmos/server/start.go	2024-01-25 17:48:18
++++ chain/evmos/server/start.go	2024-01-31 14:50:14
+@@ -61,11 +61,11 @@
+ 	"github.com/cosmos/cosmos-sdk/server/types"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/indexer"
+-	ethdebug "github.com/evmos/evmos/v12/rpc/namespaces/ethereum/debug"
+-	"github.com/evmos/evmos/v12/server/config"
+-	srvflags "github.com/evmos/evmos/v12/server/flags"
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/indexer"
++	ethdebug "github.com/settlus/chain/evmos/rpc/namespaces/ethereum/debug"
++	"github.com/settlus/chain/evmos/server/config"
++	srvflags "github.com/settlus/chain/evmos/server/flags"
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ // DBOpener is a function to open `application.db`, potentially with customized options.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/server/util.go chain/evmos/server/util.go
+--- evmos/server/util.go	2024-01-25 17:48:18
++++ chain/evmos/server/util.go	2024-01-31 14:50:14
+@@ -21,11 +21,12 @@
+ 	"time"
+ 
+ 	// TODO update import to local pkg when rpc pkg is migrated
+-	"github.com/evmos/evmos/v12/server/config"
+ 	"github.com/gorilla/mux"
+ 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+ 	"github.com/spf13/cobra"
+ 	"golang.org/x/net/netutil"
++
++	"github.com/settlus/chain/evmos/server/config"
+ 
+ 	sdkserver "github.com/cosmos/cosmos-sdk/server"
+ 	"github.com/cosmos/cosmos-sdk/server/types"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/abci.go chain/evmos/testutil/abci.go
+--- evmos/testutil/abci.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/abci.go	2024-01-31 14:50:14
+@@ -26,9 +26,9 @@
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 	tmtypes "github.com/tendermint/tendermint/types"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/testutil/tx"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/testutil/tx"
+ )
+ 
+ // Commit commits a block at a given time. Reminder: At the end of each
+@@ -37,7 +37,7 @@
+ //  2. DeliverTx
+ //  3. EndBlock
+ //  4. Commit
+-func Commit(ctx sdk.Context, app *app.Evmos, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
++func Commit(ctx sdk.Context, app *app.App, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
+ 	header := ctx.BlockHeader()
+ 
+ 	if vs != nil {
+@@ -69,7 +69,7 @@
+ // DeliverTx delivers a cosmos tx for a given set of msgs
+ func DeliverTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	gasPrice *sdkmath.Int,
+ 	msgs ...sdk.Msg,
+@@ -97,7 +97,7 @@
+ // If a private key is provided, it will attempt to sign all messages with the given private key,
+ // otherwise, it will assume the messages have already been signed.
+ func DeliverEthTx(
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	msgs ...sdk.Msg,
+ ) (abci.ResponseDeliverTx, error) {
+@@ -113,7 +113,7 @@
+ // CheckTx checks a cosmos tx for a given set of msgs
+ func CheckTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	gasPrice *sdkmath.Int,
+ 	msgs ...sdk.Msg,
+@@ -140,7 +140,7 @@
+ 
+ // CheckEthTx checks a Ethereum tx for a given set of msgs
+ func CheckEthTx(
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	msgs ...sdk.Msg,
+ ) (abci.ResponseCheckTx, error) {
+@@ -154,7 +154,7 @@
+ }
+ 
+ // BroadcastTxBytes encodes a transaction and calls DeliverTx on the app.
+-func BroadcastTxBytes(app *app.Evmos, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseDeliverTx, error) {
++func BroadcastTxBytes(app *app.App, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseDeliverTx, error) {
+ 	// bz are bytes to be broadcasted over the network
+ 	bz, err := txEncoder(tx)
+ 	if err != nil {
+@@ -171,7 +171,7 @@
+ }
+ 
+ // checkTxBytes encodes a transaction and calls checkTx on the app.
+-func checkTxBytes(app *app.Evmos, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseCheckTx, error) {
++func checkTxBytes(app *app.App, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseCheckTx, error) {
+ 	bz, err := txEncoder(tx)
+ 	if err != nil {
+ 		return abci.ResponseCheckTx{}, err
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/ante.go chain/evmos/testutil/ante.go
+--- evmos/testutil/ante.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/ante.go	2024-01-31 14:50:14
+@@ -2,8 +2,9 @@
+ 
+ import (
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/encoding"
++
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/encoding"
+ )
+ 
+ // NextFn is a no-op function that returns the context and no error in order to mock
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/contract.go chain/evmos/testutil/contract.go
+--- evmos/testutil/contract.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/contract.go	2024-01-31 14:50:14
+@@ -15,16 +15,16 @@
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/crypto"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/testutil/tx"
+-	evm "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/testutil/tx"
++	evm "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // DeployContract deploys a contract with the provided private key,
+ // compiled contract data and constructor arguments
+ func DeployContract(
+ 	ctx sdk.Context,
+-	evmosApp *app.Evmos,
++	evmosApp *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	queryClientEvm evm.QueryClient,
+ 	contract evm.CompiledContract,
+@@ -72,7 +72,7 @@
+ // with the provided factoryAddress
+ func DeployContractWithFactory(
+ 	ctx sdk.Context,
+-	evmosApp *app.Evmos,
++	evmosApp *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	factoryAddress common.Address,
+ ) (common.Address, abci.ResponseDeliverTx, error) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/integration.go chain/evmos/testutil/integration.go
+--- evmos/testutil/integration.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/integration.go	2024-01-31 14:54:58
+@@ -25,8 +25,8 @@
+ 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ // SubmitProposal delivers a submit proposal tx for a given gov content.
+@@ -34,7 +34,7 @@
+ // event.
+ func SubmitProposal(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	pk *ethsecp256k1.PrivKey,
+ 	content govv1beta1.Content,
+ 	eventNum int,
+@@ -63,7 +63,7 @@
+ // Delegate delivers a delegate tx
+ func Delegate(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv *ethsecp256k1.PrivKey,
+ 	delegateAmount sdk.Coin,
+ 	validator stakingtypes.Validator,
+@@ -82,7 +82,7 @@
+ // Vote delivers a vote tx with the VoteOption "yes"
+ func Vote(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv *ethsecp256k1.PrivKey,
+ 	proposalID uint64,
+ 	voteOption govv1beta1.VoteOption,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/network/network.go chain/evmos/testutil/network/network.go
+--- evmos/testutil/network/network.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/network/network.go	2024-01-26 14:00:28
+@@ -64,13 +64,14 @@
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 	"github.com/cosmos/cosmos-sdk/x/genutil"
+ 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/crypto/hd"
+ 
+-	"github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/server/config"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/crypto/hd"
++
++	"github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/server/config"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // package-wide network lock to only allow one test network at a time
+@@ -142,7 +143,7 @@
+ // NewAppConstructor returns a new Evmos AppConstructor
+ func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
+ 	return func(val Validator) servertypes.Application {
+-		return app.NewEvmos(
++		return app.New(
+ 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
+ 			encodingCfg,
+ 			simapp.EmptyAppOptions{},
+@@ -433,7 +434,7 @@
+ 			CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
+ 		})
+ 
+-		commission, err := sdk.NewDecFromStr("0.5")
++		commission, err := sdk.NewDecFromStr("0")
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -443,8 +444,10 @@
+ 			valPubKeys[i],
+ 			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
+ 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
+-			stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
++			stakingtypes.NewCommissionRates(commission, sdk.ZeroDec(), sdk.ZeroDec()),
+ 			sdk.OneInt(),
++			sdk.ZeroInt(),
++			false,
+ 		)
+ 		if err != nil {
+ 			return nil, err
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/network/network_test.go chain/evmos/testutil/network/network_test.go
+--- evmos/testutil/network/network_test.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/network/network_test.go	2024-01-26 13:59:21
+@@ -11,10 +11,11 @@
+ 	"github.com/stretchr/testify/suite"
+ 
+ 	"github.com/ethereum/go-ethereum/ethclient"
+-	"github.com/evmos/evmos/v12/server/config"
+-	"github.com/evmos/evmos/v12/testutil/network"
+ 
+-	evmosnetwork "github.com/evmos/evmos/v12/testutil/network"
++	"github.com/settlus/chain/evmos/server/config"
++	"github.com/settlus/chain/evmos/testutil/network"
++
++	evmosnetwork "github.com/settlus/chain/evmos/testutil/network"
+ )
+ 
+ type IntegrationTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/network/util.go chain/evmos/testutil/network/util.go
+--- evmos/testutil/network/util.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/network/util.go	2024-01-26 14:00:28
+@@ -43,10 +43,9 @@
+ 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+ 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+ 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+-	inflationtypes "github.com/evmos/evmos/v12/x/inflation/types"
+ 
+-	"github.com/evmos/evmos/v12/server"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/server"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func startInProcess(cfg Config, val *Validator) error {
+@@ -227,12 +226,6 @@
+ 
+ 	govGenState.DepositParams.MinDeposit[0].Denom = cfg.BondDenom
+ 	cfg.GenesisState[govtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&govGenState)
+-
+-	var inflationGenState inflationtypes.GenesisState
+-	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[inflationtypes.ModuleName], &inflationGenState)
+-
+-	inflationGenState.Params.MintDenom = cfg.BondDenom
+-	cfg.GenesisState[inflationtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&inflationGenState)
+ 
+ 	var crisisGenState crisistypes.GenesisState
+ 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[crisistypes.ModuleName], &crisisGenState)
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/statedb.go chain/evmos/testutil/statedb.go
+--- evmos/testutil/statedb.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/statedb.go	2024-01-26 14:00:28
+@@ -19,8 +19,10 @@
+ import (
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/evmos/evmos/v12/app/ante/evm"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
++
++	"github.com/settlus/chain/evmos/app/ante/evm"
++
++	"github.com/settlus/chain/evmos/x/evm/statedb"
+ )
+ 
+ // NewStateDB returns a new StateDB for testing purposes.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/tx/cosmos.go chain/evmos/testutil/tx/cosmos.go
+--- evmos/testutil/tx/cosmos.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/tx/cosmos.go	2024-01-31 14:50:14
+@@ -26,8 +26,8 @@
+ 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+ 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/utils"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/utils"
+ )
+ 
+ var (
+@@ -59,7 +59,7 @@
+ // It returns the signed transaction and an error
+ func PrepareCosmosTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	args CosmosTxArgs,
+ ) (authsigning.Tx, error) {
+ 	txBuilder := args.TxCfg.NewTxBuilder()
+@@ -92,7 +92,7 @@
+ // the provided private key
+ func signCosmosTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	args CosmosTxArgs,
+ 	txBuilder client.TxBuilder,
+ ) (authsigning.Tx, error) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/tx/eip712.go chain/evmos/testutil/tx/eip712.go
+--- evmos/testutil/tx/eip712.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/tx/eip712.go	2024-01-31 14:50:14
+@@ -29,10 +29,11 @@
+ 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+ 
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+-	"github.com/evmos/evmos/v12/app"
+-	cryptocodec "github.com/evmos/evmos/v12/crypto/codec"
+-	"github.com/evmos/evmos/v12/ethereum/eip712"
+-	"github.com/evmos/evmos/v12/types"
++
++	"github.com/settlus/chain/app"
++	cryptocodec "github.com/settlus/chain/evmos/crypto/codec"
++	"github.com/settlus/chain/evmos/ethereum/eip712"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ type EIP712TxArgs struct {
+@@ -65,7 +66,7 @@
+ // It returns the signed transaction and an error
+ func CreateEIP712CosmosTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	args EIP712TxArgs,
+ ) (sdk.Tx, error) {
+ 	builder, err := PrepareEIP712CosmosTx(
+@@ -81,7 +82,7 @@
+ // It returns the tx builder with the signed transaction and an error
+ func PrepareEIP712CosmosTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	args EIP712TxArgs,
+ ) (client.TxBuilder, error) {
+ 	txArgs := args.CosmosTxArgs
+@@ -144,7 +145,7 @@
+ // the provided private key and the typed data
+ func signCosmosEIP712Tx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	args EIP712TxArgs,
+ 	builder authtx.ExtensionOptionsTxBuilder,
+ 	chainID uint64,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/tx/eth.go chain/evmos/testutil/tx/eth.go
+--- evmos/testutil/tx/eth.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/tx/eth.go	2024-01-31 14:50:14
+@@ -31,17 +31,17 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/server/config"
+-	"github.com/evmos/evmos/v12/utils"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/server/config"
++	"github.com/settlus/chain/evmos/utils"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // PrepareEthTx creates an ethereum tx and signs it with the provided messages and private key.
+ // It returns the signed transaction and an error
+ func PrepareEthTx(
+ 	txCfg client.TxConfig,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	priv cryptotypes.PrivKey,
+ 	msgs ...sdk.Msg,
+ ) (authsigning.Tx, error) {
+@@ -104,7 +104,7 @@
+ // Should this not be the case, just pass in zero.
+ func CreateEthTx(
+ 	ctx sdk.Context,
+-	appEvmos *app.Evmos,
++	appEvmos *app.App,
+ 	privKey cryptotypes.PrivKey,
+ 	from sdk.AccAddress,
+ 	dest sdk.AccAddress,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/testutil/tx/signer.go chain/evmos/testutil/tx/signer.go
+--- evmos/testutil/tx/signer.go	2024-01-25 17:48:18
++++ chain/evmos/testutil/tx/signer.go	2024-01-31 14:50:14
+@@ -25,7 +25,7 @@
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ // NewAddrKey generates an Ethereum address and its corresponding private key.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/types/account_test.go chain/evmos/types/account_test.go
+--- evmos/types/account_test.go	2024-01-25 17:48:18
++++ chain/evmos/types/account_test.go	2024-01-26 13:59:21
+@@ -12,10 +12,10 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 
+-	cryptocodec "github.com/evmos/evmos/v12/crypto/codec"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	encodingcodec "github.com/evmos/evmos/v12/encoding/codec"
+-	"github.com/evmos/evmos/v12/types"
++	cryptocodec "github.com/settlus/chain/evmos/crypto/codec"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	encodingcodec "github.com/settlus/chain/evmos/encoding/codec"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func init() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/types/gasmeter.go chain/evmos/types/gasmeter.go
+--- evmos/types/gasmeter.go	2024-01-25 17:48:18
++++ chain/evmos/types/gasmeter.go	2024-01-31 14:50:14
+@@ -16,8 +16,8 @@
+ package types
+ 
+ import (
+-	fmt "fmt"
+-	math "math"
++	"fmt"
++	"math"
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/types/int.go chain/evmos/types/int.go
+--- evmos/types/int.go	2024-01-25 17:48:18
++++ chain/evmos/types/int.go	2024-01-31 14:50:14
+@@ -16,8 +16,8 @@
+ package types
+ 
+ import (
+-	fmt "fmt"
+-	math "math"
++	"fmt"
++	"math"
+ 	"math/big"
+ 
+ 	errorsmod "cosmossdk.io/errors"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/types/validation_test.go chain/evmos/types/validation_test.go
+--- evmos/types/validation_test.go	2024-01-25 17:48:18
++++ chain/evmos/types/validation_test.go	2024-01-26 13:59:21
+@@ -4,9 +4,10 @@
+ 	"testing"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/types"
+ 	"github.com/stretchr/testify/require"
++
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func TestIsEmptyHash(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/utils/utils.go chain/evmos/utils/utils.go
+--- evmos/utils/utils.go	2024-01-25 17:48:18
++++ chain/evmos/utils/utils.go	2024-01-31 14:51:39
+@@ -19,7 +19,7 @@
+ import (
+ 	"strings"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ 
+ 	errorsmod "cosmossdk.io/errors"
+ 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/utils/utils_test.go chain/evmos/utils/utils_test.go
+--- evmos/utils/utils_test.go	2024-01-25 17:48:18
++++ chain/evmos/utils/utils_test.go	2024-01-26 13:59:21
+@@ -12,7 +12,7 @@
+ 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ func init() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/client/cli/query.go chain/evmos/x/erc20/client/cli/query.go
+--- evmos/x/erc20/client/cli/query.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/client/cli/query.go	2024-01-26 14:00:28
+@@ -23,7 +23,7 @@
+ 	"github.com/cosmos/cosmos-sdk/client/flags"
+ 	"github.com/spf13/cobra"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // GetQueryCmd returns the parent command for all erc20 CLI query commands
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/client/cli/tx.go chain/evmos/x/erc20/client/cli/tx.go
+--- evmos/x/erc20/client/cli/tx.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/client/cli/tx.go	2024-01-26 14:00:28
+@@ -31,9 +31,9 @@
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // NewTxCmd returns a root CLI command handler for erc20 transaction commands
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/client/cli/utils.go chain/evmos/x/erc20/client/cli/utils.go
+--- evmos/x/erc20/client/cli/utils.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/client/cli/utils.go	2024-01-26 14:00:28
+@@ -23,7 +23,8 @@
+ 
+ 	"github.com/cosmos/cosmos-sdk/codec"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // ParseRegisterCoinProposal reads and parses a ParseRegisterCoinProposal from a file.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/client/cli/utils_test.go chain/evmos/x/erc20/client/cli/utils_test.go
+--- evmos/x/erc20/client/cli/utils_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/client/cli/utils_test.go	2024-01-26 13:59:21
+@@ -3,8 +3,9 @@
+ import (
+ 	"testing"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
+ 	"github.com/stretchr/testify/require"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ func TestParseMetadata(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/client/proposal_handler.go chain/evmos/x/erc20/client/proposal_handler.go
+--- evmos/x/erc20/client/proposal_handler.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/client/proposal_handler.go	2024-01-26 14:00:28
+@@ -19,7 +19,7 @@
+ import (
+ 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/client/cli"
++	"github.com/settlus/chain/evmos/x/erc20/client/cli"
+ )
+ 
+ var (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/genesis.go chain/evmos/x/erc20/genesis.go
+--- evmos/x/erc20/genesis.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/genesis.go	2024-01-26 14:00:28
+@@ -22,8 +22,8 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/keeper"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/keeper"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // InitGenesis import module genesis
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/handler.go chain/evmos/x/erc20/handler.go
+--- evmos/x/erc20/handler.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/handler.go	2024-01-26 14:00:28
+@@ -21,7 +21,7 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // NewHandler defines the erc20 module handler instance
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/ibc_middleware.go chain/evmos/x/erc20/ibc_middleware.go
+--- evmos/x/erc20/ibc_middleware.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/ibc_middleware.go	2024-01-26 14:00:28
+@@ -26,8 +26,9 @@
+ 	"github.com/cosmos/ibc-go/v6/modules/core/exported"
+ 
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+-	"github.com/evmos/evmos/v12/ibc"
+-	"github.com/evmos/evmos/v12/x/erc20/keeper"
++
++	"github.com/settlus/chain/evmos/ibc"
++	"github.com/settlus/chain/evmos/x/erc20/keeper"
+ )
+ 
+ var _ porttypes.IBCModule = &IBCMiddleware{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/evm.go chain/evmos/x/erc20/keeper/evm.go
+--- evmos/x/erc20/keeper/evm.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/evm.go	2024-01-26 14:00:28
+@@ -17,23 +17,19 @@
+ package keeper
+ 
+ import (
+-	"encoding/json"
+ 	"math/big"
+ 
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 	"github.com/ethereum/go-ethereum/accounts/abi"
+ 	"github.com/ethereum/go-ethereum/common"
+-	"github.com/ethereum/go-ethereum/common/hexutil"
+-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	"github.com/evmos/evmos/v12/server/config"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 
+-	"github.com/evmos/evmos/v12/contracts"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++
++	"github.com/settlus/chain/contracts"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // DeployERC20Contract creates and deploys an ERC20 contract on the EVM with the
+@@ -47,7 +43,7 @@
+ 		decimalsIdx := len(coinMetadata.DenomUnits) - 1
+ 		decimals = uint8(coinMetadata.DenomUnits[decimalsIdx].Exponent)
+ 	}
+-	ctorArgs, err := contracts.ERC20MinterBurnerDecimalsContract.ABI.Pack(
++	ctorArgs, err := contracts.ERC20Contract.ABI.Pack(
+ 		"",
+ 		coinMetadata.Name,
+ 		coinMetadata.Symbol,
+@@ -57,9 +53,9 @@
+ 		return common.Address{}, errorsmod.Wrapf(types.ErrABIPack, "coin metadata is invalid %s: %s", coinMetadata.Name, err.Error())
+ 	}
+ 
+-	data := make([]byte, len(contracts.ERC20MinterBurnerDecimalsContract.Bin)+len(ctorArgs))
+-	copy(data[:len(contracts.ERC20MinterBurnerDecimalsContract.Bin)], contracts.ERC20MinterBurnerDecimalsContract.Bin)
+-	copy(data[len(contracts.ERC20MinterBurnerDecimalsContract.Bin):], ctorArgs)
++	data := make([]byte, len(contracts.ERC20Contract.Bin)+len(ctorArgs))
++	copy(data[:len(contracts.ERC20Contract.Bin)], contracts.ERC20Contract.Bin)
++	copy(data[len(contracts.ERC20Contract.Bin):], ctorArgs)
+ 
+ 	nonce, err := k.accountKeeper.GetSequence(ctx, types.ModuleAddress.Bytes())
+ 	if err != nil {
+@@ -67,7 +63,7 @@
+ 	}
+ 
+ 	contractAddr := crypto.CreateAddress(types.ModuleAddress, nonce)
+-	_, err = k.CallEVMWithData(ctx, types.ModuleAddress, nil, data, true)
++	_, err = k.evmKeeper.CallEVMWithData(ctx, types.ModuleAddress, nil, data, true)
+ 	if err != nil {
+ 		return common.Address{}, errorsmod.Wrapf(err, "failed to deploy contract for %s", coinMetadata.Name)
+ 	}
+@@ -86,10 +82,10 @@
+ 		decimalRes types.ERC20Uint8Response
+ 	)
+ 
+-	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
++	erc20 := contracts.ERC20Contract.ABI
+ 
+ 	// Name
+-	res, err := k.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "name")
++	res, err := k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "name")
+ 	if err != nil {
+ 		return types.ERC20Data{}, err
+ 	}
+@@ -101,7 +97,7 @@
+ 	}
+ 
+ 	// Symbol
+-	res, err = k.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "symbol")
++	res, err = k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "symbol")
+ 	if err != nil {
+ 		return types.ERC20Data{}, err
+ 	}
+@@ -113,7 +109,7 @@
+ 	}
+ 
+ 	// Decimals
+-	res, err = k.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "decimals")
++	res, err = k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, false, "decimals")
+ 	if err != nil {
+ 		return types.ERC20Data{}, err
+ 	}
+@@ -133,7 +129,7 @@
+ 	abi abi.ABI,
+ 	contract, account common.Address,
+ ) *big.Int {
+-	res, err := k.CallEVM(ctx, abi, types.ModuleAddress, contract, false, "balanceOf", account)
++	res, err := k.evmKeeper.CallEVM(ctx, abi, types.ModuleAddress, contract, false, "balanceOf", account)
+ 	if err != nil {
+ 		return nil
+ 	}
+@@ -149,90 +145,6 @@
+ 	}
+ 
+ 	return balance
+-}
+-
+-// CallEVM performs a smart contract method call using given args
+-func (k Keeper) CallEVM(
+-	ctx sdk.Context,
+-	abi abi.ABI,
+-	from, contract common.Address,
+-	commit bool,
+-	method string,
+-	args ...interface{},
+-) (*evmtypes.MsgEthereumTxResponse, error) {
+-	data, err := abi.Pack(method, args...)
+-	if err != nil {
+-		return nil, errorsmod.Wrap(
+-			types.ErrABIPack,
+-			errorsmod.Wrap(err, "failed to create transaction data").Error(),
+-		)
+-	}
+-
+-	resp, err := k.CallEVMWithData(ctx, from, &contract, data, commit)
+-	if err != nil {
+-		return nil, errorsmod.Wrapf(err, "contract call failed: method '%s', contract '%s'", method, contract)
+-	}
+-	return resp, nil
+-}
+-
+-// CallEVMWithData performs a smart contract method call using contract data
+-func (k Keeper) CallEVMWithData(
+-	ctx sdk.Context,
+-	from common.Address,
+-	contract *common.Address,
+-	data []byte,
+-	commit bool,
+-) (*evmtypes.MsgEthereumTxResponse, error) {
+-	nonce, err := k.accountKeeper.GetSequence(ctx, from.Bytes())
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	gasCap := config.DefaultGasCap
+-	if commit {
+-		args, err := json.Marshal(evmtypes.TransactionArgs{
+-			From: &from,
+-			To:   contract,
+-			Data: (*hexutil.Bytes)(&data),
+-		})
+-		if err != nil {
+-			return nil, errorsmod.Wrapf(errortypes.ErrJSONMarshal, "failed to marshal tx args: %s", err.Error())
+-		}
+-
+-		gasRes, err := k.evmKeeper.EstimateGas(sdk.WrapSDKContext(ctx), &evmtypes.EthCallRequest{
+-			Args:   args,
+-			GasCap: config.DefaultGasCap,
+-		})
+-		if err != nil {
+-			return nil, err
+-		}
+-		gasCap = gasRes.Gas
+-	}
+-
+-	msg := ethtypes.NewMessage(
+-		from,
+-		contract,
+-		nonce,
+-		big.NewInt(0), // amount
+-		gasCap,        // gasLimit
+-		big.NewInt(0), // gasFeeCap
+-		big.NewInt(0), // gasTipCap
+-		big.NewInt(0), // gasPrice
+-		data,
+-		ethtypes.AccessList{}, // AccessList
+-		!commit,               // isFake
+-	)
+-
+-	res, err := k.evmKeeper.ApplyMessage(ctx, msg, evmtypes.NewNoOpTracer(), commit)
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	if res.Failed() {
+-		return nil, errorsmod.Wrap(evmtypes.ErrVMExecution, res.VmError)
+-	}
+-
+-	return res, nil
+ }
+ 
+ // monitorApprovalEvent returns an error if the given transactions logs include
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/evm_hooks.go chain/evmos/x/erc20/keeper/evm_hooks.go
+--- evmos/x/erc20/keeper/evm_hooks.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/evm_hooks.go	2024-01-26 14:00:28
+@@ -24,10 +24,11 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
+ 
+-	"github.com/evmos/evmos/v12/contracts"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
++
++	"github.com/settlus/chain/contracts"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ var _ evmtypes.EvmHooks = Hooks{}
+@@ -71,7 +72,7 @@
+ 		return nil
+ 	}
+ 
+-	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
++	erc20 := contracts.ERC20Contract.ABI
+ 
+ 	for i, log := range receipt.Logs {
+ 		// Note: the `Transfer` event contains 3 topics (id, from, to)
+@@ -144,7 +145,7 @@
+ 		// registered token wants to mint a Cosmos coin.
+ 		switch pair.ContractOwner {
+ 		case types.OWNER_MODULE:
+-			_, err = k.CallEVM(ctx, erc20, types.ModuleAddress, contractAddr, true, "burn", tokens)
++			_, err = k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contractAddr, true, "burn", tokens)
+ 		case types.OWNER_EXTERNAL:
+ 			err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+ 		default:
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/grpc_query.go chain/evmos/x/erc20/keeper/grpc_query.go
+--- evmos/x/erc20/keeper/grpc_query.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/grpc_query.go	2024-01-26 14:00:28
+@@ -25,9 +25,10 @@
+ 	"github.com/cosmos/cosmos-sdk/store/prefix"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/cosmos/cosmos-sdk/types/query"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ var _ types.QueryServer = Keeper{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/ibc_callbacks.go chain/evmos/x/erc20/keeper/ibc_callbacks.go
+--- evmos/x/erc20/keeper/ibc_callbacks.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/ibc_callbacks.go	2024-01-26 14:00:28
+@@ -29,8 +29,8 @@
+ 	"github.com/cosmos/ibc-go/v6/modules/core/exported"
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	"github.com/evmos/evmos/v12/ibc"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/ibc"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // OnRecvPacket performs the ICS20 middleware receive callback for automatically
+@@ -73,10 +73,8 @@
+ 		return channeltypes.NewErrorAcknowledgement(err)
+ 	}
+ 
+-	claimsParams := k.claimsKeeper.GetParams(ctx)
+-
+-	// if sender == recipient, and is not from an EVM Channel recovery was executed
+-	if sender.Equals(recipient) && !claimsParams.IsEVMChannel(packet.DestinationChannel) {
++	// if sender == recipient TODO
++	if sender.Equals(recipient) {
+ 		// Continue to the next IBC middleware by returning the original ACK.
+ 		return ack
+ 	}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/keeper.go chain/evmos/x/erc20/keeper/keeper.go
+--- evmos/x/erc20/keeper/keeper.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/keeper.go	2024-01-26 14:00:28
+@@ -24,7 +24,7 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/tendermint/tendermint/libs/log"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // Keeper of this module maintains collections of erc20.
+@@ -38,7 +38,6 @@
+ 	bankKeeper    types.BankKeeper
+ 	evmKeeper     types.EVMKeeper
+ 	stakingKeeper types.StakingKeeper
+-	claimsKeeper  types.ClaimsKeeper
+ }
+ 
+ // NewKeeper creates new instances of the erc20 Keeper
+@@ -50,7 +49,6 @@
+ 	bk types.BankKeeper,
+ 	evmKeeper types.EVMKeeper,
+ 	sk types.StakingKeeper,
+-	ck types.ClaimsKeeper,
+ ) Keeper {
+ 	// ensure gov module account is set and is not nil
+ 	if err := sdk.VerifyAddressFormat(authority); err != nil {
+@@ -65,7 +63,6 @@
+ 		bankKeeper:    bk,
+ 		evmKeeper:     evmKeeper,
+ 		stakingKeeper: sk,
+-		claimsKeeper:  ck,
+ 	}
+ }
+ 
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/mint.go chain/evmos/x/erc20/keeper/mint.go
+--- evmos/x/erc20/keeper/mint.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/mint.go	2024-01-26 14:00:28
+@@ -22,7 +22,7 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // MintingEnabled checks that:
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/msg_server.go chain/evmos/x/erc20/keeper/msg_server.go
+--- evmos/x/erc20/keeper/msg_server.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/msg_server.go	2024-01-26 14:00:28
+@@ -28,8 +28,8 @@
+ 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	"github.com/evmos/evmos/v12/contracts"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/contracts"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ var _ types.MsgServer = &Keeper{}
+@@ -132,7 +132,7 @@
+ ) (*types.MsgConvertCoinResponse, error) {
+ 	// NOTE: ignore validation from NewCoin constructor
+ 	coins := sdk.Coins{msg.Coin}
+-	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
++	erc20 := contracts.ERC20Contract.ABI
+ 	contract := pair.GetERC20Contract()
+ 	balanceToken := k.BalanceOf(ctx, erc20, contract, receiver)
+ 	if balanceToken == nil {
+@@ -146,7 +146,7 @@
+ 	}
+ 
+ 	// Mint tokens and send to receiver
+-	_, err = k.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "mint", receiver, msg.Coin.Amount.BigInt())
++	_, err = k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "mint", receiver, msg.Coin.Amount.BigInt())
+ 	if err != nil {
+ 		return nil, err
+ 	}
+@@ -217,7 +217,7 @@
+ ) (*types.MsgConvertERC20Response, error) {
+ 	// NOTE: coin fields already validated
+ 	coins := sdk.Coins{sdk.Coin{Denom: pair.Denom, Amount: msg.Amount}}
+-	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
++	erc20 := contracts.ERC20Contract.ABI
+ 	contract := pair.GetERC20Contract()
+ 	balanceCoin := k.bankKeeper.GetBalance(ctx, receiver, pair.Denom)
+ 	balanceToken := k.BalanceOf(ctx, erc20, contract, sender)
+@@ -226,7 +226,7 @@
+ 	}
+ 
+ 	// Burn escrowed tokens
+-	_, err := k.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "burnCoins", sender, msg.Amount.BigInt())
++	_, err := k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "burnCoins", sender, msg.Amount.BigInt())
+ 	if err != nil {
+ 		return nil, err
+ 	}
+@@ -317,7 +317,7 @@
+ ) (*types.MsgConvertERC20Response, error) {
+ 	// NOTE: coin fields already validated
+ 	coins := sdk.Coins{sdk.Coin{Denom: pair.Denom, Amount: msg.Amount}}
+-	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
++	erc20 := contracts.ERC20Contract.ABI
+ 	contract := pair.GetERC20Contract()
+ 	balanceCoin := k.bankKeeper.GetBalance(ctx, receiver, pair.Denom)
+ 	balanceToken := k.BalanceOf(ctx, erc20, contract, types.ModuleAddress)
+@@ -331,7 +331,7 @@
+ 		return nil, err
+ 	}
+ 
+-	res, err := k.CallEVMWithData(ctx, sender, &contract, transferData, true)
++	res, err := k.evmKeeper.CallEVMWithData(ctx, sender, &contract, transferData, true)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+@@ -443,7 +443,7 @@
+ 	// NOTE: ignore validation from NewCoin constructor
+ 	coins := sdk.Coins{msg.Coin}
+ 
+-	erc20 := contracts.ERC20MinterBurnerDecimalsContract.ABI
++	erc20 := contracts.ERC20Contract.ABI
+ 	contract := pair.GetERC20Contract()
+ 	balanceToken := k.BalanceOf(ctx, erc20, contract, receiver)
+ 	if balanceToken == nil {
+@@ -456,7 +456,7 @@
+ 	}
+ 
+ 	// Unescrow Tokens and send to receiver
+-	res, err := k.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "transfer", receiver, msg.Coin.Amount.BigInt())
++	res, err := k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "transfer", receiver, msg.Coin.Amount.BigInt())
+ 	if err != nil {
+ 		return nil, err
+ 	}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/params.go chain/evmos/x/erc20/keeper/params.go
+--- evmos/x/erc20/keeper/params.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/params.go	2024-01-26 14:00:28
+@@ -18,7 +18,8 @@
+ 
+ import (
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ var isTrue = []byte("0x01")
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/proposals.go chain/evmos/x/erc20/keeper/proposals.go
+--- evmos/x/erc20/keeper/proposals.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/proposals.go	2024-01-26 14:00:28
+@@ -23,7 +23,7 @@
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // RegisterCoin deploys an erc20 contract and creates the token pair for the
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/keeper/token_pairs.go chain/evmos/x/erc20/keeper/token_pairs.go
+--- evmos/x/erc20/keeper/token_pairs.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/keeper/token_pairs.go	2024-01-26 14:00:28
+@@ -21,7 +21,7 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // GetTokenPairs - get all registered token tokenPairs
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/module.go chain/evmos/x/erc20/module.go
+--- evmos/x/erc20/module.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/module.go	2024-01-26 14:00:28
+@@ -34,9 +34,9 @@
+ 	"github.com/spf13/cobra"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/client/cli"
+-	"github.com/evmos/evmos/v12/x/erc20/keeper"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/client/cli"
++	"github.com/settlus/chain/evmos/x/erc20/keeper"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // type check to ensure the interface is properly implemented
+@@ -150,16 +150,6 @@
+ func (am AppModule) RegisterServices(cfg module.Configurator) {
+ 	types.RegisterMsgServer(cfg.MsgServer(), &am.keeper)
+ 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+-
+-	migrator := keeper.NewMigrator(am.keeper, am.legacySubspace)
+-
+-	// NOTE: the migrations below will only run if the consensus version has changed
+-	// since the last release
+-
+-	// register v2 -> v3 migration
+-	if err := cfg.RegisterMigration(types.ModuleName, 2, migrator.Migrate2to3); err != nil {
+-		panic(fmt.Errorf("failed to migrate %s to v2: %w", types.ModuleName, err))
+-	}
+ }
+ 
+ func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/proposal_handler.go chain/evmos/x/erc20/proposal_handler.go
+--- evmos/x/erc20/proposal_handler.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/proposal_handler.go	2024-01-26 14:00:28
+@@ -23,8 +23,8 @@
+ 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/keeper"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	"github.com/settlus/chain/evmos/x/erc20/keeper"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // NewErc20ProposalHandler creates a governance handler to manage new proposal types.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/evm_test.go chain/evmos/x/erc20/types/evm_test.go
+--- evmos/x/erc20/types/evm_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/evm_test.go	2024-01-26 13:59:21
+@@ -3,8 +3,9 @@
+ import (
+ 	"testing"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
+ 	"github.com/stretchr/testify/require"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ func TestNewERC20Data(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/genesis_test.go chain/evmos/x/erc20/types/genesis_test.go
+--- evmos/x/erc20/types/genesis_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/genesis_test.go	2024-01-26 13:59:21
+@@ -3,8 +3,9 @@
+ import (
+ 	"testing"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
+ 	"github.com/stretchr/testify/suite"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ type GenesisTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/interfaces.go chain/evmos/x/erc20/types/interfaces.go
+--- evmos/x/erc20/types/interfaces.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/interfaces.go	2024-01-26 14:00:28
+@@ -17,7 +17,7 @@
+ package types
+ 
+ import (
+-	context "context"
++	"context"
+ 
+ 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+ 
+@@ -25,13 +25,13 @@
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 
++	"github.com/ethereum/go-ethereum/accounts/abi"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core"
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 
+-	claimstypes "github.com/evmos/evmos/v12/x/claims/types"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // AccountKeeper defines the expected interface needed to retrieve account info.
+@@ -66,11 +66,8 @@
+ 	GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) *statedb.Account
+ 	EstimateGas(c context.Context, req *evmtypes.EthCallRequest) (*evmtypes.EstimateGasResponse, error)
+ 	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool) (*evmtypes.MsgEthereumTxResponse, error)
+-}
+-
+-// StakingKeeper defines the expected interface needed to retrieve the staking denom.
+-type ClaimsKeeper interface {
+-	GetParams(ctx sdk.Context) claimstypes.Params
++	CallEVM(ctx sdk.Context, abi abi.ABI, from, contract common.Address, commit bool, method string, args ...interface{}) (*evmtypes.MsgEthereumTxResponse, error)
++	CallEVMWithData(ctx sdk.Context, from common.Address, contract *common.Address, data []byte, commit bool) (*evmtypes.MsgEthereumTxResponse, error)
+ }
+ 
+ type (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/msg_test.go chain/evmos/x/erc20/types/msg_test.go
+--- evmos/x/erc20/types/msg_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/msg_test.go	2024-01-26 13:59:21
+@@ -10,8 +10,8 @@
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+ 
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/params.go chain/evmos/x/erc20/types/params.go
+--- evmos/x/erc20/types/params.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/params.go	2024-01-26 14:00:28
+@@ -17,7 +17,7 @@
+ package types
+ 
+ import (
+-	fmt "fmt"
++	"fmt"
+ )
+ 
+ // Parameter store key
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/params_test.go chain/evmos/x/erc20/types/params_test.go
+--- evmos/x/erc20/types/params_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/params_test.go	2024-01-26 13:59:21
+@@ -3,8 +3,9 @@
+ import (
+ 	"testing"
+ 
+-	"github.com/evmos/evmos/v12/x/erc20/types"
+ 	"github.com/stretchr/testify/suite"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ type ParamsTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/proposal.go chain/evmos/x/erc20/types/proposal.go
+--- evmos/x/erc20/types/proposal.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/proposal.go	2024-01-26 14:00:28
+@@ -23,9 +23,10 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+-	v1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
++	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+ 	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+-	evmostypes "github.com/evmos/evmos/v12/types"
++
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ // constants
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/proposal_test.go chain/evmos/x/erc20/types/proposal_test.go
+--- evmos/x/erc20/types/proposal_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/proposal_test.go	2024-01-26 13:59:21
+@@ -9,8 +9,8 @@
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+ 	length "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+ 
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ type ProposalTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/token_pair.go chain/evmos/x/erc20/types/token_pair.go
+--- evmos/x/erc20/types/token_pair.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/token_pair.go	2024-01-26 14:00:28
+@@ -19,8 +19,9 @@
+ import (
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+ 	"github.com/tendermint/tendermint/crypto/tmhash"
++
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ // NewTokenPair returns an instance of TokenPair
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/token_pair_test.go chain/evmos/x/erc20/types/token_pair_test.go
+--- evmos/x/erc20/types/token_pair_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/token_pair_test.go	2024-01-26 13:59:21
+@@ -5,10 +5,11 @@
+ 	"testing"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
+ 	"github.com/stretchr/testify/suite"
+ 	"github.com/tendermint/tendermint/crypto/tmhash"
++
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ type TokenPairTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/erc20/types/utils_test.go chain/evmos/x/erc20/types/utils_test.go
+--- evmos/x/erc20/types/utils_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/erc20/types/utils_test.go	2024-01-26 13:59:21
+@@ -6,8 +6,9 @@
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+-	"github.com/evmos/evmos/v12/x/erc20/types"
+ 	"github.com/stretchr/testify/require"
++
++	"github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ func TestSanitizeERC20Name(t *testing.T) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/client/cli/query.go chain/evmos/x/evm/client/cli/query.go
+--- evmos/x/evm/client/cli/query.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/client/cli/query.go	2024-01-31 14:50:14
+@@ -16,13 +16,14 @@
+ package cli
+ 
+ import (
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+ 	"github.com/spf13/cobra"
+ 
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++
+ 	"github.com/cosmos/cosmos-sdk/client"
+ 	"github.com/cosmos/cosmos-sdk/client/flags"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // GetQueryCmd returns the parent command for all x/bank CLi query commands.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/client/cli/tx.go chain/evmos/x/evm/client/cli/tx.go
+--- evmos/x/evm/client/cli/tx.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/client/cli/tx.go	2024-01-31 14:50:14
+@@ -27,8 +27,8 @@
+ 	"github.com/pkg/errors"
+ 	"github.com/spf13/cobra"
+ 
+-	rpctypes "github.com/evmos/evmos/v12/rpc/types"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	rpctypes "github.com/settlus/chain/evmos/rpc/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // GetTxCmd returns the transaction commands for this module
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/genesis.go chain/evmos/x/evm/genesis.go
+--- evmos/x/evm/genesis.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/genesis.go	2024-01-31 14:50:14
+@@ -25,9 +25,9 @@
+ 	"github.com/ethereum/go-ethereum/crypto"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/keeper"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/keeper"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // InitGenesis initializes genesis state based on exported genesis
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/handler.go chain/evmos/x/evm/handler.go
+--- evmos/x/evm/handler.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/handler.go	2024-01-31 14:50:14
+@@ -20,7 +20,7 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // NewHandler returns a handler for Ethermint type messages.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/config.go chain/evmos/x/evm/keeper/config.go
+--- evmos/x/evm/keeper/config.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/config.go	2024-01-31 14:50:14
+@@ -23,8 +23,9 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core"
+ 	"github.com/ethereum/go-ethereum/core/vm"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // EVMConfig creates the EVMConfig based on current state
+@@ -65,13 +66,7 @@
+ 		noBaseFee = k.feeMarketKeeper.GetParams(ctx).NoBaseFee
+ 	}
+ 
+-	var debug bool
+-	if _, ok := tracer.(types.NoOpTracer); !ok {
+-		debug = true
+-	}
+-
+ 	return vm.Config{
+-		Debug:     debug,
+ 		Tracer:    tracer,
+ 		NoBaseFee: noBaseFee,
+ 		ExtraEips: cfg.Params.EIPs(),
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/fees.go chain/evmos/x/evm/keeper/fees.go
+--- evmos/x/evm/keeper/fees.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/fees.go	2024-01-31 14:50:14
+@@ -28,7 +28,7 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // CheckSenderBalance validates that the tx cost value is positive and that the
+@@ -83,7 +83,7 @@
+ 	txData types.TxData,
+ 	denom string,
+ 	baseFee *big.Int,
+-	homestead, istanbul, isCheckTx bool,
++	homestead, istanbul, sanghai, isCheckTx bool,
+ ) (sdk.Coins, error) {
+ 	isContractCreation := txData.GetTo() == nil
+ 
+@@ -94,7 +94,7 @@
+ 		accessList = txData.GetAccessList()
+ 	}
+ 
+-	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, homestead, istanbul)
++	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, homestead, istanbul, sanghai)
+ 	if err != nil {
+ 		return nil, errorsmod.Wrapf(
+ 			err,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/gas.go chain/evmos/x/evm/keeper/gas.go
+--- evmos/x/evm/keeper/gas.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/gas.go	2024-01-31 14:50:14
+@@ -27,7 +27,7 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // GetEthIntrinsicGas returns the intrinsic gas cost for the transaction
+@@ -35,8 +35,9 @@
+ 	height := big.NewInt(ctx.BlockHeight())
+ 	homestead := cfg.IsHomestead(height)
+ 	istanbul := cfg.IsIstanbul(height)
++	issanghai := cfg.IsShanghai(uint64(ctx.BlockTime().Unix()))
+ 
+-	return core.IntrinsicGas(msg.Data(), msg.AccessList(), isContractCreation, homestead, istanbul)
++	return core.IntrinsicGas(msg.Data, msg.AccessList, isContractCreation, homestead, istanbul, issanghai)
+ }
+ 
+ // RefundGas transfers the leftover gas to the sender of the message, caped to half of the total gas
+@@ -45,7 +46,7 @@
+ // AnteHandler.
+ func (k *Keeper) RefundGas(ctx sdk.Context, msg core.Message, leftoverGas uint64, denom string) error {
+ 	// Return EVM tokens for remaining gas, exchanged at the original rate.
+-	remaining := new(big.Int).Mul(new(big.Int).SetUint64(leftoverGas), msg.GasPrice())
++	remaining := new(big.Int).Mul(new(big.Int).SetUint64(leftoverGas), msg.GasPrice)
+ 
+ 	switch remaining.Sign() {
+ 	case -1:
+@@ -57,7 +58,7 @@
+ 
+ 		// refund to sender from the fee collector module account, which is the escrow account in charge of collecting tx fees
+ 
+-		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, msg.From().Bytes(), refundedCoins)
++		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, msg.From.Bytes(), refundedCoins)
+ 		if err != nil {
+ 			err = errorsmod.Wrapf(errortypes.ErrInsufficientFunds, "fee collector account failed to refund fees: %s", err.Error())
+ 			return errorsmod.Wrapf(err, "failed to refund %d leftover gas (%s)", leftoverGas, refundedCoins.String())
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/grpc_query.go chain/evmos/x/evm/keeper/grpc_query.go
+--- evmos/x/evm/keeper/grpc_query.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/grpc_query.go	2024-01-31 14:50:14
+@@ -39,9 +39,9 @@
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 	ethparams "github.com/ethereum/go-ethereum/params"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var _ types.QueryServer = Keeper{}
+@@ -339,19 +339,19 @@
+ 	// Create a helper to check if a gas allowance results in an executable transaction
+ 	executable := func(gas uint64) (vmError bool, rsp *types.MsgEthereumTxResponse, err error) {
+ 		// update the message with the new gas value
+-		msg = ethtypes.NewMessage(
+-			msg.From(),
+-			msg.To(),
+-			msg.Nonce(),
+-			msg.Value(),
+-			gas,
+-			msg.GasPrice(),
+-			msg.GasFeeCap(),
+-			msg.GasTipCap(),
+-			msg.Data(),
+-			msg.AccessList(),
+-			msg.IsFake(),
+-		)
++		msg = core.Message{
++			From:              msg.From,
++			To:                msg.To,
++			Nonce:             msg.Nonce,
++			Value:             msg.Value,
++			GasLimit:          gas,
++			GasPrice:          msg.GasPrice,
++			GasFeeCap:         msg.GasFeeCap,
++			GasTipCap:         msg.GasTipCap,
++			Data:              msg.Data,
++			AccessList:        msg.AccessList,
++			SkipAccountChecks: msg.SkipAccountChecks,
++		}
+ 
+ 		// pass false to not commit StateDB
+ 		rsp, err = k.ApplyMessageWithConfig(ctx, msg, nil, false, cfg, txConfig)
+@@ -427,13 +427,13 @@
+ 	txConfig := statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash().Bytes()))
+ 	for i, tx := range req.Predecessors {
+ 		ethTx := tx.AsTransaction()
+-		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
++		msg, err := core.TransactionToMessage(ethTx, signer, cfg.BaseFee)
+ 		if err != nil {
+ 			continue
+ 		}
+ 		txConfig.TxHash = ethTx.Hash()
+ 		txConfig.TxIndex = uint(i)
+-		rsp, err := k.ApplyMessageWithConfig(ctx, msg, types.NewNoOpTracer(), true, cfg, txConfig)
++		rsp, err := k.ApplyMessageWithConfig(ctx, *msg, types.NewNoOpTracer(), true, cfg, txConfig)
+ 		if err != nil {
+ 			continue
+ 		}
+@@ -548,7 +548,7 @@
+ 		err       error
+ 		timeout   = defaultTraceTimeout
+ 	)
+-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
++	msg, err := core.TransactionToMessage(tx, signer, cfg.BaseFee)
+ 	if err != nil {
+ 		return nil, 0, status.Error(codes.Internal, err.Error())
+ 	}
+@@ -580,7 +580,7 @@
+ 	}
+ 
+ 	if traceConfig.Tracer != "" {
+-		if tracer, err = tracers.New(traceConfig.Tracer, tCtx, tracerJSONConfig); err != nil {
++		if tracer, err = tracers.DefaultDirectory.New(traceConfig.Tracer, tCtx, tracerJSONConfig); err != nil {
+ 			return nil, 0, status.Error(codes.Internal, err.Error())
+ 		}
+ 	}
+@@ -603,7 +603,7 @@
+ 		}
+ 	}()
+ 
+-	res, err := k.ApplyMessageWithConfig(ctx, msg, tracer, commitMessage, cfg, txConfig)
++	res, err := k.ApplyMessageWithConfig(ctx, *msg, tracer, commitMessage, cfg, txConfig)
+ 	if err != nil {
+ 		return nil, 0, status.Error(codes.Internal, err.Error())
+ 	}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/hooks.go chain/evmos/x/evm/keeper/hooks.go
+--- evmos/x/evm/keeper/hooks.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/hooks.go	2024-01-31 14:50:14
+@@ -20,7 +20,8 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/core"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var _ types.EvmHooks = MultiEvmHooks{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/keeper.go chain/evmos/x/evm/keeper/keeper.go
+--- evmos/x/evm/keeper/keeper.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/keeper.go	2024-01-31 14:50:14
+@@ -16,6 +16,8 @@
+ package keeper
+ 
+ import (
++	"encoding/json"
++	"fmt"
+ 	"math/big"
+ 
+ 	errorsmod "cosmossdk.io/errors"
+@@ -23,17 +25,20 @@
+ 	"github.com/cosmos/cosmos-sdk/store/prefix"
+ 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
++	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
++	"github.com/ethereum/go-ethereum/accounts/abi"
+ 	"github.com/ethereum/go-ethereum/common"
++	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	"github.com/ethereum/go-ethereum/core"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 	"github.com/ethereum/go-ethereum/params"
++	"github.com/settlus/chain/evmos/server/config"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ 	"github.com/tendermint/tendermint/libs/log"
+-
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	"github.com/evmos/evmos/v12/x/evm/types"
+ )
+ 
+ // Keeper grants access to the EVM module state and implements the go-ethereum StateDB interface.
+@@ -123,13 +128,9 @@
+ 	}
+ 
+ 	if k.eip155ChainID != nil && k.eip155ChainID.Cmp(chainID) != 0 {
+-		panic("chain id already set")
++		panic(fmt.Sprintf("chain id already set: %v", ctx.ChainID()))
+ 	}
+ 
+-	if !(chainID.Cmp(big.NewInt(9001)) == 0 || chainID.Cmp(big.NewInt(9000)) == 0) {
+-		panic("EVM only supports Evmos chain identifiers (9000 or 9001)")
+-	}
+-
+ 	k.eip155ChainID = chainID
+ }
+ 
+@@ -269,7 +270,7 @@
+ 
+ // Tracer return a default vm.Tracer based on current keeper state
+ func (k Keeper) Tracer(ctx sdk.Context, msg core.Message, ethCfg *params.ChainConfig) vm.EVMLogger {
+-	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
++	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight(), uint64(ctx.BlockTime().Unix()))
+ }
+ 
+ // GetAccountWithoutBalance load nonce and codehash without balance,
+@@ -392,4 +393,88 @@
+ 	}
+ 	k.SetTransientGasUsed(ctx, result)
+ 	return result, nil
++}
++
++// CallEVM performs a smart contract method call using given args
++func (k Keeper) CallEVM(
++	ctx sdk.Context,
++	abi abi.ABI,
++	from, contract common.Address,
++	commit bool,
++	method string,
++	args ...interface{},
++) (*types.MsgEthereumTxResponse, error) {
++	data, err := abi.Pack(method, args...)
++	if err != nil {
++		return nil, errorsmod.Wrap(
++			types.ErrABIPack,
++			errorsmod.Wrap(err, "failed to create transaction data").Error(),
++		)
++	}
++
++	resp, err := k.CallEVMWithData(ctx, from, &contract, data, commit)
++	if err != nil {
++		return nil, errorsmod.Wrapf(err, "contract call failed: method '%s', contract '%s'", method, contract)
++	}
++	return resp, nil
++}
++
++// CallEVMWithData performs a smart contract method call using contract data
++func (k Keeper) CallEVMWithData(
++	ctx sdk.Context,
++	from common.Address,
++	contract *common.Address,
++	data []byte,
++	commit bool,
++) (*types.MsgEthereumTxResponse, error) {
++	nonce, err := k.accountKeeper.GetSequence(ctx, from.Bytes())
++	if err != nil {
++		return nil, err
++	}
++
++	gasCap := config.DefaultGasCap
++	if commit {
++		args, err := json.Marshal(types.TransactionArgs{
++			From: &from,
++			To:   contract,
++			Data: (*hexutil.Bytes)(&data),
++		})
++		if err != nil {
++			return nil, errorsmod.Wrapf(errortypes.ErrJSONMarshal, "failed to marshal tx args: %s", err.Error())
++		}
++
++		gasRes, err := k.EstimateGas(sdk.WrapSDKContext(ctx), &types.EthCallRequest{
++			Args:   args,
++			GasCap: config.DefaultGasCap,
++		})
++		if err != nil {
++			return nil, err
++		}
++		gasCap = gasRes.Gas
++	}
++
++	msg := core.Message{
++		From:              from,
++		To:                contract,
++		Nonce:             nonce,
++		Value:             big.NewInt(0),
++		GasLimit:          gasCap,
++		GasPrice:          big.NewInt(0),
++		GasFeeCap:         big.NewInt(0),
++		GasTipCap:         big.NewInt(0),
++		Data:              data,
++		AccessList:        ethtypes.AccessList{},
++		SkipAccountChecks: !commit,
++	}
++
++	res, err := k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), commit)
++	if err != nil {
++		return nil, err
++	}
++
++	if res.Failed() {
++		return nil, errorsmod.Wrap(types.ErrVMExecution, res.VmError)
++	}
++
++	return res, nil
+ }
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/msg_server.go chain/evmos/x/evm/keeper/msg_server.go
+--- evmos/x/evm/keeper/msg_server.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/msg_server.go	2024-01-31 14:50:14
+@@ -31,7 +31,7 @@
+ 	"github.com/cosmos/cosmos-sdk/telemetry"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var _ types.MsgServer = &Keeper{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/params.go chain/evmos/x/evm/keeper/params.go
+--- evmos/x/evm/keeper/params.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/params.go	2024-01-31 14:50:14
+@@ -17,7 +17,8 @@
+ 
+ import (
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // GetParams returns the total set of evm parameters.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/state_transition.go chain/evmos/x/evm/keeper/state_transition.go
+--- evmos/x/evm/keeper/state_transition.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/state_transition.go	2024-01-31 14:50:14
+@@ -23,9 +23,9 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core"
+@@ -58,13 +58,13 @@
+ 		Coinbase:    cfg.CoinBase,
+ 		GasLimit:    evmostypes.BlockGasLimit(ctx),
+ 		BlockNumber: big.NewInt(ctx.BlockHeight()),
+-		Time:        big.NewInt(ctx.BlockHeader().Time.Unix()),
++		Time:        uint64(ctx.BlockHeader().Time.Unix()),
+ 		Difficulty:  big.NewInt(0), // unused. Only required in PoW context
+ 		BaseFee:     cfg.BaseFee,
+ 		Random:      nil, // not supported
+ 	}
+ 
+-	txCtx := core.NewEVMTxContext(msg)
++	txCtx := core.NewEVMTxContext(&msg)
+ 	if tracer == nil {
+ 		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+ 	}
+@@ -159,7 +159,7 @@
+ 
+ 	// get the signer according to the chain rules from the config and block height
+ 	signer := ethtypes.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
+-	msg, err := tx.AsMessage(signer, cfg.BaseFee)
++	msg, err := core.TransactionToMessage(tx, signer, cfg.BaseFee)
+ 	if err != nil {
+ 		return nil, errorsmod.Wrap(err, "failed to return ethereum transaction as core message")
+ 	}
+@@ -176,7 +176,7 @@
+ 	}
+ 
+ 	// pass true to commit the StateDB
+-	res, err := k.ApplyMessageWithConfig(tmpCtx, msg, nil, true, cfg, txConfig)
++	res, err := k.ApplyMessageWithConfig(tmpCtx, *msg, nil, true, cfg, txConfig)
+ 	if err != nil {
+ 		return nil, errorsmod.Wrap(err, "failed to apply ethereum core message")
+ 	}
+@@ -200,8 +200,8 @@
+ 	}
+ 
+ 	var contractAddr common.Address
+-	if msg.To() == nil {
+-		contractAddr = crypto.CreateAddress(msg.From(), msg.Nonce())
++	if msg.To == nil {
++		contractAddr = crypto.CreateAddress(msg.From, msg.Nonce)
+ 	}
+ 
+ 	receipt := &ethtypes.Receipt{
+@@ -221,7 +221,7 @@
+ 	if !res.Failed() {
+ 		receipt.Status = ethtypes.ReceiptStatusSuccessful
+ 		// Only call hooks if tx executed successfully.
+-		if err = k.PostTxProcessing(tmpCtx, msg, receipt); err != nil {
++		if err = k.PostTxProcessing(tmpCtx, *msg, receipt); err != nil {
+ 			// If hooks return error, revert the whole tx.
+ 			res.VmError = types.ErrPostTxProcessing.Error()
+ 			k.Logger(ctx).Error("tx post processing failed", "error", err)
+@@ -238,8 +238,8 @@
+ 	}
+ 
+ 	// refund gas in order to match the Ethereum gas consumption instead of the default SDK one.
+-	if err = k.RefundGas(ctx, msg, msg.Gas()-res.GasUsed, cfg.Params.EvmDenom); err != nil {
+-		return nil, errorsmod.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From())
++	if err = k.RefundGas(ctx, *msg, msg.GasLimit-res.GasUsed, cfg.Params.EvmDenom); err != nil {
++		return nil, errorsmod.Wrapf(err, "failed to refund gas leftover gas to sender %s", msg.From)
+ 	}
+ 
+ 	if len(receipt.Logs) > 0 {
+@@ -322,28 +322,19 @@
+ 	)
+ 
+ 	// return error if contract creation or call are disabled through governance
+-	if !cfg.Params.EnableCreate && msg.To() == nil {
++	if !cfg.Params.EnableCreate && msg.To == nil {
+ 		return nil, errorsmod.Wrap(types.ErrCreateDisabled, "failed to create new contract")
+-	} else if !cfg.Params.EnableCall && msg.To() != nil {
++	} else if !cfg.Params.EnableCall && msg.To != nil {
+ 		return nil, errorsmod.Wrap(types.ErrCallDisabled, "failed to call contract")
+ 	}
+ 
+ 	stateDB := statedb.New(ctx, k, txConfig)
+ 	evm := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
+ 
+-	leftoverGas := msg.Gas()
++	leftoverGas := msg.GasLimit
+ 
+-	// Allow the tracer captures the tx level events, mainly the gas consumption.
+-	vmCfg := evm.Config
+-	if vmCfg.Debug {
+-		vmCfg.Tracer.CaptureTxStart(leftoverGas)
+-		defer func() {
+-			vmCfg.Tracer.CaptureTxEnd(leftoverGas)
+-		}()
+-	}
+-
+-	sender := vm.AccountRef(msg.From())
+-	contractCreation := msg.To() == nil
++	sender := vm.AccountRef(msg.From)
++	contractCreation := msg.To == nil
+ 	isLondon := cfg.ChainConfig.IsLondon(evm.Context.BlockNumber)
+ 
+ 	intrinsicGas, err := k.GetEthIntrinsicGas(ctx, msg, cfg.ChainConfig, contractCreation)
+@@ -361,19 +352,19 @@
+ 
+ 	// access list preparation is moved from ante handler to here, because it's needed when `ApplyMessage` is called
+ 	// under contexts where ante handlers are not run, for example `eth_call` and `eth_estimateGas`.
+-	if rules := cfg.ChainConfig.Rules(big.NewInt(ctx.BlockHeight()), cfg.ChainConfig.MergeNetsplitBlock != nil); rules.IsBerlin {
+-		stateDB.PrepareAccessList(msg.From(), msg.To(), vm.ActivePrecompiles(rules), msg.AccessList())
++	if rules := cfg.ChainConfig.Rules(big.NewInt(ctx.BlockHeight()), cfg.ChainConfig.MergeNetsplitBlock != nil, uint64(ctx.BlockTime().Unix())); rules.IsBerlin {
++		stateDB.Prepare(rules, msg.From, evm.Context.Coinbase, msg.To, vm.ActivePrecompiles(rules), msg.AccessList)
+ 	}
+ 
+ 	if contractCreation {
+ 		// take over the nonce management from evm:
+ 		// - reset sender's nonce to msg.Nonce() before calling evm.
+ 		// - increase sender's nonce by one no matter the result.
+-		stateDB.SetNonce(sender.Address(), msg.Nonce())
+-		ret, _, leftoverGas, vmErr = evm.Create(sender, msg.Data(), leftoverGas, msg.Value())
+-		stateDB.SetNonce(sender.Address(), msg.Nonce()+1)
++		stateDB.SetNonce(sender.Address(), msg.Nonce)
++		ret, _, leftoverGas, vmErr = evm.Create(sender, msg.Data, leftoverGas, msg.Value)
++		stateDB.SetNonce(sender.Address(), msg.Nonce+1)
+ 	} else {
+-		ret, leftoverGas, vmErr = evm.Call(sender, *msg.To(), msg.Data(), leftoverGas, msg.Value())
++		ret, leftoverGas, vmErr = evm.Call(sender, *msg.To, msg.Data, leftoverGas, msg.Value)
+ 	}
+ 
+ 	refundQuotient := params.RefundQuotient
+@@ -384,11 +375,11 @@
+ 	}
+ 
+ 	// calculate gas refund
+-	if msg.Gas() < leftoverGas {
++	if msg.GasLimit < leftoverGas {
+ 		return nil, errorsmod.Wrap(types.ErrGasOverflow, "apply message")
+ 	}
+ 	// refund gas
+-	temporaryGasUsed := msg.Gas() - leftoverGas
++	temporaryGasUsed := msg.GasLimit - leftoverGas
+ 	refund := GasToRefund(stateDB.GetRefund(), temporaryGasUsed, refundQuotient)
+ 
+ 	// update leftoverGas and temporaryGasUsed with refund amount
+@@ -411,17 +402,17 @@
+ 	// calculate a minimum amount of gas to be charged to sender if GasLimit
+ 	// is considerably higher than GasUsed to stay more aligned with Tendermint gas mechanics
+ 	// for more info https://github.com/evmos/ethermint/issues/1085
+-	gasLimit := sdk.NewDec(int64(msg.Gas()))
++	gasLimit := sdk.NewDec(int64(msg.GasLimit))
+ 	minGasMultiplier := k.GetMinGasMultiplier(ctx)
+ 	minimumGasUsed := gasLimit.Mul(minGasMultiplier)
+ 
+-	if msg.Gas() < leftoverGas {
+-		return nil, errorsmod.Wrapf(types.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.Gas(), leftoverGas)
++	if msg.GasLimit < leftoverGas {
++		return nil, errorsmod.Wrapf(types.ErrGasOverflow, "message gas limit < leftover gas (%d < %d)", msg.GasLimit, leftoverGas)
+ 	}
+ 
+ 	gasUsed := sdk.MaxDec(minimumGasUsed, sdk.NewDec(int64(temporaryGasUsed))).TruncateInt().Uint64()
+ 	// reset leftoverGas, to be used by the tracer
+-	leftoverGas = msg.Gas() - gasUsed
++	leftoverGas = msg.GasLimit - gasUsed
+ 
+ 	return &types.MsgEthereumTxResponse{
+ 		GasUsed: gasUsed,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/keeper/statedb.go chain/evmos/x/evm/keeper/statedb.go
+--- evmos/x/evm/keeper/statedb.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/keeper/statedb.go	2024-01-31 14:50:14
+@@ -25,9 +25,10 @@
+ 	"github.com/cosmos/cosmos-sdk/store/prefix"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+-	evmostypes "github.com/evmos/evmos/v12/types"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	evmostypes "github.com/settlus/chain/evmos/types"
++	"github.com/settlus/chain/evmos/x/evm/statedb"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var _ statedb.Keeper = &Keeper{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/module.go chain/evmos/x/evm/module.go
+--- evmos/x/evm/module.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/module.go	2024-01-31 14:50:14
+@@ -34,9 +34,9 @@
+ 	"github.com/cosmos/cosmos-sdk/types/module"
+ 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/client/cli"
+-	"github.com/evmos/evmos/v12/x/evm/keeper"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/client/cli"
++	"github.com/settlus/chain/evmos/x/evm/keeper"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ var (
+@@ -140,16 +140,6 @@
+ func (am AppModule) RegisterServices(cfg module.Configurator) {
+ 	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+ 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+-
+-	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)
+-	err := cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4)
+-	if err != nil {
+-		panic(err)
+-	}
+-
+-	if err := cfg.RegisterMigration(types.ModuleName, 4, m.Migrate4to5); err != nil {
+-		panic(err)
+-	}
+ }
+ 
+ // Route returns the message routing key for the evm module.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/statedb/config.go chain/evmos/x/evm/statedb/config.go
+--- evmos/x/evm/statedb/config.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/statedb/config.go	2024-01-31 14:50:14
+@@ -20,7 +20,8 @@
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/params"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ // TxConfig encapulates the readonly information of current tx for `StateDB`.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/statedb/journal.go chain/evmos/x/evm/statedb/journal.go
+--- evmos/x/evm/statedb/journal.go	2024-01-25 17:48:16
++++ chain/evmos/x/evm/statedb/journal.go	2024-01-26 13:59:21
+@@ -137,6 +137,11 @@
+ 		address *common.Address
+ 		slot    *common.Hash
+ 	}
++
++	transientStorageChange struct {
++		account       *common.Address
++		key, prevalue common.Hash
++	}
+ )
+ 
+ func (ch createObjectChange) Revert(s *StateDB) {
+@@ -197,6 +202,14 @@
+ 
+ func (ch storageChange) Dirtied() *common.Address {
+ 	return ch.account
++}
++
++func (ch transientStorageChange) Revert(s *StateDB) {
++	s.setTransientState(*ch.account, ch.key, ch.prevalue)
++}
++
++func (ch transientStorageChange) Dirtied() *common.Address {
++	return nil
+ }
+ 
+ func (ch refundChange) Revert(s *StateDB) {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/statedb/mock_test.go chain/evmos/x/evm/statedb/mock_test.go
+--- evmos/x/evm/statedb/mock_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/statedb/mock_test.go	2024-01-26 13:59:21
+@@ -8,7 +8,8 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
++
++	"github.com/settlus/chain/evmos/x/evm/statedb"
+ )
+ 
+ var (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/statedb/state_object.go chain/evmos/x/evm/statedb/state_object.go
+--- evmos/x/evm/statedb/state_object.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/statedb/state_object.go	2024-01-31 14:50:14
+@@ -62,6 +62,14 @@
+ 	return keys
+ }
+ 
++func (s Storage) Copy() Storage {
++	cpy := make(Storage, len(s))
++	for key, value := range s {
++		cpy[key] = value
++	}
++	return cpy
++}
++
+ // stateObject is the state of an acount
+ type stateObject struct {
+ 	db *StateDB
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/statedb/statedb.go chain/evmos/x/evm/statedb/statedb.go
+--- evmos/x/evm/statedb/statedb.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/statedb/statedb.go	2024-01-31 14:50:14
+@@ -21,11 +21,13 @@
+ 	"sort"
+ 
+ 	errorsmod "cosmossdk.io/errors"
++
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 	"github.com/ethereum/go-ethereum/crypto"
++	"github.com/ethereum/go-ethereum/params"
+ )
+ 
+ // revision is the identifier of a version of state.
+@@ -65,6 +67,9 @@
+ 
+ 	// Per-transaction access list
+ 	accessList *accessList
++
++	// Transient storage
++	transientStorage transientStorage
+ }
+ 
+ // New creates a new state from a given trie.
+@@ -377,7 +382,7 @@
+ // - Add the contents of the optional tx access list (2930)
+ //
+ // This method should only be called if Yolov3/Berlin/2929+2930 is applicable at the current number.
+-func (s *StateDB) PrepareAccessList(sender common.Address, dst *common.Address, precompiles []common.Address, list ethtypes.AccessList) {
++func (s *StateDB) Prepare(rules params.Rules, sender, coinbase common.Address, dst *common.Address, precompiles []common.Address, list ethtypes.AccessList) {
+ 	s.AddAddressToAccessList(sender)
+ 	if dst != nil {
+ 		s.AddAddressToAccessList(*dst)
+@@ -392,6 +397,9 @@
+ 			s.AddSlotToAccessList(el.Address, key)
+ 		}
+ 	}
++
++	// Reset transient storage at the beginning of transaction execution
++	s.transientStorage = newTransientStorage()
+ }
+ 
+ // AddAddressToAccessList adds the given address to the access list
+@@ -480,4 +488,31 @@
+ 		}
+ 	}
+ 	return nil
++}
++
++// GetTransientState gets transient storage for a given account.
++func (s *StateDB) GetTransientState(addr common.Address, key common.Hash) common.Hash {
++	return s.transientStorage.Get(addr, key)
++}
++
++// SetTransientState sets transient storage for a given account. It
++// adds the change to the journal so that it can be rolled back
++// to its previous value if there is a revert.
++func (s *StateDB) SetTransientState(addr common.Address, key, value common.Hash) {
++	prev := s.GetTransientState(addr, key)
++	if prev == value {
++		return
++	}
++	s.journal.append(transientStorageChange{
++		account:  &addr,
++		key:      key,
++		prevalue: prev,
++	})
++	s.setTransientState(addr, key, value)
++}
++
++// setTransientState is a lower level setter for transient storage. It
++// is called during a revert to prevent modifications to the journal.
++func (s *StateDB) setTransientState(addr common.Address, key, value common.Hash) {
++	s.transientStorage.Set(addr, key, value)
+ }
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/statedb/statedb_test.go chain/evmos/x/evm/statedb/statedb_test.go
+--- evmos/x/evm/statedb/statedb_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/statedb/statedb_test.go	2024-01-26 13:59:21
+@@ -9,8 +9,10 @@
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	"github.com/evmos/evmos/v12/x/evm/statedb"
++	"github.com/ethereum/go-ethereum/params"
+ 	"github.com/stretchr/testify/suite"
++
++	"github.com/settlus/chain/evmos/x/evm/statedb"
+ )
+ 
+ var (
+@@ -439,8 +441,9 @@
+ 				Address:     address3,
+ 				StorageKeys: []common.Hash{value1},
+ 			}}
+-			db.PrepareAccessList(address, &address2, vm.PrecompiledAddressesBerlin, al)
+ 
++			db.Prepare(params.Rules{}, address, common.Address{}, &address2, vm.PrecompiledAddressesBerlin, al)
++
+ 			// check sender and dst
+ 			suite.Require().True(db.AddressInAccessList(address))
+ 			suite.Require().True(db.AddressInAccessList(address2))
+@@ -566,7 +569,7 @@
+ 	suite.Require().Equal(1, len(storage))
+ }
+ 
+-func CollectContractStorage(db vm.StateDB) statedb.Storage {
++func CollectContractStorage(db *statedb.StateDB) statedb.Storage {
+ 	storage := make(statedb.Storage)
+ 	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
+ 		storage[k] = v
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/access_list_test.go chain/evmos/x/evm/types/access_list_test.go
+--- evmos/x/evm/types/access_list_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/access_list_test.go	2024-01-26 13:59:21
+@@ -3,7 +3,8 @@
+ import (
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *TxDataTestSuite) TestTestNewAccessList() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/access_list_tx.go chain/evmos/x/evm/types/access_list_tx.go
+--- evmos/x/evm/types/access_list_tx.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/access_list_tx.go	2024-01-31 14:50:14
+@@ -25,7 +25,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func newAccessListTx(tx *ethtypes.Transaction) (*AccessListTx, error) {
+@@ -234,13 +234,6 @@
+ 		return errorsmod.Wrap(
+ 			errortypes.ErrInvalidChainID,
+ 			"chain ID must be present on AccessList txs",
+-		)
+-	}
+-
+-	if !(chainID.Cmp(big.NewInt(9001)) == 0 || chainID.Cmp(big.NewInt(9000)) == 0) {
+-		return errorsmod.Wrapf(
+-			errortypes.ErrInvalidChainID,
+-			"chain ID must be 9000 or 9001 on Evmos, got %s", chainID,
+ 		)
+ 	}
+ 
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/access_list_tx_test.go chain/evmos/x/evm/types/access_list_tx_test.go
+--- evmos/x/evm/types/access_list_tx_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/access_list_tx_test.go	2024-01-26 13:59:21
+@@ -4,7 +4,8 @@
+ 	"math/big"
+ 
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *TxDataTestSuite) TestAccessListTxCopy() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/chain_config.go chain/evmos/x/evm/types/chain_config.go
+--- evmos/x/evm/types/chain_config.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/chain_config.go	2024-01-31 14:50:14
+@@ -37,7 +37,6 @@
+ 		DAOForkBlock:            getBlockValue(cc.DAOForkBlock),
+ 		DAOForkSupport:          cc.DAOForkSupport,
+ 		EIP150Block:             getBlockValue(cc.EIP150Block),
+-		EIP150Hash:              common.HexToHash(cc.EIP150Hash),
+ 		EIP155Block:             getBlockValue(cc.EIP155Block),
+ 		EIP158Block:             getBlockValue(cc.EIP158Block),
+ 		ByzantiumBlock:          getBlockValue(cc.ByzantiumBlock),
+@@ -50,8 +49,6 @@
+ 		ArrowGlacierBlock:       getBlockValue(cc.ArrowGlacierBlock),
+ 		GrayGlacierBlock:        getBlockValue(cc.GrayGlacierBlock),
+ 		MergeNetsplitBlock:      getBlockValue(cc.MergeNetsplitBlock),
+-		ShanghaiBlock:           getBlockValue(cc.ShanghaiBlock),
+-		CancunBlock:             getBlockValue(cc.CancunBlock),
+ 		TerminalTotalDifficulty: nil,
+ 		Ethash:                  nil,
+ 		Clique:                  nil,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/codec.go chain/evmos/x/evm/types/codec.go
+--- evmos/x/evm/types/codec.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/codec.go	2024-01-31 14:50:14
+@@ -23,7 +23,7 @@
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+ 	"github.com/cosmos/cosmos-sdk/types/msgservice"
+ 	"github.com/cosmos/cosmos-sdk/types/tx"
+-	proto "github.com/gogo/protobuf/proto"
++	"github.com/gogo/protobuf/proto"
+ )
+ 
+ var (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/dynamic_fee_tx.go chain/evmos/x/evm/types/dynamic_fee_tx.go
+--- evmos/x/evm/types/dynamic_fee_tx.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/dynamic_fee_tx.go	2024-01-31 14:50:14
+@@ -25,7 +25,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func NewDynamicFeeTx(tx *ethtypes.Transaction) (*DynamicFeeTx, error) {
+@@ -266,13 +266,6 @@
+ 		return errorsmod.Wrap(
+ 			errortypes.ErrInvalidChainID,
+ 			"chain ID must be present on AccessList txs",
+-		)
+-	}
+-
+-	if !(chainID.Cmp(big.NewInt(9001)) == 0 || chainID.Cmp(big.NewInt(9000)) == 0) {
+-		return errorsmod.Wrapf(
+-			errortypes.ErrInvalidChainID,
+-			"chain ID must be 9000 or 9001 on Evmos, got %s", chainID,
+ 		)
+ 	}
+ 
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/dynamic_fee_tx_test.go chain/evmos/x/evm/types/dynamic_fee_tx_test.go
+--- evmos/x/evm/types/dynamic_fee_tx_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/dynamic_fee_tx_test.go	2024-01-31 14:51:39
+@@ -11,8 +11,8 @@
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ 
+ 	"github.com/stretchr/testify/suite"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/errors.go chain/evmos/x/evm/types/errors.go
+--- evmos/x/evm/types/errors.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/errors.go	2024-01-31 14:51:39
+@@ -42,6 +42,8 @@
+ 	codeErrGasOverflow
+ 	codeErrInvalidAccount
+ 	codeErrInvalidGasLimit
++	codeErrABIPack
++	codeErrABIUnpack
+ )
+ 
+ var ErrPostTxProcessing = errors.New("failed to execute post processing")
+@@ -91,6 +93,10 @@
+ 
+ 	// ErrInvalidGasLimit returns an error if gas limit value is invalid
+ 	ErrInvalidGasLimit = errorsmod.Register(ModuleName, codeErrInvalidGasLimit, "invalid gas limit")
++
++	ErrABIPack = errorsmod.Register(ModuleName, codeErrABIPack, "contract ABI pack failed")
++
++	ErrABIUnpack = errorsmod.Register(ModuleName, codeErrABIUnpack, "contract ABI unpack failed")
+ )
+ 
+ // NewExecErrorWithReason unpacks the revert return bytes and returns a wrapped error
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/genesis.go chain/evmos/x/evm/types/genesis.go
+--- evmos/x/evm/types/genesis.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/genesis.go	2024-01-31 14:50:14
+@@ -18,7 +18,7 @@
+ import (
+ 	"fmt"
+ 
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ // Validate performs a basic validation of a GenesisAccount fields.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/genesis_test.go chain/evmos/x/evm/types/genesis_test.go
+--- evmos/x/evm/types/genesis_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/genesis_test.go	2024-01-26 13:59:21
+@@ -6,7 +6,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/stretchr/testify/suite"
+ 
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+ )
+ 
+ type GenesisTestSuite struct {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/interfaces.go chain/evmos/x/evm/types/interfaces.go
+--- evmos/x/evm/types/interfaces.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/interfaces.go	2024-01-31 14:50:14
+@@ -26,7 +26,8 @@
+ 
+ 	"github.com/ethereum/go-ethereum/core"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	feemarkettypes "github.com/evmos/evmos/v12/x/feemarket/types"
++
++	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // AccountKeeper defines the expected account keeper interface
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/legacy_tx.go chain/evmos/x/evm/types/legacy_tx.go
+--- evmos/x/evm/types/legacy_tx.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/legacy_tx.go	2024-01-31 14:50:14
+@@ -23,7 +23,8 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+-	"github.com/evmos/evmos/v12/types"
++
++	"github.com/settlus/chain/evmos/types"
+ )
+ 
+ func NewLegacyTx(tx *ethtypes.Transaction) (*LegacyTx, error) {
+@@ -211,13 +212,6 @@
+ 		return errorsmod.Wrap(
+ 			errortypes.ErrInvalidChainID,
+ 			"chain ID must be present on AccessList txs",
+-		)
+-	}
+-
+-	if !(chainID.Cmp(big.NewInt(9001)) == 0 || chainID.Cmp(big.NewInt(9000)) == 0) {
+-		return errorsmod.Wrapf(
+-			errortypes.ErrInvalidChainID,
+-			"chain ID must be 9000 or 9001 on Evmos, got %s", chainID,
+ 		)
+ 	}
+ 
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/legacy_tx_test.go chain/evmos/x/evm/types/legacy_tx_test.go
+--- evmos/x/evm/types/legacy_tx_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/legacy_tx_test.go	2024-01-26 13:59:21
+@@ -6,7 +6,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *TxDataTestSuite) TestNewLegacyTx() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/logs.go chain/evmos/x/evm/types/logs.go
+--- evmos/x/evm/types/logs.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/logs.go	2024-01-31 14:50:14
+@@ -22,7 +22,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	evmostypes "github.com/evmos/evmos/v12/types"
++	evmostypes "github.com/settlus/chain/evmos/types"
+ )
+ 
+ // NewTransactionLogs creates a new NewTransactionLogs instance.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/logs_test.go chain/evmos/x/evm/types/logs_test.go
+--- evmos/x/evm/types/logs_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/logs_test.go	2024-01-26 13:59:21
+@@ -5,8 +5,8 @@
+ 
+ 	"github.com/stretchr/testify/require"
+ 
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/msg.go chain/evmos/x/evm/types/msg.go
+--- evmos/x/evm/types/msg.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/msg.go	2024-01-31 14:50:14
+@@ -32,7 +32,7 @@
+ 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+ 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+ 
+-	"github.com/evmos/evmos/v12/types"
++	"github.com/settlus/chain/evmos/types"
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/core"
+@@ -316,7 +316,8 @@
+ 
+ // AsMessage creates an Ethereum core.Message from the msg fields
+ func (msg MsgEthereumTx) AsMessage(signer ethtypes.Signer, baseFee *big.Int) (core.Message, error) {
+-	return msg.AsTransaction().AsMessage(signer, baseFee)
++	m, err := core.TransactionToMessage(msg.AsTransaction(), signer, baseFee)
++	return *m, err
+ }
+ 
+ // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/msg_test.go chain/evmos/x/evm/types/msg_test.go
+--- evmos/x/evm/types/msg_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/msg_test.go	2024-01-31 14:51:39
+@@ -17,12 +17,13 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 	"github.com/ethereum/go-ethereum/crypto"
+-	"github.com/evmos/evmos/v12/crypto/ethsecp256k1"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/encoding"
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/encoding"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ const invalidAddress = "0x0000"
+@@ -429,19 +430,6 @@
+ 			accessList: &ethtypes.AccessList{},
+ 			expectPass: false,
+ 			errMsg:     "failed to unpack tx data",
+-		},
+-		{
+-			msg:        "invalid chain ID (neither 9000 nor 9001)",
+-			to:         suite.to.Hex(),
+-			amount:     hundredInt,
+-			gasLimit:   1000,
+-			gasPrice:   zeroInt,
+-			gasFeeCap:  nil,
+-			gasTipCap:  nil,
+-			accessList: &ethtypes.AccessList{},
+-			chainID:    hundredInt,
+-			expectPass: false,
+-			errMsg:     "chain ID must be 9000 or 9001 on Evmos",
+ 		},
+ 	}
+ 
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/params.go chain/evmos/x/evm/types/params.go
+--- evmos/x/evm/types/params.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/params.go	2024-01-31 14:50:14
+@@ -24,7 +24,7 @@
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/utils"
++	"github.com/settlus/chain/evmos/utils"
+ )
+ 
+ var (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/tracer.go chain/evmos/x/evm/types/tracer.go
+--- evmos/x/evm/types/tracer.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/tracer.go	2024-01-31 14:50:14
+@@ -18,7 +18,6 @@
+ import (
+ 	"math/big"
+ 	"os"
+-	"time"
+ 
+ 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
+ 
+@@ -37,7 +36,7 @@
+ 
+ // NewTracer creates a new Logger tracer to collect execution traces from an
+ // EVM transaction.
+-func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height int64) vm.EVMLogger {
++func NewTracer(tracer string, msg core.Message, cfg *params.ChainConfig, height int64, time uint64) vm.EVMLogger {
+ 	// TODO: enable additional log configuration
+ 	logCfg := &logger.Config{
+ 		Debug: true,
+@@ -45,8 +44,8 @@
+ 
+ 	switch tracer {
+ 	case TracerAccessList:
+-		preCompiles := vm.ActivePrecompiles(cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil))
+-		return logger.NewAccessListTracer(msg.AccessList(), msg.From(), *msg.To(), preCompiles)
++		preCompiles := vm.ActivePrecompiles(cfg.Rules(big.NewInt(height), cfg.MergeNetsplitBlock != nil, time))
++		return logger.NewAccessListTracer(msg.AccessList, msg.From, *msg.To, preCompiles)
+ 	case TracerJSON:
+ 		return logger.NewJSONLogger(logCfg, os.Stderr)
+ 	case TracerMarkdown:
+@@ -101,7 +100,7 @@
+ // CaptureEnd implements vm.Tracer interface
+ //
+ //nolint:revive // allow unused parameters to indicate expected signature
+-func (dt NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, tm time.Duration, err error) {}
++func (dt NoOpTracer) CaptureEnd(output []byte, gasUsed uint64, err error) {}
+ 
+ // CaptureEnter implements vm.Tracer interface
+ //
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/tx_args.go chain/evmos/x/evm/types/tx_args.go
+--- evmos/x/evm/types/tx_args.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/tx_args.go	2024-01-31 14:50:14
+@@ -25,6 +25,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	"github.com/ethereum/go-ethereum/common/hexutil"
+ 	"github.com/ethereum/go-ethereum/common/math"
++	"github.com/ethereum/go-ethereum/core"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ )
+ 
+@@ -169,10 +170,10 @@
+ 
+ // ToMessage converts the arguments to the Message type used by the core evm.
+ // This assumes that setTxDefaults has been called.
+-func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (ethtypes.Message, error) {
++func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (core.Message, error) {
+ 	// Reject invalid combinations of pre- and post-1559 fee styles
+ 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
+-		return ethtypes.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
++		return core.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
+ 	}
+ 
+ 	// Set sender address or use zero address if none specified.
+@@ -239,8 +240,19 @@
+ 		nonce = uint64(*args.Nonce)
+ 	}
+ 
+-	msg := ethtypes.NewMessage(addr, args.To, nonce, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
+-	return msg, nil
++	return core.Message{
++		From:              addr,
++		To:                args.To,
++		Nonce:             nonce,
++		Value:             value,
++		GasLimit:          gas,
++		GasPrice:          gasPrice,
++		GasFeeCap:         gasFeeCap,
++		GasTipCap:         gasTipCap,
++		Data:              data,
++		AccessList:        accessList,
++		SkipAccountChecks: true,
++	}, nil
+ }
+ 
+ // GetFrom retrieves the transaction sender address.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/tx_args_test.go chain/evmos/x/evm/types/tx_args_test.go
+--- evmos/x/evm/types/tx_args_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/tx_args_test.go	2024-01-26 13:59:21
+@@ -7,7 +7,7 @@
+ 	"github.com/ethereum/go-ethereum/common"
+ 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+ 
+-	"github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/evmos/x/evm/types"
+ )
+ 
+ func (suite *TxDataTestSuite) TestTxArgsString() {
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/evm/types/utils_test.go chain/evmos/x/evm/types/utils_test.go
+--- evmos/x/evm/types/utils_test.go	2024-01-25 17:48:18
++++ chain/evmos/x/evm/types/utils_test.go	2024-01-26 13:59:21
+@@ -12,12 +12,12 @@
+ 
+ 	"github.com/ethereum/go-ethereum/common"
+ 
+-	proto "github.com/gogo/protobuf/proto"
++	"github.com/gogo/protobuf/proto"
+ 
+-	"github.com/evmos/evmos/v12/app"
+-	"github.com/evmos/evmos/v12/encoding"
+-	utiltx "github.com/evmos/evmos/v12/testutil/tx"
+-	evmtypes "github.com/evmos/evmos/v12/x/evm/types"
++	"github.com/settlus/chain/app"
++	"github.com/settlus/chain/evmos/encoding"
++	utiltx "github.com/settlus/chain/evmos/testutil/tx"
++	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+ 
+ 	"github.com/stretchr/testify/require"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/client/cli/query.go chain/evmos/x/feemarket/client/cli/query.go
+--- evmos/x/feemarket/client/cli/query.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/client/cli/query.go	2024-01-31 14:50:14
+@@ -21,7 +21,7 @@
+ 	"github.com/cosmos/cosmos-sdk/client"
+ 	"github.com/cosmos/cosmos-sdk/client/flags"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // GetQueryCmd returns the parent command for all x/feemarket CLI query commands.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/genesis.go chain/evmos/x/feemarket/genesis.go
+--- evmos/x/feemarket/genesis.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/genesis.go	2024-01-31 14:50:14
+@@ -20,8 +20,8 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/keeper"
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/feemarket/keeper"
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // InitGenesis initializes genesis state based on exported genesis
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/handler.go chain/evmos/x/feemarket/handler.go
+--- evmos/x/feemarket/handler.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/handler.go	2024-01-31 14:50:14
+@@ -19,7 +19,8 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // NewHandler returns a handler for Ethermint type messages.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/keeper/abci.go chain/evmos/x/feemarket/keeper/abci.go
+--- evmos/x/feemarket/keeper/abci.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/keeper/abci.go	2024-01-31 14:50:14
+@@ -18,8 +18,9 @@
+ import (
+ 	"fmt"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
+ 	abci "github.com/tendermint/tendermint/abci/types"
++
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ 
+ 	sdkmath "cosmossdk.io/math"
+ 	"github.com/cosmos/cosmos-sdk/telemetry"
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/keeper/grpc_query.go chain/evmos/x/feemarket/keeper/grpc_query.go
+--- evmos/x/feemarket/keeper/grpc_query.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/keeper/grpc_query.go	2024-01-31 14:50:14
+@@ -22,7 +22,7 @@
+ 	sdkmath "cosmossdk.io/math"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ var _ types.QueryServer = Keeper{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/keeper/keeper.go chain/evmos/x/feemarket/keeper/keeper.go
+--- evmos/x/feemarket/keeper/keeper.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/keeper/keeper.go	2024-01-31 14:50:14
+@@ -24,7 +24,7 @@
+ 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+ 	"github.com/tendermint/tendermint/libs/log"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // KeyPrefixBaseFeeV1 TODO: Temporary will be removed with params refactor PR
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/keeper/msg_server.go chain/evmos/x/feemarket/keeper/msg_server.go
+--- evmos/x/feemarket/keeper/msg_server.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/keeper/msg_server.go	2024-01-31 14:50:14
+@@ -6,7 +6,8 @@
+ 	errorsmod "cosmossdk.io/errors"
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ // UpdateParams implements the gRPC MsgServer interface. When an UpdateParams
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/keeper/params.go chain/evmos/x/feemarket/keeper/params.go
+--- evmos/x/feemarket/keeper/params.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/keeper/params.go	2024-01-31 14:50:14
+@@ -18,7 +18,7 @@
+ import (
+ 	"math/big"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ 
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ )
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/module.go chain/evmos/x/feemarket/module.go
+--- evmos/x/feemarket/module.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/module.go	2024-01-31 14:50:14
+@@ -34,9 +34,9 @@
+ 	"github.com/cosmos/cosmos-sdk/types/module"
+ 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+ 
+-	"github.com/evmos/evmos/v12/x/feemarket/client/cli"
+-	"github.com/evmos/evmos/v12/x/feemarket/keeper"
+-	"github.com/evmos/evmos/v12/x/feemarket/types"
++	"github.com/settlus/chain/evmos/x/feemarket/client/cli"
++	"github.com/settlus/chain/evmos/x/feemarket/keeper"
++	"github.com/settlus/chain/evmos/x/feemarket/types"
+ )
+ 
+ var (
+@@ -137,11 +137,6 @@
+ func (am AppModule) RegisterServices(cfg module.Configurator) {
+ 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+ 	types.RegisterMsgServer(cfg.MsgServer(), &am.keeper)
+-
+-	m := keeper.NewMigrator(am.keeper, am.legacySubspace)
+-	if err := cfg.RegisterMigration(types.ModuleName, 3, m.Migrate3to4); err != nil {
+-		panic(err)
+-	}
+ }
+ 
+ // Route returns the message routing key for the fee market module.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/feemarket/types/params.go chain/evmos/x/feemarket/types/params.go
+--- evmos/x/feemarket/types/params.go	2024-01-25 17:48:18
++++ chain/evmos/x/feemarket/types/params.go	2024-01-31 14:50:14
+@@ -25,8 +25,8 @@
+ )
+ 
+ var (
+-	// DefaultMinGasMultiplier is 0.5 or 50%
+-	DefaultMinGasMultiplier = sdk.NewDecWithPrec(50, 2)
++	// DefaultMinGasMultiplier is 0 (i.e. all unused fee will be refunded)
++	DefaultMinGasMultiplier = sdk.ZeroDec()
+ 	// DefaultMinGasPrice is 0 (i.e disabled)
+ 	DefaultMinGasPrice = sdk.ZeroDec()
+ 	// DefaultEnableHeight is 0 (i.e disabled)
+@@ -90,8 +90,8 @@
+ func DefaultParams() Params {
+ 	return Params{
+ 		NoBaseFee:                DefaultNoBaseFee,
+-		BaseFeeChangeDenominator: params.BaseFeeChangeDenominator,
+-		ElasticityMultiplier:     params.ElasticityMultiplier,
++		BaseFeeChangeDenominator: params.DefaultBaseFeeChangeDenominator,
++		ElasticityMultiplier:     params.DefaultElasticityMultiplier,
+ 		BaseFee:                  sdkmath.NewIntFromUint64(params.InitialBaseFee),
+ 		EnableHeight:             DefaultEnableHeight,
+ 		MinGasPrice:              DefaultMinGasPrice,
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/ibc/transfer/ibc_module.go chain/evmos/x/ibc/transfer/ibc_module.go
+--- evmos/x/ibc/transfer/ibc_module.go	2024-01-25 17:48:18
++++ chain/evmos/x/ibc/transfer/ibc_module.go	2024-01-26 14:00:28
+@@ -19,7 +19,8 @@
+ import (
+ 	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+ 	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
+-	"github.com/evmos/evmos/v12/x/ibc/transfer/keeper"
++
++	"github.com/settlus/chain/evmos/x/ibc/transfer/keeper"
+ )
+ 
+ var _ porttypes.IBCModule = IBCModule{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/ibc/transfer/keeper/keeper.go chain/evmos/x/ibc/transfer/keeper/keeper.go
+--- evmos/x/ibc/transfer/keeper/keeper.go	2024-01-25 17:48:18
++++ chain/evmos/x/ibc/transfer/keeper/keeper.go	2024-01-26 14:00:28
+@@ -26,7 +26,7 @@
+ 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+ 	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
+ 
+-	"github.com/evmos/evmos/v12/x/ibc/transfer/types"
++	"github.com/settlus/chain/evmos/x/ibc/transfer/types"
+ )
+ 
+ // Keeper defines the modified IBC transfer keeper that embeds the original one.
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/ibc/transfer/keeper/msg_server.go chain/evmos/x/ibc/transfer/keeper/msg_server.go
+--- evmos/x/ibc/transfer/keeper/msg_server.go	2024-01-25 17:48:18
++++ chain/evmos/x/ibc/transfer/keeper/msg_server.go	2024-01-26 14:00:28
+@@ -28,7 +28,8 @@
+ 	sdk "github.com/cosmos/cosmos-sdk/types"
+ 
+ 	"github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+-	erc20types "github.com/evmos/evmos/v12/x/erc20/types"
++
++	erc20types "github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ var _ types.MsgServer = Keeper{}
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/ibc/transfer/module.go chain/evmos/x/ibc/transfer/module.go
+--- evmos/x/ibc/transfer/module.go	2024-01-25 17:48:18
++++ chain/evmos/x/ibc/transfer/module.go	2024-01-26 14:00:28
+@@ -24,7 +24,8 @@
+ 	ibctransfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
+ 	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
+ 	"github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+-	"github.com/evmos/evmos/v12/x/ibc/transfer/keeper"
++
++	"github.com/settlus/chain/evmos/x/ibc/transfer/keeper"
+ )
+ 
+ var (
+diff --color -urw --exclude=.* --exclude=*.pb.go evmos/x/ibc/transfer/types/interfaces.go chain/evmos/x/ibc/transfer/types/interfaces.go
+--- evmos/x/ibc/transfer/types/interfaces.go	2024-01-25 17:48:18
++++ chain/evmos/x/ibc/transfer/types/interfaces.go	2024-01-26 14:00:28
+@@ -26,7 +26,7 @@
+ 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+ 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+ 
+-	erc20types "github.com/evmos/evmos/v12/x/erc20/types"
++	erc20types "github.com/settlus/chain/evmos/x/erc20/types"
+ )
+ 
+ // AccountKeeper defines the expected interface needed to retrieve account info.

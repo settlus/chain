@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Evmos packages. If not, see https://github.com/evmos/evmos/blob/main/LICENSE
-
 package types
 
 import (
@@ -44,7 +43,7 @@ const (
 	codeErrInvalidAccount
 	codeErrInvalidGasLimit
 	codeErrABIPack
-	CodeErrABIUnpack
+	codeErrABIUnpack
 )
 
 var ErrPostTxProcessing = errors.New("failed to execute post processing")
@@ -97,7 +96,7 @@ var (
 
 	ErrABIPack = errorsmod.Register(ModuleName, codeErrABIPack, "contract ABI pack failed")
 
-	ErrABIUnpack = errorsmod.Register(ModuleName, CodeErrABIUnpack, "contract ABI unpack failed")
+	ErrABIUnpack = errorsmod.Register(ModuleName, codeErrABIUnpack, "contract ABI unpack failed")
 )
 
 // NewExecErrorWithReason unpacks the revert return bytes and returns a wrapped error

@@ -9,16 +9,32 @@ option go_package = "github.com/settlus/chain/x/settlement/types";
 
 // Msg defines the Msg service.
 service Msg {
+  // Record records a revenue for a tenant.
   rpc Record(MsgRecord) returns (MsgRecordResponse);
+
+  // Cancel cancels a revenue record for a tenant.
   rpc Cancel(MsgCancel) returns (MsgCancelResponse);
+
+  // CreateTenant creates a new tenant.
   rpc CreateTenant(MsgCreateTenant) returns (MsgCreateTenantResponse);
+
+  // CreateTenantWithMintableContract creates a new tenant with a mintable
+  // contract.
   rpc CreateTenantWithMintableContract(MsgCreateTenantWithMintableContract)
       returns (MsgCreateTenantResponse);
+
+  // AddTenantAdmin adds a new admin to a tenant.
   rpc AddTenantAdmin(MsgAddTenantAdmin) returns (MsgAddTenantAdminResponse);
+
+  // RemoveTenantAdmin removes an admin from a tenant.
   rpc RemoveTenantAdmin(MsgRemoveTenantAdmin)
       returns (MsgRemoveTenantAdminResponse);
+
+  // UpdateTenantPayoutPeriod updates the payout period for a tenant.
   rpc UpdateTenantPayoutPeriod(MsgUpdateTenantPayoutPeriod)
       returns (MsgUpdateTenantPayoutPeriodResponse);
+
+  // DepositToTreasury deposits funds to the treasury.
   rpc DepositToTreasury(MsgDepositToTreasury)
       returns (MsgDepositToTreasuryResponse);
 }

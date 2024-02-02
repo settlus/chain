@@ -25,7 +25,6 @@ import (
 	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
 
 	"github.com/settlus/chain/cmd/settlusd/config"
-	"github.com/settlus/chain/evmos/utils"
 )
 
 func init() {
@@ -108,7 +107,7 @@ func Setup(
 		// Initialize the chain
 		app.InitChain(
 			abci.RequestInitChain{
-				ChainId:         utils.MainnetChainID + "-1",
+				ChainId:         "settlus_5371-1",
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
