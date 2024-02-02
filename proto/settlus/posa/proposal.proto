@@ -8,6 +8,7 @@ import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/settlus/chain/x/posa/types";
 
+// CreateValidatorProposal defines a proposal to create a new validator
 message CreateValidatorProposal {
   option (gogoproto.equal) = false;
 
@@ -16,6 +17,7 @@ message CreateValidatorProposal {
   ValidatorInfo info = 3;
 }
 
+// ValidatorInfo contains the information of a validator
 message ValidatorInfo {
   option (gogoproto.equal) = false;
 

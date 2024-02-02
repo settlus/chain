@@ -1,8 +1,6 @@
 syntax = "proto3";
 package settlus.posa;
 
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/settlus/chain/x/posa/types";
 
 // Params defines the parameters for the module.
