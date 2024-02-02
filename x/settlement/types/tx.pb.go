@@ -975,13 +975,22 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// Record records a revenue for a tenant.
 	Record(ctx context.Context, in *MsgRecord, opts ...grpc.CallOption) (*MsgRecordResponse, error)
+	// Cancel cancels a revenue record for a tenant.
 	Cancel(ctx context.Context, in *MsgCancel, opts ...grpc.CallOption) (*MsgCancelResponse, error)
+	// CreateTenant creates a new tenant.
 	CreateTenant(ctx context.Context, in *MsgCreateTenant, opts ...grpc.CallOption) (*MsgCreateTenantResponse, error)
+	// CreateTenantWithMintableContract creates a new tenant with a mintable
+	// contract.
 	CreateTenantWithMintableContract(ctx context.Context, in *MsgCreateTenantWithMintableContract, opts ...grpc.CallOption) (*MsgCreateTenantResponse, error)
+	// AddTenantAdmin adds a new admin to a tenant.
 	AddTenantAdmin(ctx context.Context, in *MsgAddTenantAdmin, opts ...grpc.CallOption) (*MsgAddTenantAdminResponse, error)
+	// RemoveTenantAdmin removes an admin from a tenant.
 	RemoveTenantAdmin(ctx context.Context, in *MsgRemoveTenantAdmin, opts ...grpc.CallOption) (*MsgRemoveTenantAdminResponse, error)
+	// UpdateTenantPayoutPeriod updates the payout period for a tenant.
 	UpdateTenantPayoutPeriod(ctx context.Context, in *MsgUpdateTenantPayoutPeriod, opts ...grpc.CallOption) (*MsgUpdateTenantPayoutPeriodResponse, error)
+	// DepositToTreasury deposits funds to the treasury.
 	DepositToTreasury(ctx context.Context, in *MsgDepositToTreasury, opts ...grpc.CallOption) (*MsgDepositToTreasuryResponse, error)
 }
 
@@ -1067,13 +1076,22 @@ func (c *msgClient) DepositToTreasury(ctx context.Context, in *MsgDepositToTreas
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// Record records a revenue for a tenant.
 	Record(context.Context, *MsgRecord) (*MsgRecordResponse, error)
+	// Cancel cancels a revenue record for a tenant.
 	Cancel(context.Context, *MsgCancel) (*MsgCancelResponse, error)
+	// CreateTenant creates a new tenant.
 	CreateTenant(context.Context, *MsgCreateTenant) (*MsgCreateTenantResponse, error)
+	// CreateTenantWithMintableContract creates a new tenant with a mintable
+	// contract.
 	CreateTenantWithMintableContract(context.Context, *MsgCreateTenantWithMintableContract) (*MsgCreateTenantResponse, error)
+	// AddTenantAdmin adds a new admin to a tenant.
 	AddTenantAdmin(context.Context, *MsgAddTenantAdmin) (*MsgAddTenantAdminResponse, error)
+	// RemoveTenantAdmin removes an admin from a tenant.
 	RemoveTenantAdmin(context.Context, *MsgRemoveTenantAdmin) (*MsgRemoveTenantAdminResponse, error)
+	// UpdateTenantPayoutPeriod updates the payout period for a tenant.
 	UpdateTenantPayoutPeriod(context.Context, *MsgUpdateTenantPayoutPeriod) (*MsgUpdateTenantPayoutPeriodResponse, error)
+	// DepositToTreasury deposits funds to the treasury.
 	DepositToTreasury(context.Context, *MsgDepositToTreasury) (*MsgDepositToTreasuryResponse, error)
 }
 

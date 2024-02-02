@@ -18,7 +18,8 @@ service Msg {
   // CreateTenant creates a new tenant.
   rpc CreateTenant(MsgCreateTenant) returns (MsgCreateTenantResponse);
 
-  // CreateTenantWithMintableContract creates a new tenant with a mintable contract.
+  // CreateTenantWithMintableContract creates a new tenant with a mintable
+  // contract.
   rpc CreateTenantWithMintableContract(MsgCreateTenantWithMintableContract)
       returns (MsgCreateTenantResponse);
 
