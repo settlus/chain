@@ -3,7 +3,6 @@ package settlus.nftownership;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
 import "settlus/nftownership/params.proto";
 
 option go_package = "github.com/settlus/chain/x/nftownership/types";

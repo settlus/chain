@@ -8,8 +8,13 @@ option go_package = "github.com/settlus/chain/x/oracle/types";
 
 // Msg defines the Msg service.
 service Msg {
+  // Prevote sends a prevote message for the oracle consensus.
   rpc Prevote(MsgPrevote) returns (MsgPrevoteResponse);
+
+  // Vote sends a vote message for the oracle consensus.
   rpc Vote(MsgVote) returns (MsgVoteResponse);
+
+  // FeederDelegationConsent sends a message to delegate feeder to a validator.
   rpc FeederDelegationConsent(MsgFeederDelegationConsent)
       returns (MsgFeederDelegationConsentResponse);
 }
