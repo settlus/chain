@@ -37,7 +37,7 @@ message AggregatePrevote {
 }
 
 message AggregateVote {
-  repeated BlockData blockData = 1;
+  repeated BlockData block_data = 1;
   string voter = 2;
 }
 
