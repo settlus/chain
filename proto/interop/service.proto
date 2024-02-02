@@ -1,5 +1,5 @@
 syntax = "proto3";
-package settlus.interop;
+package interop;
 
 option go_package = "github.com/settlus/chain/x/interop";
 

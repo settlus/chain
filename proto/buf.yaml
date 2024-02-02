@@ -23,6 +23,7 @@ lint:
   ignore:
     - evmos
     - ethermint
+    - interop
 breaking:
   use:
     - FILE
