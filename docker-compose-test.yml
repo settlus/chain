@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  tester:
+    container_name: tester
+    image: "settlus/localnet"
+    volumes:
+      - ./.tester:/root/.settlus:Z    
+    command: 
+      - start
+    networks:
+      chain-public_localnet:
+        ipv4_address: 192.168.11.9
+    restart: always
+
+networks:
+  chain-public_localnet:
+    external: true

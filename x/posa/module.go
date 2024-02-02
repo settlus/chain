@@ -34,7 +34,6 @@ func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// RegisterLegacyAminoCodec performs a no-op as the erc20 doesn't support Amino encoding
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
 
 // ConsensusVersion returns the consensus state-breaking version for the module.
@@ -42,12 +41,12 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 	return 3
 }
 
-// RegisterInterfaces registers interfaces and implementations of the erc20 module.
+// RegisterInterfaces registers interfaces and implementations of the posa module.
 func (AppModuleBasic) RegisterInterfaces(interfaceRegistry codectypes.InterfaceRegistry) {
 	types.RegisterInterfaces(interfaceRegistry)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the erc20
+// DefaultGenesis returns default genesis state as raw bytes for the posa
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
@@ -62,18 +61,18 @@ func (b AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncoding
 	return genesisState.Validate()
 }
 
-// RegisterRESTRoutes performs a no-op as the erc20 module doesn't expose REST
+// RegisterRESTRoutes performs a no-op as the posa module doesn't expose REST
 // endpoints
 func (AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
 func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *runtime.ServeMux) {}
 
-// GetTxCmd returns the root tx command for the erc20 module.
+// GetTxCmd returns the root tx command for the posa module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.NewTxCmd()
 }
 
-// GetQueryCmd returns no root query command for the erc20 module.
+// GetQueryCmd returns no root query command for the posa module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return nil
 }

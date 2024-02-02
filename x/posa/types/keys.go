@@ -2,7 +2,7 @@ package types
 
 const (
 	// ModuleName is the module name constant used in many places
-	ModuleName = "poa"
+	ModuleName = "posa"
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName

@@ -1,0 +1,699 @@
+{
+  "genesis_time": "2024-02-02T02:42:56.329521Z",
+  "chain_id": "settlus_5371-1",
+  "initial_height": "1",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "100000000",
+      "time_iota_ms": "1000"
+    },
+    "evidence": {
+      "max_age_num_blocks": "100000",
+      "max_age_duration": "172800000000000",
+      "max_bytes": "1048576"
+    },
+    "validator": {
+      "pub_key_types": [
+        "secp256k1"
+      ]
+    },
+    "version": {}
+  },
+  "app_hash": "",
+  "app_state": {
+    "auth": {
+      "params": {
+        "max_memo_characters": "256",
+        "tx_sig_limit": "7",
+        "tx_size_cost_per_byte": "10",
+        "sig_verify_cost_ed25519": "590",
+        "sig_verify_cost_secp256k1": "1000"
+      },
+      "accounts": [
+        {
+          "@type": "/ethermint.types.v1.EthAccount",
+          "base_account": {
+            "address": "settlus1ssckvylj3ak7hlu7clxfxw08vhd3uk0pxfl0aa",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        },
+        {
+          "@type": "/ethermint.types.v1.EthAccount",
+          "base_account": {
+            "address": "settlus1gce5kljr2yeh0ylwu9kzdxmk3xtfkml37emw8t",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        },
+        {
+          "@type": "/ethermint.types.v1.EthAccount",
+          "base_account": {
+            "address": "settlus1wgrmwa9p5825hvhkwrwujralm6hz20ta0ran97",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        },
+        {
+          "@type": "/ethermint.types.v1.EthAccount",
+          "base_account": {
+            "address": "settlus1827qy9pl4sv0l5728dleptua2qmlxqu8up7pzx",
+            "pub_key": null,
+            "account_number": "0",
+            "sequence": "0"
+          },
+          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        }
+      ]
+    },
+    "authz": {
+      "authorization": []
+    },
+    "bank": {
+      "params": {
+        "send_enabled": [],
+        "default_send_enabled": true
+      },
+      "balances": [
+        {
+          "address": "settlus1ssckvylj3ak7hlu7clxfxw08vhd3uk0pxfl0aa",
+          "coins": [
+            {
+              "denom": "asetl",
+              "amount": "100000000000000000000000000"
+            },
+            {
+              "denom": "uusdc",
+              "amount": "100000000000000000000000000"
+            }
+          ]
+        },
+        {
+          "address": "settlus1gce5kljr2yeh0ylwu9kzdxmk3xtfkml37emw8t",
+          "coins": [
+            {
+              "denom": "asetl",
+              "amount": "100000000000000000000000000"
+            },
+            {
+              "denom": "uusdc",
+              "amount": "100000000000000000000000000"
+            }
+          ]
+        },
+        {
+          "address": "settlus1wgrmwa9p5825hvhkwrwujralm6hz20ta0ran97",
+          "coins": [
+            {
+              "denom": "asetl",
+              "amount": "100000000000000000000000000"
+            },
+            {
+              "denom": "uusdc",
+              "amount": "100000000000000000000000000"
+            }
+          ]
+        },
+        {
+          "address": "settlus1827qy9pl4sv0l5728dleptua2qmlxqu8up7pzx",
+          "coins": [
+            {
+              "denom": "asetl",
+              "amount": "100000000000000000000000000"
+            },
+            {
+              "denom": "uusdc",
+              "amount": "100000000000000000000000000"
+            }
+          ]
+        }
+      ],
+      "supply": [
+        {
+          "denom": "asetl",
+          "amount": "400000000000000000000000000"
+        },
+        {
+          "denom": "uusdc",
+          "amount": "400000000000000000000000000"
+        }
+      ],
+      "denom_metadata": []
+    },
+    "capability": {
+      "index": "1",
+      "owners": []
+    },
+    "crisis": {
+      "constant_fee": {
+        "denom": "asetl",
+        "amount": "1000"
+      }
+    },
+    "distribution": {
+      "params": {
+        "community_tax": "0.020000000000000000",
+        "base_proposer_reward": "0.010000000000000000",
+        "bonus_proposer_reward": "0.040000000000000000",
+        "withdraw_addr_enabled": true
+      },
+      "fee_pool": {
+        "community_pool": []
+      },
+      "delegator_withdraw_infos": [],
+      "previous_proposer": "",
+      "outstanding_rewards": [],
+      "validator_accumulated_commissions": [],
+      "validator_historical_rewards": [],
+      "validator_current_rewards": [],
+      "delegator_starting_infos": [],
+      "validator_slash_events": []
+    },
+    "erc20": {
+      "params": {
+        "enable_erc20": true,
+        "enable_evm_hook": true
+      },
+      "token_pairs": []
+    },
+    "evidence": {
+      "evidence": []
+    },
+    "evm": {
+      "accounts": [],
+      "params": {
+        "evm_denom": "asetl",
+        "enable_create": true,
+        "enable_call": true,
+        "extra_eips": [],
+        "chain_config": {
+          "homestead_block": "0",
+          "dao_fork_block": "0",
+          "dao_fork_support": true,
+          "eip150_block": "0",
+          "eip150_hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "eip155_block": "0",
+          "eip158_block": "0",
+          "byzantium_block": "0",
+          "constantinople_block": "0",
+          "petersburg_block": "0",
+          "istanbul_block": "0",
+          "muir_glacier_block": "0",
+          "berlin_block": "0",
+          "london_block": "0",
+          "arrow_glacier_block": "0",
+          "gray_glacier_block": "0",
+          "merge_netsplit_block": "0",
+          "shanghai_block": "0",
+          "cancun_block": "0"
+        },
+        "allow_unprotected_txs": false
+      }
+    },
+    "feegrant": {
+      "allowances": []
+    },
+    "feemarket": {
+      "params": {
+        "no_base_fee": false,
+        "base_fee_change_denominator": 8,
+        "elasticity_multiplier": 2,
+        "enable_height": "0",
+        "base_fee": "1000000000",
+        "min_gas_price": "0.000000000000000000",
+        "min_gas_multiplier": "0.000000000000000000"
+      },
+      "block_gas": "0"
+    },
+    "genutil": {
+      "gen_txs": [
+        {
+          "body": {
+            "messages": [
+              {
+                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                "description": {
+                  "moniker": "node0",
+                  "identity": "",
+                  "website": "",
+                  "security_contact": "",
+                  "details": ""
+                },
+                "commission": {
+                  "rate": "0.000000000000000000",
+                  "max_rate": "0.000000000000000000",
+                  "max_change_rate": "0.000000000000000000"
+                },
+                "min_self_delegation": "1",
+                "delegator_address": "settlus1ssckvylj3ak7hlu7clxfxw08vhd3uk0pxfl0aa",
+                "validator_address": "settlusvaloper1ssckvylj3ak7hlu7clxfxw08vhd3uk0pza4ulf",
+                "pubkey": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "A50ZAgfPWXwFjtdZvx2qepziAF8Oi1e4AZTGnw7FwvIP"
+                },
+                "value": {
+                  "denom": "asetl",
+                  "amount": "100000000000000000000"
+                },
+                "isProbono": false,
+                "max_delegation": "0"
+              }
+            ],
+            "memo": "8634bc92c3ed1fcbc38426a3446627c4bc307029@192.168.11.2:26656",
+            "timeout_height": "0",
+            "extension_options": [],
+            "non_critical_extension_options": []
+          },
+          "auth_info": {
+            "signer_infos": [
+              {
+                "public_key": {
+                  "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
+                  "key": "A43DeWzUwMD9sV+KeJBYrQIkIkj8XfT+ymUpTeU+BBKJ"
+                },
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "sequence": "0"
+              }
+            ],
+            "fee": {
+              "amount": [
+                {
+                  "denom": "asetl",
+                  "amount": "210000000"
+                }
+              ],
+              "gas_limit": "1000000",
+              "payer": "",
+              "granter": ""
+            },
+            "tip": null
+          },
+          "signatures": [
+            "qP5GdEVQu0t5DdXCLRJY3FguTAxrvis2PrXKjzxAg358/SpVHwYOkiHFR3tm3CoT0dCJfeke+W4MZAn5PIqJlQA="
+          ]
+        },
+        {
+          "body": {
+            "messages": [
+              {
+                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                "description": {
+                  "moniker": "node1",
+                  "identity": "",
+                  "website": "",
+                  "security_contact": "",
+                  "details": ""
+                },
+                "commission": {
+                  "rate": "0.000000000000000000",
+                  "max_rate": "0.000000000000000000",
+                  "max_change_rate": "0.000000000000000000"
+                },
+                "min_self_delegation": "1",
+                "delegator_address": "settlus1gce5kljr2yeh0ylwu9kzdxmk3xtfkml37emw8t",
+                "validator_address": "settlusvaloper1gce5kljr2yeh0ylwu9kzdxmk3xtfkml36d3a9l",
+                "pubkey": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "A+TvnvtW3Rc+T+O/Kb5OyYu5Mql1dgvWVZUl5D0oqCRu"
+                },
+                "value": {
+                  "denom": "asetl",
+                  "amount": "100000000000000000000"
+                },
+                "isProbono": false,
+                "max_delegation": "0"
+              }
+            ],
+            "memo": "f7b8c2ea9a08aca98e3c539120ef6469ab65716c@192.168.11.3:26656",
+            "timeout_height": "0",
+            "extension_options": [],
+            "non_critical_extension_options": []
+          },
+          "auth_info": {
+            "signer_infos": [
+              {
+                "public_key": {
+                  "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
+                  "key": "AodjjLtkehP8FJtTLmcr2+RDez9yklWGLZ6NWVG4k6ta"
+                },
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "sequence": "0"
+              }
+            ],
+            "fee": {
+              "amount": [
+                {
+                  "denom": "asetl",
+                  "amount": "210000000"
+                }
+              ],
+              "gas_limit": "1000000",
+              "payer": "",
+              "granter": ""
+            },
+            "tip": null
+          },
+          "signatures": [
+            "6ERFkZkGD08I9wJCpFUAO6hDLOu0uWBvrFR7LvR3pq02ZQ/UmEyQpXfhXgCcL5kxLIRXV3ToGv1bd5a6Ha/IqAA="
+          ]
+        },
+        {
+          "body": {
+            "messages": [
+              {
+                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                "description": {
+                  "moniker": "node2",
+                  "identity": "",
+                  "website": "",
+                  "security_contact": "",
+                  "details": ""
+                },
+                "commission": {
+                  "rate": "0.000000000000000000",
+                  "max_rate": "0.000000000000000000",
+                  "max_change_rate": "0.000000000000000000"
+                },
+                "min_self_delegation": "1",
+                "delegator_address": "settlus1wgrmwa9p5825hvhkwrwujralm6hz20ta0ran97",
+                "validator_address": "settlusvaloper1wgrmwa9p5825hvhkwrwujralm6hz20tathhq82",
+                "pubkey": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "AlR4DNkEIJutYhVSqoxfW3QdZY/5U94pnpz6pcFGc50k"
+                },
+                "value": {
+                  "denom": "asetl",
+                  "amount": "100000000000000000000"
+                },
+                "isProbono": false,
+                "max_delegation": "0"
+              }
+            ],
+            "memo": "2810de1ec4c78a2c234b18495d3d1483eaa599fa@192.168.11.4:26656",
+            "timeout_height": "0",
+            "extension_options": [],
+            "non_critical_extension_options": []
+          },
+          "auth_info": {
+            "signer_infos": [
+              {
+                "public_key": {
+                  "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
+                  "key": "A473WXWhJzJLCM4oyENr/sgvDQv6Cjs8XFcJbX0wsclb"
+                },
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "sequence": "0"
+              }
+            ],
+            "fee": {
+              "amount": [
+                {
+                  "denom": "asetl",
+                  "amount": "210000000"
+                }
+              ],
+              "gas_limit": "1000000",
+              "payer": "",
+              "granter": ""
+            },
+            "tip": null
+          },
+          "signatures": [
+            "ugEgQlBgH5ZQLGluZPwuPHFuHDc0yjIOB5d4o6+Qlq466y+d+gg13MvFqOt+aK3MFV2LhLjiTrxDQpqiLocqCAA="
+          ]
+        },
+        {
+          "body": {
+            "messages": [
+              {
+                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
+                "description": {
+                  "moniker": "node3",
+                  "identity": "",
+                  "website": "",
+                  "security_contact": "",
+                  "details": ""
+                },
+                "commission": {
+                  "rate": "0.000000000000000000",
+                  "max_rate": "0.000000000000000000",
+                  "max_change_rate": "0.000000000000000000"
+                },
+                "min_self_delegation": "1",
+                "delegator_address": "settlus1827qy9pl4sv0l5728dleptua2qmlxqu8up7pzx",
+                "validator_address": "settlusvaloper1827qy9pl4sv0l5728dleptua2qmlxqu8c45jqj",
+                "pubkey": {
+                  "@type": "/cosmos.crypto.secp256k1.PubKey",
+                  "key": "A3WUTF1/ijrodzz1KgjIXpFgTKYYkzJIC56SmiZ2cF1i"
+                },
+                "value": {
+                  "denom": "asetl",
+                  "amount": "100000000000000000000"
+                },
+                "isProbono": false,
+                "max_delegation": "0"
+              }
+            ],
+            "memo": "092050a1b66a9aef54b344a7f4a5edc019ffea16@192.168.11.5:26656",
+            "timeout_height": "0",
+            "extension_options": [],
+            "non_critical_extension_options": []
+          },
+          "auth_info": {
+            "signer_infos": [
+              {
+                "public_key": {
+                  "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
+                  "key": "Az/0e2doLJB92MBYYvml48JJZSdOKI2MwR0lFmARjaW8"
+                },
+                "mode_info": {
+                  "single": {
+                    "mode": "SIGN_MODE_DIRECT"
+                  }
+                },
+                "sequence": "0"
+              }
+            ],
+            "fee": {
+              "amount": [
+                {
+                  "denom": "asetl",
+                  "amount": "210000000"
+                }
+              ],
+              "gas_limit": "1000000",
+              "payer": "",
+              "granter": ""
+            },
+            "tip": null
+          },
+          "signatures": [
+            "YvpXBNt7cYatajNhFWZRyObhQBUAyvlwDxOkKh6CsQ4OGOPzHpBgvQ4aE4iMRE3Jf8Z8YBr5mgia2eI9xq3iQQA="
+          ]
+        }
+      ]
+    },
+    "gov": {
+      "starting_proposal_id": "1",
+      "deposits": [],
+      "votes": [],
+      "proposals": [],
+      "deposit_params": {
+        "min_deposit": [
+          {
+            "denom": "asetl",
+            "amount": "1000"
+          }
+        ],
+        "max_deposit_period": "300s"
+      },
+      "voting_params": {
+        "voting_period": "300s"
+      },
+      "tally_params": {
+        "quorum": "0.334000000000000000",
+        "threshold": "0.500000000000000000",
+        "veto_threshold": "0.334000000000000000"
+      }
+    },
+    "group": {
+      "group_seq": "0",
+      "groups": [],
+      "group_members": [],
+      "group_policy_seq": "0",
+      "group_policies": [],
+      "proposal_seq": "0",
+      "proposals": [],
+      "votes": []
+    },
+    "ibc": {
+      "client_genesis": {
+        "clients": [],
+        "clients_consensus": [],
+        "clients_metadata": [],
+        "params": {
+          "allowed_clients": [
+            "06-solomachine",
+            "07-tendermint"
+          ]
+        },
+        "create_localhost": false,
+        "next_client_sequence": "0"
+      },
+      "connection_genesis": {
+        "connections": [],
+        "client_connection_paths": [],
+        "next_connection_sequence": "0",
+        "params": {
+          "max_expected_time_per_block": "30000000000"
+        }
+      },
+      "channel_genesis": {
+        "channels": [],
+        "acknowledgements": [],
+        "commitments": [],
+        "receipts": [],
+        "send_sequences": [],
+        "recv_sequences": [],
+        "ack_sequences": [],
+        "next_channel_sequence": "0"
+      }
+    },
+    "interchainaccounts": {
+      "controller_genesis_state": {
+        "active_channels": [],
+        "interchain_accounts": [],
+        "ports": [],
+        "params": {
+          "controller_enabled": true
+        }
+      },
+      "host_genesis_state": {
+        "active_channels": [],
+        "interchain_accounts": [],
+        "port": "icahost",
+        "params": {
+          "host_enabled": true,
+          "allow_messages": [
+            "*"
+          ]
+        }
+      }
+    },
+    "mint": {
+      "minter": {
+        "inflation": "0.130000000000000000",
+        "annual_provisions": "0.000000000000000000"
+      },
+      "params": {
+        "mint_denom": "asetl",
+        "inflation_rate_change": "0.130000000000000000",
+        "inflation_max": "0.200000000000000000",
+        "inflation_min": "0.070000000000000000",
+        "goal_bonded": "0.670000000000000000",
+        "blocks_per_year": "6311520",
+        "block_reward": "5000000000000000000"
+      }
+    },
+    "nftownership": {
+      "params": {
+        "allowed_chain_ids": []
+      }
+    },
+    "oracle": {
+      "params": {
+        "vote_period": "10",
+        "vote_threshold": "0.500000000000000000",
+        "tolerated_error_band": "2",
+        "whitelist": [
+          {
+            "chain_id": "1",
+            "chain_name": "Ethereum",
+            "chain_url": "https://ethereum.org"
+          }
+        ],
+        "slash_fraction": "0.010000000000000000",
+        "slash_window": "100800",
+        "max_miss_count_per_slash_window": "60"
+      },
+      "block_data": [],
+      "feeder_delegation": [],
+      "miss_counts": [],
+      "aggregate_prevotes": [],
+      "aggregate_votes": []
+    },
+    "params": null,
+    "poa": {
+      "params": {
+        "allowed_authorities": []
+      }
+    },
+    "settlement": {
+      "params": {
+        "gas_price": {
+          "denom": "uusdc",
+          "amount": "1"
+        },
+        "oracle_fee_percentage": "1.000000000000000000"
+      },
+      "tenants": [],
+      "utxrs": []
+    },
+    "slashing": {
+      "params": {
+        "signed_blocks_window": "100",
+        "min_signed_per_window": "0.500000000000000000",
+        "downtime_jail_duration": "600s",
+        "slash_fraction_double_sign": "0.050000000000000000",
+        "slash_fraction_downtime": "0.010000000000000000"
+      },
+      "signing_infos": [],
+      "missed_blocks": []
+    },
+    "staking": {
+      "params": {
+        "unbonding_time": "1814400s",
+        "max_validators": 40,
+        "max_entries": 7,
+        "historical_entries": 10000,
+        "bond_denom": "asetl",
+        "min_commission_rate": "0.000000000000000000"
+      },
+      "last_total_power": "0",
+      "last_validator_powers": [],
+      "validators": [],
+      "delegations": [],
+      "unbonding_delegations": [],
+      "redelegations": [],
+      "exported": false
+    },
+    "transfer": {
+      "port_id": "transfer",
+      "denom_traces": [],
+      "params": {
+        "send_enabled": true,
+        "receive_enabled": true
+      }
+    },
+    "upgrade": {}
+  }
+}

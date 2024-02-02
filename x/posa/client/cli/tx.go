@@ -29,6 +29,8 @@ func NewTxCmd() *cobra.Command {
 }
 
 // NewCreateValidatorProposalCmd implements the command to submit a create validator proposal
+//
+//nolint:staticcheck
 func NewCreateValidatorProposalCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-validator-proposal [proposal-file]",

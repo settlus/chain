@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/tendermint/tendermint/libs/log"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +12,7 @@ import (
 	"github.com/settlus/chain/x/posa/types"
 )
 
-// Keeper of the distribution store
+// Keeper of the PoSA store
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	authority     sdk.AccAddress
@@ -20,7 +21,7 @@ type Keeper struct {
 	stakingKeeper types.StakingKeeper
 }
 
-// NewKeeper creates a new PoA Keeper instance
+// NewKeeper creates a new PoSA Keeper instance
 func NewKeeper(
 	cdc codec.BinaryCodec, authority sdk.AccAddress,
 	ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper,
@@ -51,7 +52,7 @@ func (k Keeper) CreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCreateVali
 	}
 
 	if msg.Commission.Rate.LT(k.stakingKeeper.MinCommissionRate(ctx)) {
-		return sdkerrors.Wrapf(stakingtypes.ErrCommissionLTMinRate, "cannot set validator commission to less than minimum rate of %s", k.stakingKeeper.MinCommissionRate(ctx))
+		return errorsmod.Wrapf(stakingtypes.ErrCommissionLTMinRate, "cannot set validator commission to less than minimum rate of %s", k.stakingKeeper.MinCommissionRate(ctx))
 	}
 
 	// check to see if the pubkey or sender has been registered before
@@ -61,7 +62,7 @@ func (k Keeper) CreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCreateVali
 
 	pk, ok := msg.Pubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", pk)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "Expecting cryptotypes.PubKey, got %T", pk)
 	}
 
 	if _, found := k.stakingKeeper.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
@@ -70,7 +71,7 @@ func (k Keeper) CreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCreateVali
 
 	bondDenom := k.stakingKeeper.BondDenom(ctx)
 	if msg.Value.Denom != bondDenom {
-		return sdkerrors.Wrapf(
+		return errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Value.Denom, bondDenom,
 		)
 	}
@@ -90,7 +91,7 @@ func (k Keeper) CreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCreateVali
 			}
 		}
 		if !hasKeyType {
-			return sdkerrors.Wrapf(
+			return errorsmod.Wrapf(
 				stakingtypes.ErrValidatorPubKeyTypeNotSupported,
 				"got: %s, expected: %s", pk.Type(), cp.Validator.PubKeyTypes,
 			)

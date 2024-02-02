@@ -1,6 +1,7 @@
 package poa
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +19,7 @@ func NewPoSAProposalHandler(cdc codec.Codec, k *keeper.Keeper) govtypes.Handler 
 			return handleCreateValidatorProposal(ctx, cdc, k, c)
 
 		default:
-			return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized create validator proposal content type: %T", c)
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "unrecognized create validator proposal content type: %T", c)
 		}
 	}
 }
@@ -32,12 +33,12 @@ func handleCreateValidatorProposal(ctx sdk.Context, cdc codec.Codec, k *keeper.K
 
 	minSelfDelegation, ok := sdk.NewIntFromString(p.Info.MinSelfDelegation)
 	if !ok {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
 	}
 
 	maxDelegation, ok := sdk.NewIntFromString(p.Info.MaxDelegation)
 	if !ok {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "max delegation must be a positive integer or zero")
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "max delegation must be a positive integer or zero")
 	}
 
 	var pk cryptotypes.PubKey

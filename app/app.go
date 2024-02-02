@@ -130,7 +130,7 @@ import (
 	oraclemodule "github.com/settlus/chain/x/oracle"
 	oraclemodulekeeper "github.com/settlus/chain/x/oracle/keeper"
 	oraclemoduletypes "github.com/settlus/chain/x/oracle/types"
-	poa "github.com/settlus/chain/x/posa"
+	posamodule "github.com/settlus/chain/x/posa"
 	posaclient "github.com/settlus/chain/x/posa/client"
 	posakeeper "github.com/settlus/chain/x/posa/keeper"
 	posatypes "github.com/settlus/chain/x/posa/types"
@@ -503,7 +503,7 @@ func New(
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
 		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
 		AddRoute(erc20types.RouterKey, erc20.NewErc20ProposalHandler(&app.Erc20Keeper)).
-		AddRoute(posatypes.RouterKey, poa.NewPoSAProposalHandler(app.appCodec, &app.PoaKeeper))
+		AddRoute(posatypes.RouterKey, posamodule.NewPoSAProposalHandler(app.appCodec, &app.PoaKeeper))
 
 	govConfig := govtypes.DefaultConfig()
 	/*
