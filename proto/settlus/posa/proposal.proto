@@ -22,9 +22,8 @@ message ValidatorInfo {
   string moniker = 1;
   string min_self_delegation = 2;
   string delegator_address = 3;
-  string validator_address = 4;
-  string pubkey = 5;
-  string amount = 6;
-  bool is_probono = 7;
-  string max_delegation = 8;
+  string pubkey = 4;
+  string amount = 5;
+  bool is_probono = 6;
+  string max_delegation = 7;
 }

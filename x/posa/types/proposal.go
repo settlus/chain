@@ -36,9 +36,8 @@ func (*CreateValidatorProposal) ProposalType() string {
 	return ProposalTypeCreateValidator
 }
 
+// TODO: add basic validation for the proposal
 // ValidateBasic performs a stateless check of the proposal fields
-func (ttcp *CreateValidatorProposal) ValidateBasic() error {
-	// check if the token is a hex address, if not, check if it is a valid SDK
-	// // denom
-	return v1beta1.ValidateAbstract(ttcp)
+func (cvp *CreateValidatorProposal) ValidateBasic() error {
+	return v1beta1.ValidateAbstract(cvp)
 }

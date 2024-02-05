@@ -16,15 +16,12 @@ import (
 type Keeper struct {
 	cdc           codec.BinaryCodec
 	authority     sdk.AccAddress
-	authKeeper    types.AccountKeeper
-	bankKeeper    types.BankKeeper
 	stakingKeeper types.StakingKeeper
 }
 
 // NewKeeper creates a new PoSA Keeper instance
 func NewKeeper(
-	cdc codec.BinaryCodec, authority sdk.AccAddress,
-	ak types.AccountKeeper, bk types.BankKeeper, sk types.StakingKeeper,
+	cdc codec.BinaryCodec, authority sdk.AccAddress, sk types.StakingKeeper,
 ) Keeper {
 	// ensure gov module account is set and is not nil
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
@@ -33,8 +30,6 @@ func NewKeeper(
 	return Keeper{
 		cdc:           cdc,
 		authority:     authority,
-		authKeeper:    ak,
-		bankKeeper:    bk,
 		stakingKeeper: sk,
 	}
 }

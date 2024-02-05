@@ -422,7 +422,7 @@ func initGenFiles(
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	var govGenState govv1.GenesisState
-	newPeriod := time.Minute * 5
+	newPeriod := time.Minute * 3
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
 
 	govGenState.DepositParams.MaxDepositPeriod = &newPeriod

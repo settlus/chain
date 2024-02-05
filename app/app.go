@@ -571,8 +571,6 @@ func New(
 	app.PoaKeeper = posakeeper.NewKeeper(
 		appCodec,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper,
-		app.BankKeeper,
 		app.StakingKeeper,
 	)
 
@@ -680,7 +678,7 @@ func New(
 		settlementmodule.NewAppModule(appCodec, app.SettlementKeeper, app.AccountKeeper, app.BankKeeper),
 		nftownershipmodule.NewAppModule(appCodec, *app.NftOwnershipKeeper, app.AccountKeeper, app.EvmKeeper),
 		oraclemodule.NewAppModule(appCodec, *app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
-		posamodule.NewAppModule(app.PoaKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		posamodule.NewAppModule(app.PoaKeeper, app.StakingKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

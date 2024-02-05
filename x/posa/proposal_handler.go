@@ -60,7 +60,12 @@ func handleCreateValidatorProposal(ctx sdk.Context, cdc codec.Codec, k *keeper.K
 		"",
 	)
 
-	valAddr, _ := sdk.ValAddressFromBech32(p.Info.ValidatorAddress)
+	acc, err := sdk.AccAddressFromBech32(p.Info.DelegatorAddress)
+	if err != nil {
+		return err
+	}
+	
+	valAddr := sdk.ValAddress(acc)
 
 	newMsg, err := stakingtypes.NewMsgCreateValidator(
 		valAddr,
