@@ -1,7 +1,9 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -19,6 +21,17 @@ func PadBytes(pad int, b []byte) []byte {
 	padded := make([]byte, pad)
 	copy(padded[pad-len(b):], b)
 	return padded
+}
+
+func ValidateHexString(s string) bool {
+	s = strings.TrimPrefix(s, "0x")
+
+	if len(s)%2 == 1 {
+		s = "0" + s
+	}
+
+	_, err := hex.DecodeString(s)
+	return err == nil
 }
 
 // GetAddressFromPubKey returns the address of a public key

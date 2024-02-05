@@ -57,6 +57,53 @@ func Test_PadBytes(t *testing.T) {
 	}
 }
 
+func Test_ValidateHexString(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "valid even hex string",
+			args: args{
+				s: "0x01",
+			},
+			want: true,
+		},
+		{
+			name: "valid odd hex string",
+			args: args{
+				s: "0x0",
+			},
+			want: true,
+		},
+		{
+			name: "invalid hex string",
+			args: args{
+				s: "0x0g",
+			},
+			want: false,
+		},
+		{
+			name: "invalid hex string",
+			args: args{
+				s: "x1",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if actual := types.ValidateHexString(tt.args.s); actual != tt.want {
+				t.Errorf("actual = %v, want %v", actual, tt.want)
+			}
+		})
+	}
+}
+
 func Test_GetAddressFromPubKey(t *testing.T) {
 	config := sdk.GetConfig()
 	config.SetBech32PrefixForAccount(settlusconfig.Bech32Prefix, settlusconfig.Bech32PrefixAccPub)

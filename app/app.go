@@ -123,8 +123,9 @@ import (
 	transferkeeper "github.com/settlus/chain/evmos/x/ibc/transfer/keeper"
 
 	"github.com/settlus/chain/app/ante"
+
 	"github.com/settlus/chain/swagger"
-	"github.com/settlus/chain/x/nftownership"
+	"github.com/settlus/chain/x/interop"
 	nftownershipmodule "github.com/settlus/chain/x/nftownership"
 	nftownershipmodulekeeper "github.com/settlus/chain/x/nftownership/keeper"
 	nftownershipmoduletypes "github.com/settlus/chain/x/nftownership/types"
@@ -538,7 +539,8 @@ func New(
 		distrtypes.ModuleName,
 	)
 
-	interopNodePort := cast.ToUint16(appOpts.Get(nftownership.FlagInteropNodePort))
+	interopNodePort := cast.ToUint16(appOpts.Get(interop.FlagInteropNodePort))
+	interopClientFactory := interop.NewInteropClientFactory(logger, interopNodePort)
 	app.NftOwnershipKeeper = nftownershipmodulekeeper.NewKeeper(
 		appCodec,
 		keys[nftownershipmoduletypes.StoreKey],
@@ -546,7 +548,7 @@ func New(
 		app.AccountKeeper,
 		app.EvmKeeper,
 		app.OracleKeeper,
-		interopNodePort,
+		interopClientFactory,
 	)
 
 	app.SettlementKeeper = settlementmodulekeeper.NewKeeper(

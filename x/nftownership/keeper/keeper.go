@@ -14,9 +14,6 @@ import (
 	"github.com/settlus/chain/x/interop"
 	"github.com/settlus/chain/x/nftownership/types"
 	"github.com/tendermint/tendermint/libs/log"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Keeper struct {
@@ -28,8 +25,7 @@ type Keeper struct {
 	evmKeeper     types.EVMKeeper
 	oracleKeeper  types.OracleKeeper
 
-	interopNodeEndpoint string
-	interopNodeConn     *grpc.ClientConn
+	interopClientFactory *interop.InteropClientFactory
 }
 
 func NewKeeper(
@@ -40,7 +36,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	evmKeeper types.EVMKeeper,
 	oracleKeeper types.OracleKeeper,
-	interopNodePort uint16,
+	interopClientFactory *interop.InteropClientFactory,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -56,7 +52,7 @@ func NewKeeper(
 		evmKeeper:     evmKeeper,
 		oracleKeeper:  oracleKeeper,
 
-		interopNodeEndpoint: fmt.Sprintf("localhost:%d", interopNodePort),
+		interopClientFactory: interopClientFactory,
 	}
 }
 
@@ -109,18 +105,9 @@ func (k Keeper) FindInternalOwner(
 }
 
 func (k Keeper) FindExternalOwner(ctx sdk.Context, chainId string, contractAddr string, tokenIdHex string) (*common.Address, error) {
-	// TODO: implement a connection pool to enhance connection handling
-	if k.interopNodeConn == nil || k.interopNodeConn.GetState() != connectivity.Ready {
-		conn, err := grpc.Dial(
-			k.interopNodeEndpoint,
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to dial interop-node: %w", err)
-		}
-
-		k.interopNodeConn = conn
+	client := k.interopClientFactory.GetInteropClient()
+	if client == nil {
+		return nil, fmt.Errorf("interop client not ready")
 	}
 
 	data, err := k.oracleKeeper.GetBlockData(ctx, chainId)
@@ -128,7 +115,6 @@ func (k Keeper) FindExternalOwner(ctx sdk.Context, chainId string, contractAddr 
 		return nil, fmt.Errorf("failed to get block data: %w", err)
 	}
 
-	client := interop.NewInteropClient(k.interopNodeConn)
 	res, err := client.OwnerOf(ctx, &interop.OwnerOfRequest{
 		ChainId:      chainId,
 		ContractAddr: contractAddr,
