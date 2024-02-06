@@ -14,6 +14,7 @@ const (
 	flagOverwrite   = "overwrite"
 	DefaultLogLevel = "info"
 	DefaultDBHome   = "db"
+	DefaultPort     = 8000
 )
 
 func configCmd() *cobra.Command {
@@ -74,6 +75,7 @@ for oracle feeder.
 					},
 				},
 				LogLevel: DefaultLogLevel,
+				Port:     DefaultPort,
 				DBHome:   path.Join(home, DefaultDBHome),
 			}
 

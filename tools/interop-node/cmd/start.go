@@ -31,7 +31,7 @@ func startCmd() *cobra.Command {
 			}
 
 			s := grpc.NewServer()
-			lis, err := net.Listen("tcp", ":8000")
+			lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Config.Port))
 			if err != nil {
 				return err
 			}

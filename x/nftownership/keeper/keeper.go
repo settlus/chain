@@ -10,13 +10,10 @@ import (
 	sdkerrorstypes "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/tendermint/tendermint/libs/log"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/x/interop"
 	"github.com/settlus/chain/x/nftownership/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 type Keeper struct {
@@ -27,6 +24,8 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	evmKeeper     types.EVMKeeper
 	oracleKeeper  types.OracleKeeper
+
+	interopClientFactory *interop.InteropClientFactory
 }
 
 func NewKeeper(
@@ -37,6 +36,7 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	evmKeeper types.EVMKeeper,
 	oracleKeeper types.OracleKeeper,
+	interopClientFactory *interop.InteropClientFactory,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -51,6 +51,8 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		evmKeeper:     evmKeeper,
 		oracleKeeper:  oracleKeeper,
+
+		interopClientFactory: interopClientFactory,
 	}
 }
 
@@ -103,13 +105,9 @@ func (k Keeper) FindInternalOwner(
 }
 
 func (k Keeper) FindExternalOwner(ctx sdk.Context, chainId string, contractAddr string, tokenIdHex string) (*common.Address, error) {
-	grpcClient, err := grpc.Dial(
-		"localhost:8000",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial grpc server: %w", err)
+	client := k.interopClientFactory.GetInteropClient()
+	if client == nil {
+		return nil, fmt.Errorf("interop client not ready")
 	}
 
 	data, err := k.oracleKeeper.GetBlockData(ctx, chainId)
@@ -117,7 +115,6 @@ func (k Keeper) FindExternalOwner(ctx sdk.Context, chainId string, contractAddr 
 		return nil, fmt.Errorf("failed to get block data: %w", err)
 	}
 
-	client := interop.NewInteropClient(grpcClient)
 	res, err := client.OwnerOf(ctx, &interop.OwnerOfRequest{
 		ChainId:      chainId,
 		ContractAddr: contractAddr,

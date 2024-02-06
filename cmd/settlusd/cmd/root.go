@@ -42,6 +42,7 @@ import (
 	evmosserver "github.com/settlus/chain/evmos/server"
 	servercfg "github.com/settlus/chain/evmos/server/config"
 	srvflags "github.com/settlus/chain/evmos/server/flags"
+	"github.com/settlus/chain/x/interop"
 
 	"github.com/settlus/chain/app"
 	settluscfg "github.com/settlus/chain/cmd/settlusd/config"
@@ -123,7 +124,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		rootCmd,
 		evmosserver.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
 		a.appExport,
-		addModuleInitFlags,
+		addStartFlags,
 	)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
@@ -144,8 +145,9 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	return rootCmd, encodingConfig
 }
 
-func addModuleInitFlags(startCmd *cobra.Command) {
+func addStartFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+	startCmd.Flags().Uint64(interop.FlagInteropNodePort, 8000, "Set port of interop node")
 }
 
 func queryCommand() *cobra.Command {
