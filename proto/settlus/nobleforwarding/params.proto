@@ -1,0 +1,9 @@
+syntax = "proto3";
+package settlus.nobleforwarding;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/settlus/chain/x/nobleforwarding/types";
+
+// Params defines the parameters for the module.
+message Params { option (gogoproto.goproto_stringer) = false; }

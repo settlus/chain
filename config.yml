@@ -28,6 +28,12 @@ build:
     third_party_paths:
       - third_party/proto
       - proto_vendor
+faucet:
+  name: faucet
+  coins:
+    - 100000setl
+    - 10000usdc
+  host: 0.0.0.0:4500
 genesis:
   app_state:
     crisis:

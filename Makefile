@@ -20,7 +20,7 @@ SETTLUS_BINARY := settlusd
 all: build
 
 ###############################################################################
-###                                  Build                                  ###
+###                              Build Binary                               ###
 ###############################################################################
 
 # Build tags processing
@@ -78,6 +78,22 @@ clean:
 	@rm -rf $(BUILDDIR)
 
 .PHONY: build test clean
+
+###############################################################################
+###                                Build Image                              ###
+###############################################################################
+get-heighliner:
+	git clone https://github.com/strangelove-ventures/heighliner.git
+	cd heighliner && go install
+
+local-image:
+ifeq (,$(shell which heighliner))
+	echo 'heighliner' binary not found. Consider running `make get-heighliner`
+else
+	heighliner build -c settlus --local -f ./chains.yaml
+endif
+
+.PHONY: get-heighliner local-image
 
 ###############################################################################
 ###                                Linting                                  ###

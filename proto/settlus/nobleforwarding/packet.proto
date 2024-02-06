@@ -1,0 +1,17 @@
+syntax = "proto3";
+package settlus.nobleforwarding;
+
+option go_package = "github.com/settlus/chain/x/nobleforwarding/types";
+
+message ForwardingAccountPacketData {
+  oneof packet {
+    NoData noData = 1;
+    ForwardingAccountPacket forwardingAccountPacket = 2;
+  }
+}
+
+message NoData {}
+
+// ForwardingAccountPacket defines a struct for the noble forwarding account
+// packet payload
+message ForwardingAccountPacket { string registrant = 1; }

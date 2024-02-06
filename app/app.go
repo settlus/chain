@@ -127,6 +127,9 @@ import (
 	nftownershipmodule "github.com/settlus/chain/x/nftownership"
 	nftownershipmodulekeeper "github.com/settlus/chain/x/nftownership/keeper"
 	nftownershipmoduletypes "github.com/settlus/chain/x/nftownership/types"
+	nobleforwardingmodule "github.com/settlus/chain/x/nobleforwarding"
+	nobleforwardingkeeper "github.com/settlus/chain/x/nobleforwarding/keeper"
+	nobleforwardingtypes "github.com/settlus/chain/x/nobleforwarding/types"
 	oraclemodule "github.com/settlus/chain/x/oracle"
 	oraclemodulekeeper "github.com/settlus/chain/x/oracle/keeper"
 	oraclemoduletypes "github.com/settlus/chain/x/oracle/types"
@@ -182,6 +185,7 @@ var (
 		erc20.AppModuleBasic{},
 
 		// Settlus modules
+		nobleforwardingmodule.AppModuleBasic{},
 		settlementmodule.AppModuleBasic{},
 		nftownershipmodule.AppModuleBasic{},
 		oraclemodule.AppModuleBasic{},
@@ -202,6 +206,7 @@ var (
 		erc20types.ModuleName: {authtypes.Minter, authtypes.Burner},
 
 		// settlus modules
+		nobleforwardingtypes.ModuleName:    nil,
 		settlementmoduletypes.ModuleName:   nil,
 		nftownershipmoduletypes.ModuleName: nil,
 		oraclemoduletypes.ModuleName:       nil,
@@ -272,9 +277,10 @@ type App struct {
 	Erc20Keeper     erc20keeper.Keeper
 
 	// Settlus keepers
-	SettlementKeeper   *settlementmodulekeeper.SettlementKeeper
-	NftOwnershipKeeper *nftownershipmodulekeeper.Keeper
-	OracleKeeper       *oraclemodulekeeper.Keeper
+	NobleForwardingKeeper *nobleforwardingkeeper.Keeper
+	SettlementKeeper      *settlementmodulekeeper.SettlementKeeper
+	NftOwnershipKeeper    *nftownershipmodulekeeper.Keeper
+	OracleKeeper          *oraclemodulekeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -327,6 +333,7 @@ func New(
 		// Evmos keys
 		erc20types.StoreKey,
 		// Settlus keys
+		nobleforwardingtypes.StoreKey,
 		settlementmoduletypes.StoreKey,
 		nftownershipmoduletypes.StoreKey,
 		oraclemoduletypes.StoreKey,
@@ -526,6 +533,17 @@ func New(
 	)
 
 	// Settlus Keeper
+	scopedICAKeeper := app.CapabilityKeeper.ScopeToModule(nobleforwardingtypes.ModuleName)
+	app.NobleForwardingKeeper = nobleforwardingkeeper.NewKeeper(
+		appCodec,
+		keys[nobleforwardingtypes.StoreKey],
+		keys[nobleforwardingtypes.MemStoreKey],
+		app.GetSubspace(nobleforwardingtypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		scopedICAKeeper,
+	)
+
 	app.OracleKeeper = oraclemodulekeeper.NewKeeper(
 		appCodec,
 		keys[oraclemoduletypes.StoreKey],
@@ -601,12 +619,16 @@ func New(
 
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
+	icaIBCModule := nobleforwardingmodule.NewIBCModule(*app.NobleForwardingKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := ibcporttypes.NewRouter()
 	ibcRouter.
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
 		AddRoute(ibctransfertypes.ModuleName, transferStack)
+
+	// custom forwarding account routing
+	ibcRouter.AddRoute(ibchost.ModuleName, icaIBCModule)
 
 	// this line is used by starport scaffolding # ibc/app/router
 	app.IBCKeeper.SetRouter(ibcRouter)
@@ -658,13 +680,14 @@ func New(
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
 
 		// Settlus app modules
+		nobleforwardingmodule.NewAppModule(appCodec, *app.NobleForwardingKeeper, app.AccountKeeper),
 		settlementmodule.NewAppModule(appCodec, app.SettlementKeeper, app.AccountKeeper, app.BankKeeper),
 		nftownershipmodule.NewAppModule(appCodec, *app.NftOwnershipKeeper, app.AccountKeeper, app.EvmKeeper),
 		oraclemodule.NewAppModule(appCodec, *app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
-	// there is nothing left over in the validator fee pool, so as to keep the
+	// there is nothing left over in the validator fee pool, to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
@@ -695,6 +718,7 @@ func New(
 		erc20types.ModuleName,
 
 		// Settlus modules
+		nobleforwardingtypes.ModuleName,
 		settlementmoduletypes.ModuleName,
 		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
@@ -727,6 +751,7 @@ func New(
 		erc20types.ModuleName,
 
 		// Settlus modules
+		nobleforwardingtypes.ModuleName,
 		settlementmoduletypes.ModuleName,
 		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
@@ -765,6 +790,7 @@ func New(
 		genutiltypes.ModuleName,
 
 		// Settlus modules
+		nobleforwardingtypes.ModuleName,
 		settlementmoduletypes.ModuleName,
 		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
@@ -1065,6 +1091,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(erc20types.ModuleName)
 
 	// Settlus modules
+	paramsKeeper.Subspace(nobleforwardingtypes.ModuleName)
 	paramsKeeper.Subspace(settlementmoduletypes.ModuleName)
 	paramsKeeper.Subspace(nftownershipmoduletypes.ModuleName)
 	paramsKeeper.Subspace(oraclemoduletypes.ModuleName)

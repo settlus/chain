@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package settlus.nobleforwarding;
+
+option go_package = "github.com/settlus/chain/x/nobleforwarding/types";
+
+// EventForwardingAccountCreated defines an event that is emitted when a new
+// forwarding account is created and ack is received
+message EventForwardingAccountAckSuccess {
+  string channel_id = 1;
+  string port = 2;
+  string registrant = 3;
+}
+
+// EventForwardingAccountCreated defines an event that is emitted
+// when forwarding account registration ack is failed
+message EventForwardingAccountAckFailure {
+  string channel_id = 1;
+  string port = 2;
+  string registrant = 3;
+  string error = 4;
+}
+
+// EventForwardingAccountCreated defines an event that is emitted
+// when forwarding account registration is timed out
+message EventForwardingAccountPacketTimeout {
+  string channel_id = 1;
+  string port = 2;
+  string registrant = 3;
+}

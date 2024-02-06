@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package settlus.nobleforwarding;
+
+import "gogoproto/gogo.proto";
+import "settlus/nobleforwarding/params.proto";
+
+option go_package = "github.com/settlus/chain/x/nobleforwarding/types";
+
+// GenesisState defines the nobleforwarding module's genesis state.
+message GenesisState {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  string port_id = 2;
+}

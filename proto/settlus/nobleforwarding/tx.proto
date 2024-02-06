@@ -1,0 +1,25 @@
+syntax = "proto3";
+package settlus.nobleforwarding;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/settlus/chain/x/nobleforwarding/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // Register defines a rpc handler for MsgRegisterAccount.
+  rpc RegisterAccount(MsgRegisterAccount) returns (MsgRegisterAccountResponse);
+}
+
+// MsgRegisterAccount defines the payload for Msg/RegisterAccount.
+message MsgRegisterAccount {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1;
+  string port = 2;
+  string channel_id = 3;
+  uint64 timeout_timestamp = 4;
+}
+
+// MsgRegisterAccountResponse defines the Msg/RegisterAccount response type.
+message MsgRegisterAccountResponse {}
