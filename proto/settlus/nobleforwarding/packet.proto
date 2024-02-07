@@ -14,4 +14,4 @@ message NoData {}
 
 // ForwardingAccountPacket defines a struct for the noble forwarding account
 // packet payload
-message ForwardingAccountPacket { string registrant = 1; }
+message ForwardingAccountPacket { string recipient = 1; }

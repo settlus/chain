@@ -83,7 +83,7 @@ func (k Keeper) OnAcknowledgementForwardingPacket(ctx sdk.Context, packet channe
 		if err := ctx.EventManager().EmitTypedEvent(&types.EventForwardingAccountAckFailure{
 			ChannelId:  packet.GetDestChannel(),
 			Port:       packet.GetDestPort(),
-			Registrant: data.Registrant,
+			Registrant: data.Recipient,
 			Error:      ackErr,
 		}); err != nil {
 			return fmt.Errorf("failed to emit EventForwardingAccountAckFailure event %w", err)
@@ -102,7 +102,7 @@ func (k Keeper) OnAcknowledgementForwardingPacket(ctx sdk.Context, packet channe
 		if err := ctx.EventManager().EmitTypedEvent(&types.EventForwardingAccountAckSuccess{
 			ChannelId:  packet.GetDestChannel(),
 			Port:       packet.GetDestPort(),
-			Registrant: data.Registrant,
+			Registrant: data.Recipient,
 		}); err != nil {
 			return fmt.Errorf("failed to emit EventForwardingAccountAckSuccess event %w", err)
 		}
@@ -119,7 +119,7 @@ func (k Keeper) OnTimeoutForwardingPacket(ctx sdk.Context, packet channeltypes.P
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventForwardingAccountPacketTimeout{
 		ChannelId:  packet.GetDestChannel(),
 		Port:       packet.GetDestPort(),
-		Registrant: data.Registrant,
+		Registrant: data.Recipient,
 	}); err != nil {
 		return fmt.Errorf("failed to emit EventForwardingAccountPacketTimeout event %w", err)
 	}
