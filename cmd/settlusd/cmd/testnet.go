@@ -28,6 +28,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -412,18 +413,30 @@ func initGenFiles(
 	bankGenState.Supply = totalCoins
 	bankGenState.Balances = genBalances
 	appGenState[banktypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&bankGenState)
+	
+	var distGenState disttypes.GenesisState
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[disttypes.ModuleName], &distGenState)
+
+	distGenState.Params.BaseProposerReward = sdk.MustNewDecFromStr("0")
+	distGenState.Params.BonusProposerReward = sdk.MustNewDecFromStr("0")
+
+	appGenState[disttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&distGenState)
 
 	var stakingGenState stakingtypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[stakingtypes.ModuleName], &stakingGenState)
 
 	stakingGenState.Params.BondDenom = coinDenom
-	stakingGenState.Params.MaxValidators = uint32(80)
+	stakingGenState.Params.MaxValidators = uint32(40)
 	stakingGenState.Params.MinCommissionRate = sdk.MustNewDecFromStr("0.0")
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	var govGenState govv1.GenesisState
+	newPeriod := time.Minute * 3
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
 
+	govGenState.DepositParams.MaxDepositPeriod = &newPeriod
+	govGenState.VotingParams.VotingPeriod = &newPeriod
+	govGenState.DepositParams.MinDeposit[0].Amount = sdk.NewInt(1000)
 	govGenState.DepositParams.MinDeposit[0].Denom = coinDenom
 	appGenState[govtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&govGenState)
 

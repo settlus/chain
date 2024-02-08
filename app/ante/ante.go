@@ -23,6 +23,10 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 			return newSettlementAnteHandler(options)(ctx, tx, sim)
 		}
 
+		if isCreateValidatorTx(tx) && ctx.BlockHeight() != 0 {
+			return ctx, errorsmod.Wrap(errortypes.ErrInvalidRequest, "You can create validator only through governance or gentx")
+	}
+
 		if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
 			opts := txWithExtensions.GetExtensionOptions()
 			if len(opts) > 0 {
@@ -61,6 +65,20 @@ func isSettlementTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		// EIP-712 Msg can't be built with ExtensionOptions, so we filter settlement messages by MsgTypeURL
 		if !strings.HasPrefix(sdk.MsgTypeURL(msg), "/settlus.settlement") {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isCreateValidatorTx(tx sdk.Tx) bool {
+	if len(tx.GetMsgs()) == 0 {
+		return false
+	}
+
+	for _, msg := range tx.GetMsgs() {
+		if !strings.HasPrefix(sdk.MsgTypeURL(msg), "/cosmos.staking.v1beta1.MsgCreateValidator") {
 			return false
 		}
 	}
