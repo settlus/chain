@@ -903,7 +903,7 @@ func (app *App) BlockedAddrs() map[string]bool {
 
 	for _, acc := range accs {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
-		// blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc] 안씀
+		//blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc] 안씀
 	}
 
 	return blockedAddrs
