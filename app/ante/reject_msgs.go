@@ -23,6 +23,14 @@ func (RejectMessagesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 				"Settlment Msg can only be processed in the Settlement ante handler",
 			)
 		}
+
+		if sdk.MsgTypeURL(msg) == "/cosmos.staking.v1beta1.MsgCreateValidator" && ctx.BlockHeight() != 0 {
+			return ctx, errorsmod.Wrapf(
+				errortypes.ErrInvalidType,
+				"You can create validator only through governance or gentx",
+			)
+		}
 	}
+
 	return next(ctx, tx, simulate)
 }
