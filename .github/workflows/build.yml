@@ -24,7 +24,7 @@ jobs:
             os: ubuntu-latest
           - go-arch: arm64
             os: macos-13-xlarge
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: [lint, test]
     if: ${{ always() && (needs.lint.result == 'success' || needs.test.result == 'success') }}
     steps:
