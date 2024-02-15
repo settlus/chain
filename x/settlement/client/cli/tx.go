@@ -45,20 +45,23 @@ func GetTxCmd() *cobra.Command {
 
 func CmdRecord() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "record [tenant-id] [request-id] [amount] [chain-id] [contract-address] [token-id] [metadata]",
+		Use:   "record [tenant-id] [request-id] [amount] [chain-id] [contract-address] [token-id-hex] [metadata]",
 		Short: "Record a settlement record in the settlement module",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Create a new Unspent Transaction Record (UTXR) in the 'x/settlement' module.
 
 Each UTXR is identified by a unique UTXR ID and is associated with a tenant, specified by the tenant ID. 
-The contract address and token ID are the address and ID of the NFT that that generated the revenue.
-The owner of the NFT will receive the payment in the amount specified.
+The contract address and the token ID (in hex format) specify the NFT that generated the revenue to be recorded.
+The owner of the NFT will receive the payment in the specified amount.
 
-Example:
-$ %s tx settlement record 1234 request-0 ehtereum 
-	0x0000000000000000000000000000000000000001 1 100usdc --from mykey
+Examples:
+$ %s tx settlement record 1234 request-0 10usdc settlus_5371-1 
+	0x0000000000000000000000000000000000000001 0x1 --from mykey  # NFT on Settlus
+
+$ %s tx settlement record 1234 request-0 10usdc 1 
+	0x0000000000000000000000000000000000000001 0x1 --from mykey  # NFT on external chains like Ethereum
 `,
-				version.AppName,
+				version.AppName, version.AppName,
 			),
 		),
 		Args: cobra.RangeArgs(6, 8),
