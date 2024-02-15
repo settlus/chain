@@ -2,9 +2,9 @@ name: Docker
 # builds the Settlus docker image on push to main & tags,
 # and pushes the image to https://ghcr.io/settlus/chain
 on:
-  pull_request:
-    paths:
-      - "*"
+#  pull_request:
+#    paths:
+#      - "*"
   push:
     branches:
       - main
