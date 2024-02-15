@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -171,15 +170,15 @@ func validateOwnerOfRequest(req *interop.OwnerOfRequest) bool {
 		return false
 	}
 
-	if _, err := hexutil.Decode(req.ContractAddr); err != nil {
+	if !types.ValidateHexString(req.ContractAddr) {
 		return false
 	}
 
-	if _, err := hexutil.Decode(req.BlockHash); err != nil {
+	if !types.ValidateHexString(req.BlockHash) {
 		return false
 	}
 
-	if _, err := hexutil.Decode(req.TokenIdHex); err != nil {
+	if !types.ValidateHexString(req.TokenIdHex) {
 		return false
 	}
 
