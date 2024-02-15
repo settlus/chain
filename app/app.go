@@ -562,7 +562,7 @@ func New(
 		app.NftOwnershipKeeper,
 	)
 
-	// NOTE: app.Erc20Keeper is already initialized elsewhere
+	// NOTE: app.Erc20Keeper is already initialized elsewhere...
 
 	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
