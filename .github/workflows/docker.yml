@@ -3,8 +3,8 @@ name: Docker
 # and pushes the image to https://ghcr.io/settlus/chain
 on:
   pull_request:
-#    paths:
-#      - "Dockerfile"
+    paths:
+      - "*"
   push:
     branches:
       - main
