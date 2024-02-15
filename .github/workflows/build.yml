@@ -16,7 +16,6 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         go-arch: [amd64, arm64]
@@ -25,7 +24,7 @@ jobs:
             os: ubuntu-latest
           - go-arch: arm64
             os: macos-13-xlarge
-    needs: [lint, test]
+    runs-on: ${{ matrix.os }}
     if: ${{ always() && (needs.lint.result == 'success' || needs.test.result == 'success') }}
     steps:
       - uses: actions/checkout@v4
