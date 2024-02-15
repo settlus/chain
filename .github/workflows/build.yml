@@ -18,12 +18,10 @@ jobs:
   build:
     strategy:
       matrix:
-        go-arch: [amd64, arm64]
+        go-arch: [amd64]
         include:
           - go-arch: amd64
             os: ubuntu-latest
-          - go-arch: arm64
-            os: macos-13-xlarge
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
