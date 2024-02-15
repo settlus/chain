@@ -23,6 +23,9 @@ all: build
 ###                                  Build                                  ###
 ###############################################################################
 
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+
 # Build tags processing
 build_tags := netgo
 ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
@@ -64,7 +67,7 @@ BUILDDIR ?= $(CURDIR)/build
 build: BUILD_ARGS=-o $(BUILDDIR)/
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 	@echo "Building..."
-	@go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./... || (echo "Build failed"; exit 1)
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./... || (echo "Build failed"; exit 1)
 
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
