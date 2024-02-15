@@ -1,7 +1,7 @@
 name: CI
 #  This workflow is run on pushes to main & every Pull Requests except changes to tools/interop-node.
 on:
-  pull_request:
+  #pull_request:
   push:
     branches:
       - main
