@@ -3,8 +3,8 @@ name: Docker
 # and pushes the image to https://ghcr.io/settlus/chain
 on:
   pull_request:
-    paths:
-      - "Dockerfile"
+#    paths:
+#      - "Dockerfile"
   push:
     branches:
       - main
@@ -30,6 +30,14 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        go-arch: [amd64, arm64]
+        include:
+          - go-arch: amd64
+            os: ubuntu-latest
+          - go-arch: arm64
+            os: macos-13-xlarge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,8 +70,8 @@ jobs:
       - name: Publish to GitHub Packages
         uses: docker/build-push-action@v5
         with:
-          file: Dockerfile.New
-          platforms: linux/amd64,linux/arm64
+          file: Dockerfile
+          platforms: linux/${{go-arch}}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
