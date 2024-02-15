@@ -38,7 +38,7 @@ jobs:
             os: ubuntu-latest
           - go-arch: arm64
             os: macos-13-xlarge
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,7 +71,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           file: Dockerfile
-          platforms: linux/${{go-arch}}
+          platforms: linux/${{matrix.go-arch}}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
