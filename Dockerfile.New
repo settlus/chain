@@ -1,0 +1,11 @@
+FROM alpine:3
+
+EXPOSE 26656 26657 1317 9090 8545
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates curl bash jq
+
+COPY build/settlusd-$TARGETOS-$TARGETARCH /usr/local/bin/settlusd
+
+ENTRYPOINT ["settlusd"]
