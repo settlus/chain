@@ -10,4 +10,4 @@ ARG TARGETOS TARGETARCH
 
 COPY build/settlusd-$TARGETOS-$TARGETARCH /usr/local/bin/settlusd
 
-ENTRYPOINT ["settlusd"]
+ENTRYPOINT ["settlusd"] 
