@@ -25,6 +25,7 @@ message EventRecord {
   string token_id_hex = 8;
   string recipient = 9;
   string metadata = 10;
+  uint64 payout_block = 11;
 }
 
 message EventCancel {

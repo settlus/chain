@@ -52,6 +52,8 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 		return nil, err
 	}
 
+	payoutBlock := uint64(ctx.BlockHeight()) + tenant.PayoutPeriod
+
 	utxrId, err := k.CreateUTXR(
 		ctx,
 		msg.TenantId,
@@ -59,7 +61,7 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 			RequestId:   msg.RequestId,
 			Recipient:   settlustypes.HexAddressString(recipient),
 			Amount:      msg.Amount,
-			PayoutBlock: uint64(ctx.BlockHeight()) + tenant.PayoutPeriod,
+			PayoutBlock: payoutBlock,
 		},
 	)
 	if err != nil {
@@ -77,6 +79,7 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 		TokenIdHex:      msg.TokenIdHex,
 		Recipient:       recipient,
 		Metadata:        msg.Metadata,
+		PayoutBlock:     payoutBlock,
 	}); err != nil {
 		return nil, errorsmod.Wrapf(types.ErrEventCreationFailed, "EventRecord event creation failed")
 	}
