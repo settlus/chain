@@ -28,8 +28,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -413,7 +413,7 @@ func initGenFiles(
 	bankGenState.Supply = totalCoins
 	bankGenState.Balances = genBalances
 	appGenState[banktypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&bankGenState)
-	
+
 	var distGenState disttypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[disttypes.ModuleName], &distGenState)
 
