@@ -62,6 +62,7 @@ jobs:
       - name: Publish to GitHub Packages
         uses: docker/build-push-action@v5
         with:
+          file: Dockerfile.New
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
