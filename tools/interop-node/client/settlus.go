@@ -271,11 +271,18 @@ func (sc *SettlusClient) sendTx(ctx context.Context, tx []byte) (*coretypes.Resu
 		return nil, fmt.Errorf("failed to broadcast tx: %w", err)
 	}
 
+	if res.CheckTx.Code != 0 {
+		if res.CheckTx.Code == errors.ErrWrongSequence.ABCICode() {
+			return res, fmt.Errorf("failed to broadcast tx, sequence number mismatch, %s", res.CheckTx.Log)
+		}
+		return nil, fmt.Errorf("failed to broadcast tx, check tx failed, code: %d, log: %s", res.CheckTx.Code, res.CheckTx.Log)
+	}
+
 	if res.DeliverTx.Code != 0 {
 		if res.DeliverTx.Code == errors.ErrWrongSequence.ABCICode() {
 			return res, fmt.Errorf("failed to broadcast tx, sequence number mismatch, %s", res.DeliverTx.Log)
 		}
-		return nil, fmt.Errorf("failed to broadcast tx code: %d, log: %s", res.DeliverTx.Code, res.DeliverTx.Log)
+		return nil, fmt.Errorf("failed to broadcast tx, deliver tx failed, code: %d, log: %s", res.DeliverTx.Code, res.DeliverTx.Log)
 	}
 
 	// If the tx was successful, increment the sequence
