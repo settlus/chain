@@ -53,6 +53,7 @@ type SettlusClient struct {
 	chainId  string
 	gasLimit uint64
 	fees     sdk.Coins
+	feePayer string
 
 	signer        signer.Signer
 	accountnumber uint64
@@ -88,6 +89,7 @@ func NewSettlusClient(config *config.Config, ctx context.Context, s signer.Signe
 		chainId:       config.Settlus.ChainId,
 		gasLimit:      config.Settlus.GasLimit,
 		fees:          fees,
+		feePayer:      config.Feeder.FeePayer,
 		signer:        s,
 		accountnumber: account.GetAccountNumber(),
 		sequence:      account.GetSequence(),
@@ -220,6 +222,14 @@ func (sc *SettlusClient) buildTx(msg sdk.Msg) ([]byte, error) {
 	}
 	txBuilder.SetGasLimit(sc.gasLimit)
 	txBuilder.SetFeeAmount(sc.fees)
+
+	if sc.feePayer != "" {
+		addr, err := sdk.AccAddressFromBech32(sc.feePayer)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse fee payer address: %w", err)
+		}
+		txBuilder.SetFeePayer(addr)
+	}
 
 	pubKey := sc.signer.PubKey()
 

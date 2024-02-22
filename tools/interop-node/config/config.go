@@ -121,8 +121,9 @@ func (sc *SettlusConfig) Validate() error {
 type FeederConfig struct {
 	Topics           string `yaml:"topics"`
 	SignerMode       string `yaml:"signer_mode"`
-	Address          string `yaml:"address"` // derived from private key or aws kms key id, no need to set manually
-	Key              string `yaml:"key"`     // aws kms key id or private key
+	Address          string `yaml:"address"`   // derived from private key or aws kms key id, no need to set manually
+	FeePayer         string `yaml:"fee_payer"` // optional fee payer address
+	Key              string `yaml:"key"`       // aws kms key id or private key
 	ValidatorAddress string `yaml:"validator_address"`
 }
 
@@ -153,6 +154,17 @@ func (fc *FeederConfig) Validate() error {
 
 	if fc.SignerMode == Local && len(fc.Key) != 64 {
 		return fmt.Errorf("invalid private key: %s", fc.Key)
+	}
+
+	if fc.FeePayer != "" {
+		if !strings.HasPrefix(fc.FeePayer, "settlus1") {
+			return fmt.Errorf("fee_payer must start with settlus1: %s", fc.FeePayer)
+		}
+
+		_, err := sdk.AccAddressFromBech32(fc.FeePayer)
+		if err != nil {
+			return fmt.Errorf("invalid fee_payer address: %w", err)
+		}
 	}
 
 	return nil
