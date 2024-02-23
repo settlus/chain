@@ -74,6 +74,13 @@ service Query {
   rpc RewardPool(QueryRewardPoolRequest) returns (QueryRewardPoolResponse) {
     option (google.api.http).get = "/settlus/oracle/v1alpha1/reward_pool";
   }
+
+  // Queries the current round info.
+  rpc CurrentRoundInfo(QueryCurrentRoundInfoRequest)
+      returns (QueryCurrentRoundInfoResponse) {
+    option (google.api.http).get =
+        "/settlus/oracle/v1alpha1/current_round_info";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -182,3 +189,7 @@ message QueryRewardPoolResponse {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
+
+message QueryCurrentRoundInfoRequest {}
+
+message QueryCurrentRoundInfoResponse { RoundInfo round_info = 1; }
