@@ -150,7 +150,7 @@ func (feeder *BlockFeeder) gatherBlockDataString(round oracletypes.RoundInfo) (s
 		if !ok {
 			return "", fmt.Errorf("chain client not found for chain id: %s", cc)
 		}
-		bd, err := cc.GetRecentBlockData(uint64(round.Timestamp))
+		bd, err := cc.GetOldestBlock(uint64(round.Timestamp))
 		if err != nil {
 			return "", err
 		}

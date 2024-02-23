@@ -16,7 +16,7 @@ type Subscriber interface {
 	Id() string
 	Start(ctx context.Context)
 	Stop()
-	GetRecentBlockData(timestamp uint64) (oracletypes.BlockData, error)
+	GetOldestBlock(timestamp uint64) (oracletypes.BlockData, error)
 	OwnerOf(ctx context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error)
 }
 

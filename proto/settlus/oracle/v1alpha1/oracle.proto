@@ -64,5 +64,6 @@ message RoundInfo {
   int64 vote_end = 3;
 
   repeated string chain_ids = 4;
+  // UNIX time in milliseconds
   int64 timestamp = 5;
 }

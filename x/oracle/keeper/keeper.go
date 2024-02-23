@@ -15,6 +15,8 @@ import (
 	"github.com/settlus/chain/x/oracle/types"
 )
 
+const BlockTimestampMargin = time.Second
+
 type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
@@ -106,7 +108,7 @@ func (k Keeper) UpdateCurrentRoundInfo(ctx sdk.Context) {
 		VoteEnd:    voteEnd,
 
 		ChainIds:  params.GetWhitelistChainIds(),
-		Timestamp: ctx.BlockHeader().Time.Add(-time.Minute).UnixMilli(),
+		Timestamp: ctx.BlockHeader().Time.Add(-BlockTimestampMargin).UnixMilli(),
 	}
 
 	bz = k.cdc.MustMarshal(&roundInfo)

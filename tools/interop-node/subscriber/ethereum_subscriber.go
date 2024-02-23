@@ -97,8 +97,8 @@ func (sub *EthereumSubscriber) OwnerOf(ctx context.Context, nftAddressHex string
 }
 
 // GetBlockData returns the latest block data
-func (sub *EthereumSubscriber) GetRecentBlockData(timestamp uint64) (oracletypes.BlockData, error) {
-	block, err := sub.repo.GetRecentBlock(timestamp)
+func (sub *EthereumSubscriber) GetOldestBlock(timestamp uint64) (oracletypes.BlockData, error) {
+	block, err := sub.repo.GetOldestBlock(timestamp)
 	if err != nil {
 		return oracletypes.BlockData{}, err
 	}

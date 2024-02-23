@@ -444,7 +444,8 @@ type RoundInfo struct {
 	PrevoteEnd int64    `protobuf:"varint,2,opt,name=prevote_end,json=prevoteEnd,proto3" json:"prevote_end,omitempty"`
 	VoteEnd    int64    `protobuf:"varint,3,opt,name=vote_end,json=voteEnd,proto3" json:"vote_end,omitempty"`
 	ChainIds   []string `protobuf:"bytes,4,rep,name=chain_ids,json=chainIds,proto3" json:"chain_ids,omitempty"`
-	Timestamp  int64    `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	// UNIX time in milliseconds
+	Timestamp int64 `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 }
 
 func (m *RoundInfo) Reset()         { *m = RoundInfo{} }

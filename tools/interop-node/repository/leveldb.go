@@ -76,8 +76,8 @@ func (repo *LevelDbRepository) GetNftOwnership(nftAddessHex string, tokenIdHex s
 
 }
 
-// GetRecentBlock implements Repository.
-func (repo *LevelDbRepository) GetRecentBlock(timestamp uint64) (BlockData, error) {
+// GetOldestBlock implements Repository.
+func (repo *LevelDbRepository) GetOldestBlock(timestamp uint64) (BlockData, error) {
 	iter := repo.db.NewIterator(nil, nil)
 	if ok := iter.Seek(timestampKey(timestamp)); ok && bytes.HasPrefix(iter.Key(), []byte(BLOCK_TIMESTAMP_PREFIX)) {
 		defer iter.Release()
