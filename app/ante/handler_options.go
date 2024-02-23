@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	stakingKeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	cosmosante "github.com/settlus/chain/evmos/app/ante/cosmos"
 	evmante "github.com/settlus/chain/evmos/app/ante/evm"
@@ -28,7 +29,7 @@ type HandlerOptions struct {
 	BankKeeper             evmtypes.BankKeeper
 	DistributionKeeper     anteutils.DistributionKeeper
 	IBCKeeper              *ibckeeper.Keeper
-	StakingKeeper          anteutils.StakingKeeper
+	StakingKeeper          stakingKeeper.Keeper
 	FeeMarketKeeper        evmante.FeeMarketKeeper
 	EvmKeeper              evmante.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
@@ -71,7 +72,7 @@ func (options HandlerOptions) Validate() error {
 // newEVMAnteHandler creates the default ante handler for Ethereum transactions
 func newEVMAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		RejectMessagesDecorator{},
+		NewRejectMessagesDecorator(options.StakingKeeper),
 		// outermost AnteDecorator. SetUpContext must be called first
 		evmante.NewEthSetUpContextDecorator(options.EvmKeeper),
 		// Check eth effective gas price against the node's minimal-gas-prices config
@@ -93,7 +94,7 @@ func newEVMAnteHandler(options HandlerOptions) sdk.AnteHandler {
 // newCosmosAnteHandler creates the default ante handler for Cosmos transactions
 func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		RejectMessagesDecorator{},
+		NewRejectMessagesDecorator(options.StakingKeeper),
 		cosmosante.RejectMessagesDecorator{}, // reject MsgEthereumTxs
 		cosmosante.NewAuthzLimiterDecorator( // disable the Msg types that cannot be included on an authz.MsgExec msgs field
 			sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),

@@ -70,7 +70,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				DistributionKeeper: suite.app.DistrKeeper,
 
 				IBCKeeper:     suite.app.IBCKeeper,
-				StakingKeeper: nil,
+				StakingKeeper: suite.app.StakingKeeper,
 			},
 			false,
 		},
