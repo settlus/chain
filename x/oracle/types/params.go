@@ -180,20 +180,6 @@ func validateVoteThreshold(i interface{}) error {
 	return nil
 }
 
-func validateToleratedErrorBand(i interface{}) error {
-	v, ok := i.(uint64)
-	if !ok {
-		return errorsmod.Wrapf(ErrInvalidParams, "invalid parameter type: %T", i)
-	}
-
-	// TODO: 10 is an arbitrary number. We need to find a better way to validate this.
-	if v > 10 {
-		return errorsmod.Wrapf(ErrInvalidParams, "tolerated error band must be less than 10: %d", v)
-	}
-
-	return nil
-}
-
 func validateSlashFraction(i interface{}) error {
 	v, ok := i.(sdk.Dec)
 	if !ok {
