@@ -2,7 +2,6 @@ package subscriber
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -22,12 +20,11 @@ import (
 )
 
 type EthereumSubscriber struct {
-	chainId   *big.Int
-	repo      repository.Repository
-	client    *ethclient.Client
-	lastBlock oracletypes.BlockData
-	logger    log.Logger
-	dbCh      chan *types.BlockEventData
+	chainId string
+	repo    repository.Repository
+	client  *ethclient.Client
+	logger  log.Logger
+	dbCh    chan *types.BlockEventData
 }
 
 var _ Subscriber = (*EthereumSubscriber)(nil)
@@ -38,15 +35,10 @@ func NewEthereumSubscriber(chainId string, rpcUrl string, logger log.Logger, rep
 		return nil, fmt.Errorf("failed to connect to the Ethereum client: %v", err)
 	}
 
-	chainIdInt, ok := math.ParseBig256(chainId)
-	if !ok {
-		return nil, fmt.Errorf("failed to parse chainId: %v", err)
-	}
-
 	dbCh := make(chan *types.BlockEventData)
 
 	return &EthereumSubscriber{
-		chainId: chainIdInt,
+		chainId: chainId,
 		repo:    repo,
 		client:  client,
 		logger:  logger,
@@ -54,8 +46,8 @@ func NewEthereumSubscriber(chainId string, rpcUrl string, logger log.Logger, rep
 	}, nil
 }
 
-func (sub *EthereumSubscriber) Id() uint64 {
-	return sub.chainId.Uint64()
+func (sub *EthereumSubscriber) Id() string {
+	return sub.chainId
 }
 
 func (sub *EthereumSubscriber) Start(ctx context.Context) {
@@ -89,7 +81,7 @@ func (sub *EthereumSubscriber) OwnerOf(ctx context.Context, nftAddressHex string
 					TokenId:      common.HexToHash(tokenIdHex).Big(),
 				}}
 
-				if err := sub.repo.PutBlockData(block.Hash().Bytes(), block.Number().Bytes(), events); err != nil {
+				if err := sub.repo.PutBlockData(block.Hash().Bytes(), block.Number().Bytes(), block.Header().Time*1000, events); err != nil {
 					sub.logger.Error("Failed to putBlockData", "error", err)
 				} else {
 					sub.logger.Info("put new block", "number", block.Number(), "hash", blockHash)
@@ -105,12 +97,17 @@ func (sub *EthereumSubscriber) OwnerOf(ctx context.Context, nftAddressHex string
 }
 
 // GetBlockData returns the latest block data
-func (sub *EthereumSubscriber) GetBlockData() (oracletypes.BlockData, error) {
-	if sub.lastBlock.BlockHash == "" {
-		return sub.lastBlock, errors.New("no block data available")
+func (sub *EthereumSubscriber) GetRecentBlockData(timestamp uint64) (oracletypes.BlockData, error) {
+	block, err := sub.repo.GetRecentBlock(timestamp)
+	if err != nil {
+		return oracletypes.BlockData{}, err
 	}
 
-	return sub.lastBlock, nil
+	return oracletypes.BlockData{
+		ChainId:     sub.chainId,
+		BlockNumber: common.BytesToHash(block.Number).Big().Int64(),
+		BlockHash:   common.Bytes2Hex(block.Hash),
+	}, nil
 }
 
 func (sub *EthereumSubscriber) findOwnerFromNetwork(ctx context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
@@ -152,15 +149,9 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 				continue
 			}
 
-			if err := sub.repo.PutBlockData(event.BlockHash, event.BlockNumber.Bytes(), event.NftTransferred); err != nil {
+			if err := sub.repo.PutBlockData(event.BlockHash, event.BlockNumber.Bytes(), event.Timestamp, event.NftTransferred); err != nil {
 				sub.logger.Error("Failed to putBlockData", "error", err)
 				continue
-			}
-
-			sub.lastBlock = oracletypes.BlockData{
-				ChainId:     sub.chainId.String(),
-				BlockNumber: event.BlockNumber.Int64(),
-				BlockHash:   common.Bytes2Hex(event.BlockHash),
 			}
 
 			sub.logger.Info("put new block", "number", event.BlockNumber.Int64(), "hash", common.Bytes2Hex(event.BlockHash))
@@ -214,6 +205,7 @@ func (sub *EthereumSubscriber) parseBlock(block *ethtypes.Block) (*types.BlockEv
 	return &types.BlockEventData{
 		BlockNumber:    block.Number(),
 		BlockHash:      block.Hash().Bytes(),
+		Timestamp:      block.Header().Time * 1000,
 		NftTransferred: erc721Transferred,
 	}, nil
 }

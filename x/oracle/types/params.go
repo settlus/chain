@@ -282,7 +282,7 @@ func (p Params) GetWhitelistChainIds() []string {
 	return chainIds
 }
 
-func CalculateVotePeriod(blockHeight uint64, votePeriod uint64) (uint64, uint64) {
+func CalculateVotePeriod(blockHeight int64, votePeriod int64) (int64, int64) {
 	prevoteEnd := blockHeight - blockHeight%(votePeriod*2) + votePeriod - 1
 	voteEnd := blockHeight - blockHeight%(votePeriod*2) + votePeriod*2 - 1
 

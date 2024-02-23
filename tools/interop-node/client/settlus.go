@@ -19,6 +19,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 	cometlog "github.com/tendermint/tendermint/libs/log"
 	httpclient "github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -327,4 +328,14 @@ func (sc *SettlusClient) updateSequenceFromError(res *coretypes.ResultBroadcastT
 	sc.sequence = sequenceInt
 	sc.logger.Debug(fmt.Sprintf("sequence number mismatch, updated sequence number to %d", sequenceInt))
 	return nil
+}
+
+func (sc *SettlusClient) FetchNewRoundInfo(ctx context.Context) (*oracletypes.RoundInfo, error) {
+	qc := oracletypes.NewQueryClient(sc.grpcClient)
+	res, err := qc.CurrentRoundInfo(ctx, &oracletypes.QueryCurrentRoundInfoRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res.RoundInfo, nil
 }

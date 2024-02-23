@@ -26,9 +26,14 @@ var _ types.MsgServer = msgServer{}
 func (m msgServer) Prevote(goCtx context.Context, prevote *types.MsgPrevote) (*types.MsgPrevoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	period := m.GetParams(ctx).VotePeriod
-	if types.IsLastBlockOfVotePeriod(ctx, period) {
-		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "current block height (%d) is the last block of the period", ctx.BlockHeight())
+	roundInfo := m.GetCurrentRoundInfo(ctx)
+
+	if roundInfo == nil || roundInfo.Id != prevote.RoundId {
+		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "round info not found for the round id (%d)", prevote.RoundId)
+	}
+
+	if ctx.BlockHeight() > roundInfo.PrevoteEnd {
+		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "prevote period is over")
 	}
 
 	// validator and feeder addresses are validated in the ValidateBasic()
@@ -57,6 +62,15 @@ func (m msgServer) Prevote(goCtx context.Context, prevote *types.MsgPrevote) (*t
 func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgVoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	roundInfo := m.GetCurrentRoundInfo(ctx)
+	if roundInfo == nil || roundInfo.Id != vote.RoundId {
+		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "round info not found for the round id (%d)", vote.RoundId)
+	}
+
+	if ctx.BlockHeight() > roundInfo.VoteEnd {
+		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "vote period is over")
+	}
+
 	// validator and feeder addresses are validated in the ValidateBasic()
 	if v, err := m.ValidateFeeder(ctx, vote.Feeder, vote.Validator); err != nil && v {
 		return nil, err
@@ -66,17 +80,6 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 	aggregatePrevote := m.GetAggregatePrevote(ctx, vote.Validator)
 	if aggregatePrevote == nil {
 		return nil, fmt.Errorf("aggregate prevote not found")
-	}
-
-	// Check if the msg is submitted in the proper period
-	params := m.GetParams(ctx)
-
-	if params.VotePeriod == 0 {
-		return nil, types.ErrVotePeriodIsZero
-	}
-
-	if (uint64(ctx.BlockHeight())/params.VotePeriod)-(aggregatePrevote.SubmitBlock/params.VotePeriod) != 1 {
-		return nil, types.ErrRevealPeriodMissMatch
 	}
 
 	// Check if the vote matches the aggregate prevote hash
@@ -93,15 +96,14 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 	if err != nil {
 		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "failed to parse block data string (%s)", err)
 	}
-	var whiteListedChainIds []string
-	for _, chain := range params.GetWhitelist() {
-		whiteListedChainIds = append(whiteListedChainIds, chain.ChainId)
-	}
+
 	var voteChainIds []string
 	for _, chain := range blockData {
 		voteChainIds = append(voteChainIds, chain.ChainId)
 	}
-	if !slices.Equal(whiteListedChainIds, voteChainIds) {
+
+	chainIds := m.GetCurrentRoundInfo(ctx).ChainIds
+	if !slices.Equal(chainIds, voteChainIds) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "chain ids are not matched with the whitelist")
 	}
 

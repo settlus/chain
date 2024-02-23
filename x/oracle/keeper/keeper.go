@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -84,7 +85,7 @@ func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
 
 func (k Keeper) UpdateCurrentRoundInfo(ctx sdk.Context) {
 	params := k.GetParams(ctx)
-	prevoteEnd, voteEnd := types.CalculateVotePeriod(uint64(ctx.BlockHeight()), params.VotePeriod)
+	prevoteEnd, voteEnd := types.CalculateVotePeriod(ctx.BlockHeight(), (int64)(params.VotePeriod))
 
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.CurrentRoundKey())
@@ -105,7 +106,7 @@ func (k Keeper) UpdateCurrentRoundInfo(ctx sdk.Context) {
 		VoteEnd:    voteEnd,
 
 		ChainIds:  params.GetWhitelistChainIds(),
-		Timestamp: uint64(ctx.BlockHeader().Time.UnixMilli()),
+		Timestamp: ctx.BlockHeader().Time.Add(-time.Minute).UnixMilli(),
 	}
 
 	bz = k.cdc.MustMarshal(&roundInfo)

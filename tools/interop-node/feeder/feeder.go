@@ -10,6 +10,8 @@ import (
 	"github.com/settlus/chain/tools/interop-node/client"
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
+
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 type Feeder interface {
@@ -17,9 +19,10 @@ type Feeder interface {
 	IsVotingPeriod(height int64) bool
 	WantAbstain(height int64) bool
 
-	HandlePrevote(ctx context.Context, height int64) error
-	HandleVote(ctx context.Context, height int64) error
-	HandleAbstain(ctx context.Context, height int64) error
+	HandlePrevote(ctx context.Context) error
+	HandleVote(ctx context.Context) error
+	HandleAbstain(ctx context.Context) error
+	FetchNewRoundInfo(ctx context.Context)
 }
 
 func InitFeeders(config *config.Config, sc *client.SettlusClient, chainClients []subscriber.Subscriber, logger log.Logger) ([]Feeder, error) {
@@ -49,4 +52,38 @@ func NewFeeder(feederType string, config *config.Config, sc *client.SettlusClien
 	default:
 		return nil, fmt.Errorf("unsupported feeder type: %s", feederType)
 	}
+}
+
+type BaseFeeder struct {
+	logger           log.Logger
+	validatorAddress string
+	address          string
+	currentRound     oracletypes.RoundInfo
+	abstainRoundId   uint64
+	sc               *client.SettlusClient
+}
+
+func (feeder *BaseFeeder) FetchNewRoundInfo(ctx context.Context) {
+	roundInfo, err := feeder.sc.FetchNewRoundInfo(ctx)
+	if err != nil {
+		feeder.logger.Error(fmt.Sprintf("failed to fetch round info: %v", err))
+		return
+	}
+
+	feeder.currentRound = *roundInfo
+}
+
+// IsVotingPeriod returns true if the current height is a voting period
+func (feeder *BaseFeeder) IsVotingPeriod(height int64) bool {
+	return height > int64(feeder.currentRound.PrevoteEnd) && height <= int64(feeder.currentRound.VoteEnd)
+}
+
+// IsPreVotingPeriod returns true if the current height is a prevoting period
+func (feeder *BaseFeeder) IsPreVotingPeriod(height int64) bool {
+	return height <= int64(feeder.currentRound.PrevoteEnd)
+}
+
+// WantAbstain returns true if the feeder wants to abstain from voting
+func (feeder *BaseFeeder) WantAbstain(height int64) bool {
+	return feeder.IsPreVotingPeriod(height) && feeder.currentRound.Id == feeder.abstainRoundId
 }

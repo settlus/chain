@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -14,9 +15,10 @@ import (
 )
 
 const (
-	BLOCK_HASH_PREFIX    = "BH"
-	BLOCK_NUMBER_PREFIX  = "BN"
-	NFT_OWNERSHIP_PREFIX = "NO"
+	BLOCK_HASH_PREFIX      = "BH"
+	BLOCK_NUMBER_PREFIX    = "BN"
+	BLOCK_TIMESTAMP_PREFIX = "BT"
+	NFT_OWNERSHIP_PREFIX   = "NO"
 )
 
 type LevelDbRepository struct {
@@ -75,16 +77,15 @@ func (repo *LevelDbRepository) GetNftOwnership(nftAddessHex string, tokenIdHex s
 }
 
 // GetRecentBlock implements Repository.
-func (repo *LevelDbRepository) GetRecentBlock() (BlockData, error) {
+func (repo *LevelDbRepository) GetRecentBlock(timestamp uint64) (BlockData, error) {
 	iter := repo.db.NewIterator(nil, nil)
-	numberKeyPrefix := numberKey([]byte{})
-	if ok := iter.Seek(numberKeyPrefix); ok && bytes.HasPrefix(iter.Key(), numberKeyPrefix) {
+	if ok := iter.Seek(timestampKey(timestamp)); ok && bytes.HasPrefix(iter.Key(), []byte(BLOCK_TIMESTAMP_PREFIX)) {
 		defer iter.Release()
-		blockNumber := iter.Key()[len(numberKeyPrefix):]
-		blockHash := iter.Value()
+		blockData := iter.Value()
+
 		return BlockData{
-			Number: blockNumber,
-			Hash:   blockHash,
+			Number: blockData[:32],
+			Hash:   blockData[32:],
 		}, nil
 	}
 
@@ -92,12 +93,13 @@ func (repo *LevelDbRepository) GetRecentBlock() (BlockData, error) {
 }
 
 // PutBlockData implements Repository.
-func (repo *LevelDbRepository) PutBlockData(hash []byte, number []byte, ownershipData []*types.OwnershipTransferEvent) error {
+func (repo *LevelDbRepository) PutBlockData(hash []byte, number []byte, timestamp uint64, ownershipData []*types.OwnershipTransferEvent) error {
 	batch := new(leveldb.Batch)
 	defer batch.Reset()
 
 	batch.Put(hashKey(hash), number)
 	batch.Put(numberKey(number), hash)
+	batch.Put(timestampKey(timestamp), append(types.PadBytes(32, number), types.PadBytes(32, hash)...))
 
 	for _, v := range ownershipData {
 		blockNumber := sdkmath.NewIntFromUint64(v.BlockNumber).BigInt().Bytes()
@@ -126,6 +128,12 @@ func nftKey(nftAddr []byte, tokenId []byte, blockNumber []byte) []byte {
 func nftKeyPrefix(nftAddr []byte, tokenId []byte) []byte {
 	combined := append(types.PadBytes(20, nftAddr), types.PadBytes(32, tokenId)...)
 	return append([]byte(NFT_OWNERSHIP_PREFIX), combined...)
+}
+
+func timestampKey(timestamp uint64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, timestamp)
+	return append([]byte(BLOCK_TIMESTAMP_PREFIX), b...)
 }
 
 func (repo *LevelDbRepository) Close() {

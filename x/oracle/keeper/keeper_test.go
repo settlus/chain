@@ -30,6 +30,7 @@ import (
 	"github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/testutil"
 	utiltx "github.com/settlus/chain/testutil/tx"
+	"github.com/settlus/chain/x/oracle"
 	"github.com/settlus/chain/x/oracle/types"
 )
 
@@ -126,6 +127,7 @@ func (suite *OracleTestSuite) DoSetupTest(t *testing.T) {
 	}
 
 	staking.EndBlocker(suite.ctx, suite.app.StakingKeeper)
+	oracle.EndBlocker(suite.ctx, *suite.app.OracleKeeper)
 
 	validators := s.app.StakingKeeper.GetValidators(s.ctx, 5)
 	var bondedValidators []stakingtypes.Validator

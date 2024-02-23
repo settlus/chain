@@ -18,12 +18,13 @@ var (
 	_ sdk.Msg = &MsgFeederDelegationConsent{}
 )
 
-func NewMsgVote(feeder, validator, blockDataString, salt string) *MsgVote {
+func NewMsgVote(feeder, validator, blockDataString, salt string, roundId uint64) *MsgVote {
 	return &MsgVote{
 		Feeder:          feeder,
 		Validator:       validator,
 		BlockDataString: blockDataString,
 		Salt:            salt,
+		RoundId:         roundId,
 	}
 }
 
@@ -67,11 +68,12 @@ func (msg *MsgVote) ValidateBasic() error {
 	return nil
 }
 
-func NewMsgPrevote(feeder string, validator string, hash string) *MsgPrevote {
+func NewMsgPrevote(feeder string, validator string, hash string, roundId uint64) *MsgPrevote {
 	return &MsgPrevote{
 		Feeder:    feeder,
 		Validator: validator,
 		Hash:      hash,
+		RoundId:   roundId,
 	}
 }
 

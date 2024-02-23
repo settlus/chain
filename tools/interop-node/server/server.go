@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/client"
@@ -31,7 +30,7 @@ type Server struct {
 
 	sc *client.SettlusClient
 
-	subscribers map[uint64]subscriber.Subscriber
+	subscribers map[string]subscriber.Subscriber
 	feeders     []feeder.Feeder
 }
 
@@ -59,7 +58,7 @@ func NewServer(
 	if err != nil {
 		return nil, fmt.Errorf("failed to init chain clients: %w", err)
 	}
-	subscribersMap := make(map[uint64]subscriber.Subscriber)
+	subscribersMap := make(map[string]subscriber.Subscriber)
 	for _, ss := range subscribers {
 		subscribersMap[ss.Id()] = ss
 	}
@@ -116,17 +115,19 @@ func (s *Server) handleIteration() {
 	for _, f := range s.feeders {
 		switch {
 		case f.WantAbstain(nextHeight):
-			if err := f.HandleAbstain(s.ctx, nextHeight); err != nil {
+			if err := f.HandleAbstain(s.ctx); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to handle abstain: %v", err))
 			}
 		case f.IsVotingPeriod(nextHeight):
-			if err := f.HandleVote(s.ctx, nextHeight); err != nil {
+			if err := f.HandleVote(s.ctx); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to handle vote: %v", err))
 			}
 		case f.IsPreVotingPeriod(nextHeight):
-			if err := f.HandlePrevote(s.ctx, nextHeight); err != nil {
+			if err := f.HandlePrevote(s.ctx); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to handle prevote: %v", err))
 			}
+		default:
+			f.FetchNewRoundInfo(s.ctx)
 		}
 	}
 }
@@ -148,12 +149,7 @@ func (s *Server) OwnerOf(ctx context.Context, req *interop.OwnerOfRequest) (*int
 		return nil, fmt.Errorf("invalid request")
 	}
 
-	chainId, success := math.ParseUint64(req.ChainId)
-	if !success {
-		return nil, fmt.Errorf("failed to parse chain id: %s", req.ChainId)
-	}
-
-	c, ok := s.subscribers[chainId]
+	c, ok := s.subscribers[req.ChainId]
 	if !ok {
 		return nil, fmt.Errorf("chain id %s not supported", req.ChainId)
 	}

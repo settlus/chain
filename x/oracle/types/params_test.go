@@ -109,10 +109,10 @@ func TestParams(t *testing.T) {
 }
 func TestCalculateVotePeriod(t *testing.T) {
 	tests := []struct {
-		votePeriod  uint64
-		blockHeight uint64
-		prevoteEnd  uint64
-		voteEnd     uint64
+		votePeriod  int64
+		blockHeight int64
+		prevoteEnd  int64
+		voteEnd     int64
 	}{
 		{votePeriod: 10, blockHeight: 0, prevoteEnd: 9, voteEnd: 19},
 		{votePeriod: 10, blockHeight: 1, prevoteEnd: 9, voteEnd: 19},
