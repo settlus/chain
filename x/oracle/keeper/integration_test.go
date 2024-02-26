@@ -48,7 +48,8 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 				SendPrevoteAndVote(validator, blockDataStr, salt, 0)
 			}
 
-			oracle.EndBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod), *s.app.OracleKeeper)
+			_, voteEnd := types.CalculateVotePeriod(s.ctx.BlockHeight(), DefaultVotePeriod)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(voteEnd), *s.app.OracleKeeper)
 
 			bd, err := s.app.OracleKeeper.GetBlockData(s.ctx, "1")
 			Expect(err).To(BeNil())
@@ -102,13 +103,14 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			}
 			oracle.EndBlocker(s.ctx.WithBlockHeight(1), *s.app.OracleKeeper)
 		})
-		It("Vote period is 10, prevote is submitted at block 1, vote is submitted at block 10, block data is updated at block 11", func() {
+		It("Vote period is 10, prevote is submitted at block 1, vote is submitted at block 10, block data is updated at block 19", func() {
 			for i, validator := range s.validators {
 				salt := fmt.Sprintf("%d", i)
 				SendVote(s.ctx.WithBlockHeight(DefaultVotePeriod), validator, blockDataStr, salt, 0)
 			}
 
-			oracle.EndBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod), *s.app.OracleKeeper)
+			_, voteEnd := types.CalculateVotePeriod(s.ctx.BlockHeight(), DefaultVotePeriod)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(voteEnd), *s.app.OracleKeeper)
 
 			bd, err := s.app.OracleKeeper.GetBlockData(s.ctx.WithBlockHeight(DefaultVotePeriod+1), "1")
 			Expect(err).To(BeNil())
@@ -133,7 +135,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			Expect(err).To(BeNil())
 			Expect(prevotes.AggregatePrevotes).To(BeNil())
 		})
-		It("Vote period is 10, send prevote at block 1 and another at block 2. Send vote at block 10. Block data is updated at block 11", func() {
+		It("Vote period is 10, send prevote at block 1 and another at block 2. Send vote at block 10. Block data is updated at block 19", func() {
 			blockDataStr := types.BlockDataToString(&types.BlockData{ChainId: "1", BlockNumber: 101, BlockHash: blockHash})
 
 			for i, validator := range s.validators {
@@ -146,7 +148,8 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 				salt := fmt.Sprintf("%d", i)
 				SendVote(s.ctx.WithBlockHeight(DefaultVotePeriod), validator, blockDataStr, salt, 0)
 			}
-			oracle.EndBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod), *s.app.OracleKeeper)
+			_, voteEnd := types.CalculateVotePeriod(s.ctx.BlockHeight(), DefaultVotePeriod)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(voteEnd), *s.app.OracleKeeper)
 
 			bd, err := s.app.OracleKeeper.GetBlockData(s.ctx.WithBlockHeight(DefaultVotePeriod+1), "1")
 			Expect(err).To(BeNil())
