@@ -73,37 +73,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentRoundKey())
-	if bz == nil {
-		return nil
-	}
-
-	var roundInfo types.RoundInfo
-	k.cdc.MustUnmarshal(bz, &roundInfo)
-
-	return &roundInfo
-}
-
-func (k Keeper) UpdateCurrentRoundInfo(ctx sdk.Context) {
 	params := k.GetParams(ctx)
-	prevoteEnd, voteEnd := types.CalculateVotePeriod(ctx.BlockHeight(), (int64)(params.VotePeriod))
-
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.CurrentRoundKey())
-
-	var roundId uint64 = 0
-	if bz != nil {
-		var roundInfo types.RoundInfo
-		k.cdc.MustUnmarshal(bz, &roundInfo)
-		if roundInfo.VoteEnd == voteEnd && roundInfo.PrevoteEnd == prevoteEnd {
-			return
-		}
-		roundId = roundInfo.Id + 1
-	}
+	blockHeight := ctx.BlockHeight()
+	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
 
 	roundInfo := types.RoundInfo{
-		Id:         roundId,
+		Id:         types.CalculateRoundId(blockHeight, params.VotePeriod),
 		PrevoteEnd: prevoteEnd,
 		VoteEnd:    voteEnd,
 
@@ -111,8 +86,7 @@ func (k Keeper) UpdateCurrentRoundInfo(ctx sdk.Context) {
 		Timestamp: ctx.BlockHeader().Time.Add(-BlockTimestampMargin).UnixMilli(),
 	}
 
-	bz = k.cdc.MustMarshal(&roundInfo)
-	store.Set(types.CurrentRoundKey(), bz)
+	return &roundInfo
 }
 
 // GetBlockData returns block data of a chain
