@@ -84,7 +84,7 @@ func (sub *EthereumSubscriber) OwnerOf(ctx context.Context, nftAddressHex string
 				if err := sub.repo.PutBlockData(block.Hash().Bytes(), block.Number().Bytes(), block.Header().Time*1000, events); err != nil {
 					sub.logger.Error("Failed to putBlockData", "error", err)
 				} else {
-					sub.logger.Info("put new block", "number", block.Number(), "hash", blockHash)
+					sub.logger.Info("put new block", "number", block.Number(), "hash", blockHash, "timestamp", block.Header().Time*1000)
 				}
 			}()
 			return ownerHex, nil
@@ -154,7 +154,7 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 				continue
 			}
 
-			sub.logger.Info("put new block", "number", event.BlockNumber.Int64(), "hash", common.Bytes2Hex(event.BlockHash))
+			sub.logger.Info("put new block", "number", event.BlockNumber.Int64(), "hash", common.Bytes2Hex(event.BlockHash), "timestamp", event.Timestamp)
 
 		case <-ctx.Done():
 			close(sub.dbCh)

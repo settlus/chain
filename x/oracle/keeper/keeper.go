@@ -15,7 +15,7 @@ import (
 	"github.com/settlus/chain/x/oracle/types"
 )
 
-const BlockTimestampMargin = time.Second
+const BlockTimestampMargin = 60 * time.Second
 
 type (
 	Keeper struct {
