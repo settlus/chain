@@ -238,7 +238,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2
 	// use Settlus flavored Cosmos-SDK https://github.com/settlus/cosmos-sdk/releases
-	github.com/cosmos/cosmos-sdk => github.com/settlus/cosmos-sdk v0.46.13-settlus.3
+	github.com/cosmos/cosmos-sdk => github.com/settlus/cosmos-sdk v0.46.13-settlus.4
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.7
 	// use cosmos flavored protobufs
