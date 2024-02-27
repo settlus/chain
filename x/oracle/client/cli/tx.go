@@ -36,7 +36,7 @@ func CmdPrevote() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "prevote [validator] [hash] [roundId]",
 		Short: "Broadcast message prevote",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argValidator := args[0]
 			argHash := args[1]
@@ -76,7 +76,7 @@ func CmdVote() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vote [validator] [blockData] [salt] [roundId]",
 		Short: "Broadcast message vote",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argValidator := args[0]
 			argBlockDataStr := args[1]
