@@ -14,6 +14,7 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  // DEPRECATED: tolerated_error_band have been deprecated
   uint64 tolerated_error_band = 3;
   repeated Chain whitelist = 4;
   string slash_fraction = 5 [
@@ -55,4 +56,14 @@ message FeederDelegation {
 message MissCount {
   string validator_address = 1;
   uint64 miss_count = 2;
+}
+
+message RoundInfo {
+  uint64 id = 1;
+  int64 prevote_end = 2;
+  int64 vote_end = 3;
+
+  repeated string chain_ids = 4;
+  // UNIX time in milliseconds
+  int64 timestamp = 5;
 }

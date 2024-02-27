@@ -13,10 +13,10 @@ import (
 )
 
 type Subscriber interface {
-	Id() uint64
+	Id() string
 	Start(ctx context.Context)
 	Stop()
-	GetBlockData() (oracletypes.BlockData, error)
+	GetOldestBlock(timestamp uint64) (oracletypes.BlockData, error)
 	OwnerOf(ctx context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error)
 }
 

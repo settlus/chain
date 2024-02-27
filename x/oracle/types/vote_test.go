@@ -109,35 +109,6 @@ func TestBlockDataToString(t *testing.T) {
 		})
 	}
 }
-
-func TestIsLastBlockOfVotePeriod(t *testing.T) {
-	tests := []struct {
-		name        string
-		blockNumber uint64
-		period      uint64
-		want        bool
-	}{
-		{
-			name:        "block number is last block of period",
-			blockNumber: 100,
-			period:      5,
-			want:        true,
-		}, {
-			name:        "block number is not last block of period",
-			blockNumber: 101,
-			period:      5,
-			want:        false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := sdk.Context{}.WithContext(context.Background()).WithBlockHeight(int64(tt.blockNumber))
-			require.Equal(t, tt.want, types.IsLastBlockOfVotePeriod(ctx, tt.period))
-		})
-	}
-}
-
 func TestIsLastBlockOfSlashWindow(t *testing.T) {
 	tests := []struct {
 		name        string

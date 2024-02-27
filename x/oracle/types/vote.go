@@ -69,15 +69,6 @@ func BlockDataToString(bd *BlockData) string {
 	return fmt.Sprintf("%s:%d:%s", bd.ChainId, bd.BlockNumber, bd.BlockHash)
 }
 
-// IsLastBlockOfVotePeriod returns true if we are at the last block of the period
-func IsLastBlockOfVotePeriod(ctx sdk.Context, blocksPerPeriod uint64) bool {
-	if blocksPerPeriod == 0 {
-		return false
-	}
-
-	return (uint64)(ctx.BlockHeight())%blocksPerPeriod == 0
-}
-
 // IsLastBlockOfSlashWindow returns true if we are at the last block of the slash slashWindow
 func IsLastBlockOfSlashWindow(ctx sdk.Context, slashWindow uint64) bool {
 	if slashWindow == 0 {

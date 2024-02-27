@@ -118,3 +118,13 @@ func (k Keeper) RewardPool(goCtx context.Context, request *types.QueryRewardPool
 	pool := k.GetRewardPool(ctx)
 	return &types.QueryRewardPoolResponse{Balance: pool}, nil
 }
+
+// CurrentRoundInfo queries the current round info
+func (k Keeper) CurrentRoundInfo(goCtx context.Context, request *types.QueryCurrentRoundInfoRequest) (*types.QueryCurrentRoundInfoResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	roundInfo := k.GetCurrentRoundInfo(ctx)
+	if roundInfo == nil {
+		return nil, fmt.Errorf("current round info not found")
+	}
+	return &types.QueryCurrentRoundInfoResponse{RoundInfo: roundInfo}, nil
+}

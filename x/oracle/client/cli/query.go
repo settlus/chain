@@ -32,6 +32,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdQueryFeederDelegation())
 	cmd.AddCommand(CmdQueryMissCount())
 	cmd.AddCommand(CmdQueryRewardPool())
+	cmd.AddCommand(CmdQueryCurrentRoundInfo())
 
 	// this line is used by starport scaffolding # 1
 
@@ -339,6 +340,33 @@ func CmdQueryRewardPool() *cobra.Command {
 			params := &types.QueryRewardPoolRequest{}
 
 			res, err := queryClient.RewardPool(cmd.Context(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryRewardPool queries the current oracle reward pool balance.
+func CmdQueryCurrentRoundInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "round-info",
+		Short: "Query current round info",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryCurrentRoundInfoRequest{}
+
+			res, err := queryClient.CurrentRoundInfo(cmd.Context(), params)
 			if err != nil {
 				return err
 			}

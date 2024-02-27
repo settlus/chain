@@ -7,6 +7,7 @@ import (
 type BlockEventData struct {
 	BlockNumber    *big.Int
 	BlockHash      []byte
+	Timestamp      uint64
 	NftTransferred []*OwnershipTransferEvent
 }
 

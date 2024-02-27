@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/settlus/chain/x/oracle/types"
 )
+
+const BlockTimestampMargin = 60 * time.Second
 
 type (
 	Keeper struct {
@@ -67,6 +70,23 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
+	params := k.GetParams(ctx)
+	blockHeight := ctx.BlockHeight()
+	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
+
+	roundInfo := types.RoundInfo{
+		Id:         types.CalculateRoundId(blockHeight, params.VotePeriod),
+		PrevoteEnd: prevoteEnd,
+		VoteEnd:    voteEnd,
+
+		ChainIds:  params.GetWhitelistChainIds(),
+		Timestamp: ctx.BlockHeader().Time.Add(-BlockTimestampMargin).UnixMilli(),
+	}
+
+	return &roundInfo
 }
 
 // GetBlockData returns block data of a chain

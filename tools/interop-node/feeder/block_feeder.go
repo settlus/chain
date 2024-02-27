@@ -16,24 +16,17 @@ import (
 const BlockTopic = "block"
 
 type BlockVoteInfo struct {
-	Height          int64
+	RoundId         uint64
 	Salt            string
 	BlockDataString string
 }
 
 type BlockFeeder struct {
-	logger log.Logger
+	BaseFeeder
 
-	abstainHeight int64
-	lastPreVote   BlockVoteInfo
-	lastVote      BlockVoteInfo
-
-	chainClients []subscriber.Subscriber
-
-	validatorAddress string
-	address          string
-
-	sc *client.SettlusClient
+	lastPreVote *BlockVoteInfo
+	lastVote    *BlockVoteInfo
+	subscribers map[string]subscriber.Subscriber
 }
 
 var _ Feeder = (*BlockFeeder)(nil)
@@ -41,44 +34,35 @@ var _ Feeder = (*BlockFeeder)(nil)
 func NewBlockFeeder(
 	config *config.Config,
 	sc *client.SettlusClient,
-	chainclients []subscriber.Subscriber,
+	subscribers []subscriber.Subscriber,
 	logger log.Logger,
 ) (*BlockFeeder, error) {
-	return &BlockFeeder{
+	BaseFeeder := BaseFeeder{
 		logger:           logger.With("topic", "block"),
-		chainClients:     chainclients,
 		validatorAddress: config.Feeder.ValidatorAddress,
 		address:          config.Feeder.Address,
 		sc:               sc,
+	}
 
-		lastPreVote: BlockVoteInfo{
-			Height: -1,
-		},
-		lastVote: BlockVoteInfo{
-			Height: -1,
-		},
+	subscribersMap := make(map[string]subscriber.Subscriber)
+	for _, cc := range subscribers {
+		subscribersMap[cc.Id()] = cc
+	}
+
+	return &BlockFeeder{
+		BaseFeeder:  BaseFeeder,
+		subscribers: subscribersMap,
 	}, nil
 }
 
-// IsVotingPeriod returns true if the current height is a voting period
-func (feeder *BlockFeeder) IsVotingPeriod(height int64) bool {
-	// TODO: Settlus chain should provide voting period information
-	return height%2 == 0
-}
-
-// IsPreVotingPeriod returns true if the current height is a prevoting period
-func (feeder *BlockFeeder) IsPreVotingPeriod(height int64) bool {
-	return height%2 == 1
-}
-
-// WantAbstain returns true if the feeder wants to abstain from voting
-func (feeder *BlockFeeder) WantAbstain(height int64) bool {
-	return feeder.abstainHeight == height
-}
-
 // HandleVote Handles a vote period
-func (feeder *BlockFeeder) HandleVote(ctx context.Context, height int64) error {
-	if height == feeder.lastVote.Height {
+func (feeder *BlockFeeder) HandleVote(ctx context.Context) error {
+	roundId := feeder.currentRound.Id
+	if feeder.lastPreVote == nil {
+		return nil
+	}
+
+	if feeder.lastVote != nil && roundId == feeder.lastVote.RoundId {
 		feeder.logger.Debug("already sent a vote for this height, skipping this vote period...")
 		return nil
 	}
@@ -88,8 +72,8 @@ func (feeder *BlockFeeder) HandleVote(ctx context.Context, height int64) error {
 		return fmt.Errorf("failed to send vote: %w", err)
 	}
 
-	feeder.lastVote = BlockVoteInfo{
-		Height:          height,
+	feeder.lastVote = &BlockVoteInfo{
+		RoundId:         roundId,
 		Salt:            feeder.lastPreVote.Salt,
 		BlockDataString: feeder.lastPreVote.BlockDataString,
 	}
@@ -98,16 +82,17 @@ func (feeder *BlockFeeder) HandleVote(ctx context.Context, height int64) error {
 }
 
 // HandlePrevote Handles a prevote period
-func (feeder *BlockFeeder) HandlePrevote(ctx context.Context, height int64) error {
-	blockDataStr, err := feeder.gatherBlockDataString()
-	if err != nil {
-		feeder.abstainHeight = height
-		return err
+func (feeder *BlockFeeder) HandlePrevote(ctx context.Context) error {
+	round := feeder.currentRound
+	if feeder.lastPreVote != nil && round.Id == feeder.lastPreVote.RoundId {
+		feeder.logger.Debug("already prevote, skipping this period...")
+		return nil
 	}
 
-	if blockDataStr == feeder.lastPreVote.BlockDataString && height == feeder.lastPreVote.Height {
-		feeder.logger.Debug("blockDataString is the same as the last used one, skipping this vote period...")
-		return nil
+	blockDataStr, err := feeder.gatherBlockDataString(round)
+	if err != nil {
+		feeder.abstainRoundId = round.Id
+		return err
 	}
 
 	salt, err := GenerateSalt()
@@ -115,12 +100,12 @@ func (feeder *BlockFeeder) HandlePrevote(ctx context.Context, height int64) erro
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	if err := feeder.sendPrevote(ctx, blockDataStr, salt); err != nil {
+	if err := feeder.sendPrevote(ctx, blockDataStr, salt, round.Id); err != nil {
 		return fmt.Errorf("failed to send prevote: %w", err)
 	}
 
-	feeder.lastPreVote = BlockVoteInfo{
-		Height:          height,
+	feeder.lastPreVote = &BlockVoteInfo{
+		RoundId:         round.Id,
 		Salt:            salt,
 		BlockDataString: blockDataStr,
 	}
@@ -129,9 +114,10 @@ func (feeder *BlockFeeder) HandlePrevote(ctx context.Context, height int64) erro
 }
 
 // HandleAbstain Handles a prevote period when block data string cannot be gathered
-func (feeder *BlockFeeder) HandleAbstain(ctx context.Context, height int64) error {
-	if height == feeder.lastPreVote.Height {
-		feeder.logger.Debug("blockDataString is the same as the last used one, skipping this vote period...")
+func (feeder *BlockFeeder) HandleAbstain(ctx context.Context) error {
+	round := feeder.currentRound
+	if feeder.lastPreVote != nil && round.Id == feeder.lastPreVote.RoundId {
+		feeder.logger.Debug("already prevote, skipping this period...")
 		return nil
 	}
 
@@ -143,13 +129,13 @@ func (feeder *BlockFeeder) HandleAbstain(ctx context.Context, height int64) erro
 	}
 
 	// abstain from voting
-	abstainString := GenerateAbstainString(feeder.chainClients)
-	if err := feeder.sendPrevote(ctx, abstainString, salt); err != nil {
+	abstainString := GenerateAbstainString(round.ChainIds)
+	if err := feeder.sendPrevote(ctx, abstainString, salt, round.Id); err != nil {
 		return fmt.Errorf("failed to send abstain prevote: %w", err)
 	}
 
-	feeder.lastPreVote = BlockVoteInfo{
-		Height:          height,
+	feeder.lastPreVote = &BlockVoteInfo{
+		RoundId:         round.Id,
 		Salt:            salt,
 		BlockDataString: abstainString,
 	}
@@ -157,14 +143,19 @@ func (feeder *BlockFeeder) HandleAbstain(ctx context.Context, height int64) erro
 	return nil
 }
 
-func (feeder *BlockFeeder) gatherBlockDataString() (string, error) {
-	blockDataList := make([]oracletypes.BlockData, len(feeder.chainClients))
-	for i, cc := range feeder.chainClients {
-		bd, err := cc.GetBlockData()
+func (feeder *BlockFeeder) gatherBlockDataString(round oracletypes.RoundInfo) (string, error) {
+	blockDataList := make([]oracletypes.BlockData, len(round.ChainIds))
+	for idx, cid := range round.ChainIds {
+		cc, ok := feeder.subscribers[cid]
+		if !ok {
+			return "", fmt.Errorf("chain client not found for chain id: %s", cc)
+		}
+		bd, err := cc.GetOldestBlock(uint64(round.Timestamp))
 		if err != nil {
 			return "", err
 		}
-		blockDataList[i] = bd
+
+		blockDataList[idx] = bd
 	}
 
 	return BlockDataListToBlockDataString(blockDataList), nil
@@ -183,6 +174,7 @@ func (feeder *BlockFeeder) sendVote(ctx context.Context) error {
 		feeder.validatorAddress,
 		feeder.lastPreVote.BlockDataString,
 		feeder.lastPreVote.Salt,
+		feeder.lastPreVote.RoundId,
 	)
 
 	feeder.logger.Debug("try to send vote", "msg", msg.String())
@@ -195,13 +187,14 @@ func (feeder *BlockFeeder) sendVote(ctx context.Context) error {
 }
 
 // sendPrevote sends a prevote to the Settlus node
-func (feeder *BlockFeeder) sendPrevote(ctx context.Context, bd, salt string) error {
+func (feeder *BlockFeeder) sendPrevote(ctx context.Context, bd, salt string, roundId uint64) error {
 	hash := GeneratePrevoteHash(bd, salt)
 
 	msg := oracletypes.NewMsgPrevote(
 		feeder.address,
 		feeder.validatorAddress,
 		hash,
+		roundId,
 	)
 
 	feeder.logger.Debug("try to send prevote", "msg", msg.String(), "blockDataString", bd)
@@ -215,10 +208,10 @@ func (feeder *BlockFeeder) sendPrevote(ctx context.Context, bd, salt string) err
 
 // GenerateAbstainString generates an abstain string from a list of chains
 // To abstain from voting, we send a prevote with a negative blocknumber -1
-func GenerateAbstainString(subs []subscriber.Subscriber) string {
+func GenerateAbstainString(chainIds []string) string {
 	var builder strings.Builder
-	for _, sub := range subs {
-		builder.WriteString(fmt.Sprintf("%d:%d:%s", sub.Id(), -1, ""))
+	for _, chainId := range chainIds {
+		builder.WriteString(fmt.Sprintf("%s:%d:%s", chainId, -1, ""))
 	}
 	return builder.String()
 }

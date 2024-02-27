@@ -16,7 +16,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	params := k.GetParams(ctx)
-	if !types.IsLastBlockOfVotePeriod(ctx, params.VotePeriod) {
+
+	_, voteEnd := types.CalculateVotePeriod(ctx.BlockHeight(), params.VotePeriod)
+	// Proceed only if we are at the end of the vote period
+	if ctx.BlockHeight() != voteEnd {
 		return
 	}
 
@@ -78,7 +81,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	}
 
 	// increase win count for validators who voted for the winning block data
-	toleratedErrorBand := params.ToleratedErrorBand
 	for chainId, vote := range votesByChainId {
 		correctBlockData := voteResults[chainId]
 
@@ -106,7 +108,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			}
 
 			// if the validator did not abstain and voted for the block number outside the tolerated error band, increase miss count
-			if *voteData.BlockData == *correctBlockData || (voteData.BlockData.BlockNumber > 0 && Abs(voteData.BlockData.BlockNumber-correctBlockData.BlockNumber) <= int64(toleratedErrorBand)) {
+			if *voteData.BlockData == *correctBlockData {
 				claim.MissCount--
 				validatorClaimMap[voteData.Voter.String()] = claim
 			}

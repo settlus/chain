@@ -107,3 +107,32 @@ func TestParams(t *testing.T) {
 	require.NotNil(t, p20.ParamSetPairs())
 	require.NotNil(t, p20.String())
 }
+func TestCalculateVotePeriod(t *testing.T) {
+	tests := []struct {
+		votePeriod  uint64
+		blockHeight int64
+		prevoteEnd  int64
+		voteEnd     int64
+	}{
+		{votePeriod: 10, blockHeight: 0, prevoteEnd: 9, voteEnd: 19},
+		{votePeriod: 10, blockHeight: 1, prevoteEnd: 9, voteEnd: 19},
+		{votePeriod: 10, blockHeight: 9, prevoteEnd: 9, voteEnd: 19},
+		{votePeriod: 10, blockHeight: 10, prevoteEnd: 9, voteEnd: 19},
+		{votePeriod: 10, blockHeight: 19, prevoteEnd: 9, voteEnd: 19},
+		{votePeriod: 10, blockHeight: 20, prevoteEnd: 29, voteEnd: 39},
+		{votePeriod: 1, blockHeight: 0, prevoteEnd: 0, voteEnd: 1},
+		{votePeriod: 1, blockHeight: 1, prevoteEnd: 0, voteEnd: 1},
+		{votePeriod: 1, blockHeight: 2, prevoteEnd: 2, voteEnd: 3},
+		{votePeriod: 1, blockHeight: 3, prevoteEnd: 2, voteEnd: 3},
+		{votePeriod: 3, blockHeight: 0, prevoteEnd: 2, voteEnd: 5},
+		{votePeriod: 3, blockHeight: 2, prevoteEnd: 2, voteEnd: 5},
+		{votePeriod: 3, blockHeight: 4, prevoteEnd: 2, voteEnd: 5},
+		{votePeriod: 3, blockHeight: 5, prevoteEnd: 2, voteEnd: 5},
+	}
+
+	for _, tt := range tests {
+		prevoteEnd, voteEnd := types.CalculateVotePeriod(tt.blockHeight, tt.votePeriod)
+		require.Equal(t, tt.prevoteEnd, prevoteEnd)
+		require.Equal(t, tt.voteEnd, voteEnd)
+	}
+}

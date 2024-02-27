@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	"github.com/settlus/chain/x/oracle/types"
@@ -33,12 +34,17 @@ func GetTxCmd() *cobra.Command {
 // CmdPrevote is the CLI command for sending a Prevote message
 func CmdPrevote() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prevote [validator] [hash]",
+		Use:   "prevote [validator] [hash] [roundId]",
 		Short: "Broadcast message prevote",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argValidator := args[0]
 			argHash := args[1]
+			argRoundId := args[2]
+			roundId, err := cast.ToUint64E(argRoundId)
+			if err != nil {
+				return err
+			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -51,6 +57,7 @@ func CmdPrevote() *cobra.Command {
 				feeder,
 				argValidator,
 				argHash,
+				roundId,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -67,13 +74,18 @@ func CmdPrevote() *cobra.Command {
 // CmdVote is the CLI command for sending a Vote message
 func CmdVote() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote [validator] [blockData] [salt]",
+		Use:   "vote [validator] [blockData] [salt] [roundId]",
 		Short: "Broadcast message vote",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argValidator := args[0]
 			argBlockDataStr := args[1]
 			argSalt := args[2]
+			argRoundId := args[3]
+			roundId, err := cast.ToUint64E(argRoundId)
+			if err != nil {
+				return err
+			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -87,6 +99,7 @@ func CmdVote() *cobra.Command {
 				argValidator,
 				argBlockDataStr,
 				argSalt,
+				roundId,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

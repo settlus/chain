@@ -17,6 +17,9 @@ var (
 	MissCountKeyPrefix        = []byte{0x02}
 	AggregatePrevoteKeyPrefix = []byte{0x03}
 	AggregateVoteKeyPrefix    = []byte{0x04}
+	RoundKeyPrefix            = []byte{0x05}
+
+	CurrentRoundBytes = []byte{0x00}
 )
 
 func KeyPrefix(p string) []byte {
@@ -41,4 +44,8 @@ func AggregatePrevoteKey(validatorAddress string) []byte {
 
 func AggregateVoteKey(validatorAddress string) []byte {
 	return append(AggregateVoteKeyPrefix, validatorAddress...)
+}
+
+func CurrentRoundKey() []byte {
+	return append(RoundKeyPrefix, CurrentRoundBytes...)
 }
