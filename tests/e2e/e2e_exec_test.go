@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strconv"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -24,6 +25,8 @@ const (
 	flagBroadcastMode   = "broadcast-mode"
 	flagKeyringBackend  = "keyring-backend"
 	flagAllowedMessages = "allowed-messages"
+
+	chainId = "settlus_5371-1"
 )
 
 type flagOption func(map[string]interface{})
@@ -57,11 +60,10 @@ func (s *IntegrationTestSuite) execBankSend(
 	to,
 	amt,
 	fees string,
-	expectErr bool,
 	opt ...flagOption,
 ) {
 	// TODO remove the hardcode opt after refactor, all methods should accept custom flags
-	chainId := "settlus_5371-1"
+
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
 	opts := applyOptions(chainId, opt)
@@ -88,6 +90,78 @@ func (s *IntegrationTestSuite) execBankSend(
 	s.executeSettlusTxCommand(ctx, chainId, settlusCmd)
 }
 
+func (s *IntegrationTestSuite) execCreateTenant(
+	from,
+	denom string,
+	period string,
+	fees string,
+	opt ...flagOption,
+) {
+	opt = append(opt, withKeyValue(flagFees, fees))
+	opt = append(opt, withKeyValue(flagFrom, from))
+	opts := applyOptions(chainId, opt)
+	opts[flagGas] = "1010000"
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	settlusCmd := []string{
+		settlusdBinary,
+		txCommand,
+		"settlement",
+		"create-tenant",
+		denom,
+		period,
+		"-y",
+	}
+	for flag, value := range opts {
+		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
+	}
+
+	s.executeSettlusTxCommand(ctx, chainId, settlusCmd)
+}
+
+func (s *IntegrationTestSuite) execRecord(
+	from string,
+	tenantId uint64,
+	requestId,
+	amount,
+	extChainId,
+	contractAddr,
+	tokenIdHex,
+	fees string,
+	opt ...flagOption,
+) {
+	opt = append(opt, withKeyValue(flagFees, fees))
+	opt = append(opt, withKeyValue(flagFrom, from))
+	opts := applyOptions(chainId, opt)
+	opts[flagGas] = "10000"
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	settlusCmd := []string{
+		settlusdBinary,
+		txCommand,
+		"settlement",
+		"record",
+		strconv.Itoa(int(tenantId)),
+		requestId,
+		amount,
+		extChainId,
+		contractAddr,
+		tokenIdHex,
+		"",
+		"-y",
+	}
+
+	for flag, value := range opts {
+		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
+	}
+
+	s.executeSettlusTxCommand(ctx, chainId, settlusCmd)
+}
+
 func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, chainId string, settlusCmd []string) {
 	cmd := exec.Command(settlusCmd[0], settlusCmd[1:]...)
 	var out bytes.Buffer
@@ -95,8 +169,9 @@ func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, chai
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
+	s.T().Log(cmd.String())
 	err := cmd.Run()
 	s.Require().NoError(err)
 
-	//s.T().Log(out.String())
+	s.T().Log(out.String())
 }

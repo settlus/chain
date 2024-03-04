@@ -7,6 +7,7 @@ import (
 	tenderminttypes "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	settlementtypes "github.com/settlus/chain/x/settlement/types"
 )
 
 // if coin is zero, return empty coin.
@@ -22,6 +23,34 @@ func getSpecificBalance(endpoint, addr, denom string) (amt sdk.Coin, err error) 
 		}
 	}
 	return amt, nil
+}
+
+func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error) {
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/tenants", endpoint))
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
+	}
+
+	var tenantsResp settlementtypes.QueryTenantsResponse
+	if err := cdc.UnmarshalJSON(body, &tenantsResp); err != nil {
+		return nil, err
+	}
+
+	return tenantsResp.Tenants, nil
+}
+
+func queryUtxr(endpoint string, tenantId string, requestId string) (*settlementtypes.UTXR, error) {
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/utxr/%s/%s", endpoint, tenantId, requestId))
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
+	}
+
+	var utxrResp settlementtypes.QueryUTXRResponse
+	if err := cdc.UnmarshalJSON(body, &utxrResp); err != nil {
+		return nil, err
+	}
+
+	return &utxrResp.Utxr, nil
 }
 
 func querySettlusAllBalances(endpoint, addr string) (sdk.Coins, error) {

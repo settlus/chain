@@ -32,7 +32,7 @@ func (s *IntegrationTestSuite) TestBankTokenTransfer() {
 		)
 
 		tokenAmount := sdk.NewCoin(asetlDenom, sdk.NewInt(1000000000))
-		s.execBankSend(sender, recipient, tokenAmount.String(), standardFees.String(), false)
+		s.execBankSend(sender, recipient, tokenAmount.String(), standardFees.String())
 
 		s.Require().Eventually(
 			func() bool {
