@@ -1007,7 +1007,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "v1alpha1", "oracle", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_BlockData_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "block_data", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
