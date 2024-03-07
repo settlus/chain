@@ -1,12 +1,21 @@
 package e2e
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
 	tenderminttypes "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 	settlementtypes "github.com/settlus/chain/x/settlement/types"
 )
 
@@ -25,6 +34,25 @@ func getSpecificBalance(endpoint, addr, denom string) (amt sdk.Coin, err error) 
 	return amt, nil
 }
 
+func getEthBalance(endpoint, addr string) (uint64, error) {
+	body, err := httpGet(fmt.Sprintf("%s/evmos/evm/v1/balances/%s", endpoint, addr))
+	if err != nil {
+		return 0, fmt.Errorf("failed to execute HTTP request: %w", err)
+	}
+
+	var res evmtypes.QueryBalanceResponse
+	if err := cdc.UnmarshalJSON(body, &res); err != nil {
+		return 0, err
+	}
+
+	val, ok := sdkmath.NewIntFromString(res.Balance)
+	if !ok {
+		return 0, errors.New("invalid balance")
+	}
+
+	return val.Uint64(), nil
+}
+
 func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error) {
 	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/tenants", endpoint))
 	if err != nil {
@@ -39,8 +67,22 @@ func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error)
 	return tenantsResp.Tenants, nil
 }
 
-func queryUtxr(endpoint string, tenantId string, requestId string) (*settlementtypes.UTXR, error) {
-	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/utxr/%s/%s", endpoint, tenantId, requestId))
+func queryTenant(endpoint string, tenantId uint64) (*settlementtypes.TenantWithTreasury, error) {
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/tenant/%d", endpoint, tenantId))
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
+	}
+
+	var tenantResp settlementtypes.QueryTenantResponse
+	if err := cdc.UnmarshalJSON(body, &tenantResp); err != nil {
+		return nil, err
+	}
+
+	return &tenantResp.Tenant, nil
+}
+
+func queryUtxr(endpoint string, tenantId uint64, requestId string) (*settlementtypes.UTXR, error) {
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/utxr/%d/%s", endpoint, tenantId, requestId))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -65,6 +107,33 @@ func querySettlusAllBalances(endpoint, addr string) (sdk.Coins, error) {
 	}
 
 	return balancesResp.Balances, nil
+}
+
+func queryERC20Balance(client *ethclient.Client, contractAddr string, addr string) (uint64, error) {
+	tokenAddress := common.HexToAddress(contractAddr)
+	accountAddress := common.HexToAddress(addr)
+
+	balanceOfFunctionSignature := []byte("balanceOf(address)")
+	hash := crypto.Keccak256(balanceOfFunctionSignature)[:4]
+
+	paddedAddress := common.LeftPadBytes(accountAddress.Bytes(), 32)
+	data := append(hash, paddedAddress...)
+
+	// eth_call을 사용하여 잔액 조회
+	msg := ethereum.CallMsg{
+		To:   &tokenAddress,
+		Data: data,
+	}
+	ctx := context.Background()
+	result, err := client.CallContract(ctx, msg, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	balance := new(big.Int)
+	balance.SetBytes(result)
+
+	return balance.Uint64(), nil
 }
 
 func queryLatestBlockId(endpoint string) (string, error) {

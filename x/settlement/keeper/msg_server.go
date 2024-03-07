@@ -40,6 +40,7 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 
 	tenant := k.GetTenant(ctx, msg.TenantId)
 	if tenant.Denom != msg.Amount.Denom {
+		k.Logger(ctx).Error("denom mismatch", "tenant_denom", tenant.Denom, "msg_denom", msg.Amount.Denom)
 		return nil, types.ErrInvalidRequest
 	}
 

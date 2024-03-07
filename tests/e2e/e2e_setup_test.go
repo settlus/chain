@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,6 +23,8 @@ var (
 
 type IntegrationTestSuite struct {
 	suite.Suite
+	ethClient       *ethclient.Client
+	internalNftAddr string
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -30,6 +33,17 @@ func TestIntegrationTestSuite(t *testing.T) {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
+
+	s.T().Log("connecting to Ethereum JSON-RPC...")
+	ethClient, err := ethclient.Dial(ethAPIEndpoint)
+	s.Require().NoError(err)
+	s.ethClient = ethClient
+
+	s.T().Log("mint NFT for settlement Test")
+	contractAddr, err := mintNFTContract(ethClient)
+	s.internalNftAddr = contractAddr
+
+	s.Require().NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -39,5 +53,11 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 func (s *IntegrationTestSuite) TestBasic() {
 	s.Run("test basic", func() {
 		s.T().Log("testing basic functionality...")
+		s.Run("get latest block", func() {
+			blockId, err := queryLatestBlockId(chainAPIEndpoint)
+
+			s.Require().NoError(err)
+			s.Require().NotEmpty(blockId)
+		})
 	})
 }

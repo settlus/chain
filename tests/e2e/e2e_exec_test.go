@@ -62,16 +62,12 @@ func (s *IntegrationTestSuite) execBankSend(
 	fees string,
 	opt ...flagOption,
 ) {
-	// TODO remove the hardcode opt after refactor, all methods should accept custom flags
-
 	opt = append(opt, withKeyValue(flagFees, fees))
 	opt = append(opt, withKeyValue(flagFrom, from))
 	opts := applyOptions(chainId, opt)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-
-	s.T().Logf("sending %s tokens from %s to %s on chain %s", amt, from, to, chainId)
 
 	settlusCmd := []string{
 		settlusdBinary,
@@ -87,17 +83,16 @@ func (s *IntegrationTestSuite) execBankSend(
 		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.executeSettlusTxCommand(ctx, chainId, settlusCmd)
+	s.executeSettlusTxCommand(ctx, settlusCmd)
 }
 
 func (s *IntegrationTestSuite) execCreateTenant(
 	from,
 	denom string,
 	period string,
-	fees string,
 	opt ...flagOption,
 ) {
-	opt = append(opt, withKeyValue(flagFees, fees))
+	opt = append(opt, withKeyValue(flagFees, "1010000uusdc"))
 	opt = append(opt, withKeyValue(flagFrom, from))
 	opts := applyOptions(chainId, opt)
 	opts[flagGas] = "1010000"
@@ -118,7 +113,37 @@ func (s *IntegrationTestSuite) execCreateTenant(
 		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.executeSettlusTxCommand(ctx, chainId, settlusCmd)
+	s.executeSettlusTxCommand(ctx, settlusCmd)
+}
+
+func (s *IntegrationTestSuite) execCreateMcTenant(
+	from,
+	denom string,
+	period string,
+	opt ...flagOption,
+) {
+	opt = append(opt, withKeyValue(flagFees, "1010000uusdc"))
+	opt = append(opt, withKeyValue(flagFrom, from))
+	opts := applyOptions(chainId, opt)
+	opts[flagGas] = "1010000"
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	settlusCmd := []string{
+		settlusdBinary,
+		txCommand,
+		"settlement",
+		"create-tenant-mc",
+		denom,
+		period,
+		"-y",
+	}
+	for flag, value := range opts {
+		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
+	}
+
+	s.executeSettlusTxCommand(ctx, settlusCmd)
 }
 
 func (s *IntegrationTestSuite) execRecord(
@@ -128,11 +153,10 @@ func (s *IntegrationTestSuite) execRecord(
 	amount,
 	extChainId,
 	contractAddr,
-	tokenIdHex,
-	fees string,
+	tokenIdHex string,
 	opt ...flagOption,
 ) {
-	opt = append(opt, withKeyValue(flagFees, fees))
+	opt = append(opt, withKeyValue(flagFees, "10000uusdc"))
 	opt = append(opt, withKeyValue(flagFrom, from))
 	opts := applyOptions(chainId, opt)
 	opts[flagGas] = "10000"
@@ -159,19 +183,51 @@ func (s *IntegrationTestSuite) execRecord(
 		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	s.executeSettlusTxCommand(ctx, chainId, settlusCmd)
+	s.executeSettlusTxCommand(ctx, settlusCmd)
 }
 
-func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, chainId string, settlusCmd []string) {
-	cmd := exec.Command(settlusCmd[0], settlusCmd[1:]...)
+func (s *IntegrationTestSuite) execDepositToTreasury(
+	from string,
+	tenantId uint64,
+	amount string,
+	opt ...flagOption,
+) {
+	opt = append(opt, withKeyValue(flagFees, "10000uusdc"))
+	opt = append(opt, withKeyValue(flagFrom, from))
+	opts := applyOptions(chainId, opt)
+	opts[flagGas] = "10000"
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	settlusCmd := []string{
+		settlusdBinary,
+		txCommand,
+		"settlement",
+		"deposit-to-treasury",
+		strconv.Itoa(int(tenantId)),
+		amount,
+		"-y",
+	}
+
+	for flag, value := range opts {
+		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
+	}
+
+	s.executeSettlusTxCommand(ctx, settlusCmd)
+}
+
+func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, settlusCmd []string) {
+	cmd := exec.CommandContext(ctx, settlusCmd[0], settlusCmd[1:]...)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	s.T().Log(cmd.String())
 	err := cmd.Run()
+	if err != nil {
+		s.T().Log(">>", cmd.String())
+		s.T().Log("<<", out.String())
+	}
 	s.Require().NoError(err)
-
-	s.T().Log(out.String())
 }

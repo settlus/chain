@@ -1,7 +1,28 @@
 package e2e
 
-const (
-	sender           = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
-	recipient        = "settlus10z74aw2m660tuezej4w5zr35zye6684t5ejjmk"
-	chainAPIEndpoint = "http://localhost:1317"
+import "os"
+
+var (
+	chainAPIEndpoint = DefaultChainAPIEndpoint
+	ethAPIEndpoint   = DefaultEthAPIEndpoint
+
+	adminPrivateKey  = "f56cf1cd9f03c9a556da34ac8aefa1109c42d6e11d2e35ede699b515d0c7a56a"
+	internalNftOwner = "0xa7801B8115f3Fe46AC55f8c0Fdb5243726bdb66A"
 )
+
+const (
+	DefaultChainAPIEndpoint = "http://localhost:1317"
+	DefaultEthAPIEndpoint   = "http://localhost:8545"
+)
+
+func init() {
+	envChainApiEndPoint := os.Getenv("E2E_CHAIN_API_ENDPOINT")
+	if envChainApiEndPoint != "" {
+		chainAPIEndpoint = envChainApiEndPoint
+	}
+
+	envEthApiEndPoint := os.Getenv("E2E_ETH_API_ENDPOINT")
+	if envEthApiEndPoint != "" {
+		ethAPIEndpoint = envEthApiEndPoint
+	}
+}
