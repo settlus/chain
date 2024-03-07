@@ -118,9 +118,11 @@ proto-lint:
 
 proto-swagger-gen:
 	@echo "Downloading Protobuf dependencies"
+	@go get github.com/cosmos/gogoproto
 	@make proto-download-deps
 	@echo "Generating Protobuf Swagger"
 	$(protoImage) sh ./scripts/protoc-swagger-gen.sh
+	@go mod tidy
 
 proto-download-deps:
 	mkdir -p "$(THIRD_PARTY_DIR)/cosmos_tmp" && \
