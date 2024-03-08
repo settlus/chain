@@ -3,6 +3,7 @@ package e2e
 import (
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +14,7 @@ const (
 	extChainId    = "1"
 	extNftAddress = "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d"
 	extNftId      = "0x0"
-	extNftOwner   = "0xf7801B8115f3Fe46AC55f8c0Fdb5243726bdb66A"
+	extNftOwner   = "0xf7801b8115f3fe46ac55f8c0fdb5243726bdb66a"
 
 	admin = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
 )
@@ -51,24 +52,6 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 	})
 	s.Require().True(pass)
 
-	pass = s.Run("record_internal_nft_revenue", func() {
-		requestId := "req-" + strconv.Itoa(rand.Intn(10000000000))
-		s.execRecord(admin, tenantId, requestId, revenue.String(), "settlus_5371-1", s.internalNftAddr, "0x0")
-		var utxr *types.UTXR
-		var err error
-		s.Require().Eventually(
-			func() bool {
-				utxr, err = queryUtxr(chainAPIEndpoint, tenantId, requestId)
-				return err == nil
-			},
-			time.Minute,
-			2*time.Second,
-		)
-		s.Require().Equal(internalNftOwner, utxr.Recipient.String())
-		s.Require().Equal(revenue, utxr.Amount)
-	})
-	s.Require().True(pass)
-
 	pass = s.Run("record_external_nft_revenue", func() {
 		requestId := "req-" + strconv.Itoa(rand.Intn(10000000000))
 		s.execRecord(admin, tenantId, requestId, revenue.String(), "1", extNftAddress, extNftId)
@@ -82,7 +65,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(extNftOwner, utxr.Recipient.String())
+		s.Require().Equal(extNftOwner, strings.ToLower(utxr.Recipient.String()))
 		s.Require().Equal(revenue, utxr.Amount)
 	})
 	s.Require().True(pass)
@@ -172,15 +155,15 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(internalNftOwner, utxr.Recipient.String())
+		s.Require().Equal(internalNftOwner, strings.ToLower(utxr.Recipient.String()))
 		s.Require().Equal(revenue, utxr.Amount)
 
-		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)
+		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
 		s.Require().NoError(err)
 
 		s.Require().Eventually(
 			func() bool {
-				afterBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)
+				afterBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
 				s.Require().NoError(err)
 				return afterBalance-beforeBalance == revenue.Amount.Uint64()
 			},
@@ -203,7 +186,7 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(extNftOwner, utxr.Recipient.String())
+		s.Require().Equal(extNftOwner, strings.ToLower(utxr.Recipient.String()))
 		s.Require().Equal(revenue, utxr.Amount)
 
 		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)

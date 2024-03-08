@@ -24,7 +24,6 @@ func mintNFTContract(client *ethclient.Client) (string, error) {
 		return "", err
 	}
 
-	// ERC721 컨트랙트 배포
 	address, tx, bound, err := bind.DeployContract(auth, contracts.ERC721Contract.ABI, contracts.ERC721Contract.Bin, client, "E2E_NFT", "E2E_NFT")
 	if err != nil {
 		fmt.Println("failed to deply contract", err)
@@ -42,4 +41,18 @@ func mintNFTContract(client *ethclient.Client) (string, error) {
 	bind.WaitMined(context.TODO(), client, tx)
 
 	return address.Hex(), nil
+}
+
+func queryERC20Balance(client *ethclient.Client, contractAddr string, addr string) (uint64, error) {
+	contract := bind.NewBoundContract(common.HexToAddress(contractAddr), contracts.ERC20Contract.ABI, client, nil, nil)
+
+	var result []interface{}
+	balance := new(big.Int)
+	result = append(result, &balance)
+	err := contract.Call(nil, &result, "balanceOf", common.HexToAddress(addr))
+	if err != nil {
+		return 0, err
+	}
+
+	return balance.Uint64(), nil
 }

@@ -1,20 +1,14 @@
 package e2e
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	tenderminttypes "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 	settlementtypes "github.com/settlus/chain/x/settlement/types"
 )
@@ -107,33 +101,6 @@ func querySettlusAllBalances(endpoint, addr string) (sdk.Coins, error) {
 	}
 
 	return balancesResp.Balances, nil
-}
-
-func queryERC20Balance(client *ethclient.Client, contractAddr string, addr string) (uint64, error) {
-	tokenAddress := common.HexToAddress(contractAddr)
-	accountAddress := common.HexToAddress(addr)
-
-	balanceOfFunctionSignature := []byte("balanceOf(address)")
-	hash := crypto.Keccak256(balanceOfFunctionSignature)[:4]
-
-	paddedAddress := common.LeftPadBytes(accountAddress.Bytes(), 32)
-	data := append(hash, paddedAddress...)
-
-	// eth_call을 사용하여 잔액 조회
-	msg := ethereum.CallMsg{
-		To:   &tokenAddress,
-		Data: data,
-	}
-	ctx := context.Background()
-	result, err := client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	balance := new(big.Int)
-	balance.SetBytes(result)
-
-	return balance.Uint64(), nil
 }
 
 func queryLatestBlockId(endpoint string) (string, error) {

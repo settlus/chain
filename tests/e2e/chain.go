@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	appparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	authvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -13,7 +12,6 @@ import (
 var (
 	encodingConfig appparams.EncodingConfig
 	cdc            codec.Codec
-	txConfig       client.TxConfig
 )
 
 func init() {
@@ -22,5 +20,4 @@ func init() {
 	stakingtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	evidencetypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	cdc = encodingConfig.Codec
-	txConfig = encodingConfig.TxConfig
 }
