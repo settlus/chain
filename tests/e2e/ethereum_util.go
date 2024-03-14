@@ -30,7 +30,10 @@ func mintNFTContract(client *ethclient.Client) (string, error) {
 
 		return "", err
 	}
-	bind.WaitDeployed(context.TODO(), client, tx)
+	_, err = bind.WaitDeployed(context.TODO(), client, tx)
+	if err != nil {
+		fmt.Println("failed to wait deployed", err)
+	}
 
 	toAddress := common.HexToAddress(internalNftOwner)
 	tx, err = bound.Transact(auth, "safeMint", toAddress)
@@ -38,7 +41,10 @@ func mintNFTContract(client *ethclient.Client) (string, error) {
 		fmt.Println("failed to mint NFT")
 		return "", err
 	}
-	bind.WaitMined(context.TODO(), client, tx)
+	_, err = bind.WaitMined(context.TODO(), client, tx)
+	if err != nil {
+		fmt.Println("failed to wait mined", err)
+	}
 
 	return address.Hex(), nil
 }
