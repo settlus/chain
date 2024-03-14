@@ -34,16 +34,7 @@ func TestIntegrationTestSuite(t *testing.T) {
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
 
-	s.T().Log("connecting to Ethereum JSON-RPC...")
-	ethClient, err := ethclient.Dial(ethAPIEndpoint)
-	s.Require().NoError(err)
-	s.ethClient = ethClient
-
-	s.T().Log("mint NFT for settlement Test")
-	contractAddr, err := mintNFTContract(ethClient)
-	s.internalNftAddr = contractAddr
-
-	s.Require().NoError(err)
+	s.SetupSettlementTestSuite()
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {

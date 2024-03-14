@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/settlus/chain/x/settlement/types"
 )
 
@@ -16,10 +17,26 @@ const (
 	extNftId      = "0x0"
 	extNftOwner   = "0xf7801b8115f3fe46ac55f8c0fdb5243726bdb66a"
 
-	internalNftId = "0x0"
+	internalNftId    = "0x0"
+	internalNftOwner = "0xa7801b8115f3fe46ac55f8c0fdb5243726bdb66a"
 
 	admin = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
 )
+
+func (s *IntegrationTestSuite) SetupSettlementTestSuite() {
+	s.T().Log("connecting to Ethereum JSON-RPC...")
+	ethClient, err := ethclient.Dial(ethAPIEndpoint)
+	s.Require().NoError(err)
+	s.ethClient = ethClient
+
+	s.T().Log("mint NFT for settlement Test")
+	contractAddr, err := mintNFTContract(ethClient)
+	s.Require().NoError(err)
+	s.internalNftAddr = contractAddr
+
+	err = mintNFT(ethClient, contractAddr, internalNftOwner)
+	s.Require().NoError(err)
+}
 
 func (s *IntegrationTestSuite) TestNativeTenant() {
 	denom := asetlDenom
