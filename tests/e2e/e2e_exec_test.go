@@ -226,8 +226,9 @@ func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, sett
 
 	err := cmd.Run()
 	if err != nil {
-		s.T().Log(">>", cmd.String())
-		s.T().Log("<<", out.String())
+		s.T().Log("CMD:", cmd.String())
+		s.T().Log("STDOUT:", out.String())
+		s.T().Log("STDERR:", stderr.String())
 	}
 	s.Require().NoError(err)
 }

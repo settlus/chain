@@ -10,9 +10,9 @@ import (
 
 const (
 	settlusdBinary = "settlusd"
-	txCommand      = "tx"
-	queryCommand   = "query"
-	keysCommand    = "keys"
+	txCommand      = "txs"
+	queryCommand   = "quesry"
+	keysCommand    = "keyfs"
 	setlDenom      = "setl"
 	asetlDenom     = "asetl"
 )
