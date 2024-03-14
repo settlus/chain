@@ -16,6 +16,8 @@ const (
 	extNftId      = "0x0"
 	extNftOwner   = "0xf7801b8115f3fe46ac55f8c0fdb5243726bdb66a"
 
+	internalNftId = "0x0"
+
 	admin = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
 )
 
@@ -52,9 +54,27 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 	})
 	s.Require().True(pass)
 
+	pass = s.Run("record_internal_nft_revenue", func() {
+		requestId := NewReqId()
+		s.execRecord(admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
+		var utxr *types.UTXR
+		var err error
+		s.Require().Eventually(
+			func() bool {
+				utxr, err = queryUtxr(chainAPIEndpoint, tenantId, requestId)
+				return err == nil
+			},
+			time.Minute,
+			2*time.Second,
+		)
+		s.Require().Equal(internalNftOwner, strings.ToLower(utxr.Recipient.String()))
+		s.Require().Equal(revenue, utxr.Amount)
+	})
+	s.Require().True(pass)
+
 	pass = s.Run("record_external_nft_revenue", func() {
-		requestId := "req-" + strconv.Itoa(rand.Intn(10000000000))
-		s.execRecord(admin, tenantId, requestId, revenue.String(), "1", extNftAddress, extNftId)
+		requestId := NewReqId()
+		s.execRecord(admin, tenantId, requestId, revenue.String(), extChainId, extNftAddress, extNftId)
 		var utxr *types.UTXR
 		var err error
 		s.Require().Eventually(
@@ -99,7 +119,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 			2*time.Second,
 		)
 
-		afterBalance, err := getEthBalance(chainAPIEndpoint, extNftOwner)
+		afterBalance, err := getEthBalance(chainAPIEndpoint, internalNftOwner)
 		s.Require().NoError(err)
 		s.Require().Equal(afterBalance-beforeBalance, revenue.Amount.Uint64())
 	})
@@ -143,8 +163,8 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 	s.Require().True(pass)
 
 	pass = s.Run("record_internal_nft_revenue", func() {
-		requestId := "req-" + strconv.Itoa(rand.Intn(10000000000))
-		s.execRecord(admin, tenantId, requestId, revenue.String(), "settlus_5371-1", s.internalNftAddr, "0x0")
+		requestId := NewReqId()
+		s.execRecord(admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
 		var utxr *types.UTXR
 		var err error
 		s.Require().Eventually(
@@ -174,7 +194,7 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 	s.Require().True(pass)
 
 	pass = s.Run("record_external_nft_revenue", func() {
-		requestId := "req-" + strconv.Itoa(rand.Intn(10000000000))
+		requestId := NewReqId()
 		s.execRecord(admin, tenantId, requestId, revenue.String(), extChainId, extNftAddress, extNftId)
 		var utxr *types.UTXR
 		var err error
@@ -203,4 +223,8 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 		)
 	})
 	s.Require().True(pass)
+}
+
+func NewReqId() string {
+	return "req-" + strconv.Itoa(rand.Intn(10000000000))
 }
