@@ -1,7 +1,6 @@
 package oracle
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -72,7 +71,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 				ChainId:     chainId,
 				BlockHeight: ctx.BlockHeight(),
 			}); err != nil {
-				panic(fmt.Errorf("failed to emit event (%s)", err))
+				logger.Error("failed to emit event", "error", err)
 			}
 
 			continue
@@ -91,8 +90,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		for _, voteData := range vote {
 			claim, ok := validatorClaimMap[voteData.Voter.String()]
 			if !ok {
-				// TODO: handle error
-				panic(voteData.Voter.String() + " not found in validatorClaimMap")
+				// if the validator is not in the active set or is jailed, skip
+				logger.Debug("validator not found in active set", "validator", voteData.Voter.String())
+				continue
 			}
 
 			// if abstain flag is set, continue
@@ -125,7 +125,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// distribute rewards to winners
 	if err := k.RewardBallotWinners(ctx, &validatorClaimMap); err != nil {
-		panic(err)
+		logger.Error("failed to distribute rewards", "error", err)
 	}
 
 	// clear ballots
