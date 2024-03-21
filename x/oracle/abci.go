@@ -91,7 +91,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 			claim, ok := validatorClaimMap[voteData.Voter.String()]
 			if !ok {
 				// if the validator is not in the active set or is jailed, skip
-				logger.Debug("validator not found in active set", "validator", voteData.Voter.String())
+				logger.Info("validator not found in active set", "validator", voteData.Voter.String())
 				continue
 			}
 
