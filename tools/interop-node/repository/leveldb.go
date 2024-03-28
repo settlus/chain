@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"go-ethereum/common"
+
 	sdkmath "cosmossdk.io/math"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/syndtr/goleveldb/leveldb"
 
 	"github.com/settlus/chain/tools/interop-node/types"

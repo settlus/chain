@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"go-ethereum/crypto"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
 )
