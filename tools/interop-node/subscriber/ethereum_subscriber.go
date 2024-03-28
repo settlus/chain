@@ -8,11 +8,10 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
+	"go-ethereum/common"
 
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
+	ethtypes "go-ethereum/core/types"
+	"go-ethereum/ethclient"
 
 	"github.com/settlus/chain/tools/interop-node/repository"
 	"github.com/settlus/chain/tools/interop-node/types"

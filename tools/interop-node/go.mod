@@ -1,4 +1,4 @@
-module github.com/settlus/tools/interop-node
+module github.com/settlus/chain/tools/interop-node
 
 go 1.22.0
 
@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.7
 	github.com/aws/aws-sdk-go-v2/service/kms v1.29.2
 	github.com/cosmos/cosmos-sdk v0.46.13
-	github.com/ethereum/go-ethereum v1.11.6
+	go-ethereum v1.13.14
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/settlus/chain v0.0.6
 	github.com/spf13/cobra v1.8.0
@@ -218,4 +218,5 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	// use cometbft
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.29
+	go-ethereum => github.com/ethereum/go-ethereum v1.13.14
 )

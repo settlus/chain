@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
+	"go-ethereum/common"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 
 	settlusconfig "github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"

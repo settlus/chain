@@ -1,8 +1,9 @@
 package signer
 
 import (
+	"go-ethereum/crypto"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
 )
