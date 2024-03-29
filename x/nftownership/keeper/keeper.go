@@ -7,11 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkerrorstypes "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/settlus/chain/contracts"
-	"github.com/settlus/chain/x/interop"
 	"github.com/settlus/chain/x/nftownership/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -24,8 +25,6 @@ type Keeper struct {
 	accountKeeper types.AccountKeeper
 	evmKeeper     types.EVMKeeper
 	oracleKeeper  types.OracleKeeper
-
-	interopClientFactory *interop.InteropClientFactory
 }
 
 func NewKeeper(
@@ -36,7 +35,6 @@ func NewKeeper(
 	accountKeeper types.AccountKeeper,
 	evmKeeper types.EVMKeeper,
 	oracleKeeper types.OracleKeeper,
-	interopClientFactory *interop.InteropClientFactory,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -51,8 +49,6 @@ func NewKeeper(
 		accountKeeper: accountKeeper,
 		evmKeeper:     evmKeeper,
 		oracleKeeper:  oracleKeeper,
-
-		interopClientFactory: interopClientFactory,
 	}
 }
 
@@ -105,26 +101,6 @@ func (k Keeper) FindInternalOwner(
 }
 
 func (k Keeper) FindExternalOwner(ctx sdk.Context, chainId string, contractAddr string, tokenIdHex string) (*common.Address, error) {
-	client := k.interopClientFactory.GetInteropClient()
-	if client == nil {
-		return nil, fmt.Errorf("interop client not ready")
-	}
-
-	data, err := k.oracleKeeper.GetBlockData(ctx, chainId)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get block data: %w", err)
-	}
-
-	res, err := client.OwnerOf(ctx, &interop.OwnerOfRequest{
-		ChainId:      chainId,
-		ContractAddr: contractAddr,
-		TokenIdHex:   tokenIdHex,
-		BlockHash:    data.BlockHash,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to call OwnerOf: %w", err)
-	}
-
-	owner := common.HexToAddress(res.Owner)
-	return &owner, nil
+	// Not implemented yet
+	return nil, errortypes.ErrNotSupported
 }
