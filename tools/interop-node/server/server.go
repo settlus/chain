@@ -13,7 +13,6 @@ import (
 	"github.com/settlus/chain/tools/interop-node/signer"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
 	"github.com/settlus/chain/tools/interop-node/types"
-	"github.com/settlus/chain/x/interop"
 )
 
 const (
@@ -22,8 +21,6 @@ const (
 )
 
 type Server struct {
-	interop.UnimplementedInteropServer
-
 	ctx    context.Context
 	config *cfg.Config
 	logger log.Logger
@@ -142,41 +139,4 @@ func (s *Server) Close() {
 	for _, ss := range s.subscribers {
 		ss.Stop()
 	}
-}
-
-func (s *Server) OwnerOf(ctx context.Context, req *interop.OwnerOfRequest) (*interop.OwnerOfResponse, error) {
-	if !validateOwnerOfRequest(req) {
-		return nil, fmt.Errorf("invalid request")
-	}
-
-	c, ok := s.subscribers[req.ChainId]
-	if !ok {
-		return nil, fmt.Errorf("chain id %s not supported", req.ChainId)
-	}
-
-	owner, err := c.OwnerOf(ctx, req.ContractAddr, req.TokenIdHex, req.BlockHash)
-	return &interop.OwnerOfResponse{
-		Owner: owner,
-	}, err
-}
-
-// validateOwnerOfRequest validates the owner of request
-func validateOwnerOfRequest(req *interop.OwnerOfRequest) bool {
-	if req == nil || req.ChainId == "" || req.ContractAddr == "" || req.TokenIdHex == "" || req.BlockHash == "" {
-		return false
-	}
-
-	if !types.ValidateHexString(req.ContractAddr) {
-		return false
-	}
-
-	if !types.ValidateHexString(req.BlockHash) {
-		return false
-	}
-
-	if !types.ValidateHexString(req.TokenIdHex) {
-		return false
-	}
-
-	return true
 }

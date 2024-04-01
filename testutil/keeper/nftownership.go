@@ -9,7 +9,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/settlus/chain/x/interop"
 	"github.com/settlus/chain/x/nftownership/keeper"
 	"github.com/settlus/chain/x/nftownership/types"
 	"github.com/stretchr/testify/require"
@@ -44,7 +43,6 @@ func NftOwnershipKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		nil,
 		nil,
 		nil,
-		interop.NewInteropClientFactory(log.NewNopLogger(), 0),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
