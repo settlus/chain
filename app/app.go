@@ -518,7 +518,7 @@ func New(
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(
 		keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, app.StakingKeeper,
+		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, &stakingKeeper,
 	)
 
 	app.EvmKeeper = app.EvmKeeper.SetHooks(
@@ -535,7 +535,7 @@ func New(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.DistrKeeper,
-		app.StakingKeeper,
+		&stakingKeeper,
 		distrtypes.ModuleName,
 	)
 
