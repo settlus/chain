@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/tendermint/tendermint/libs/cli/flags"
 
@@ -39,6 +42,11 @@ func startCmd() *cobra.Command {
 				cancel()
 				interopServer.Close()
 			}()
+
+			cancelChan := make(chan os.Signal, 1)
+			signal.Notify(cancelChan, syscall.SIGTERM, syscall.SIGINT)
+
+			<-cancelChan
 
 			return nil
 		},

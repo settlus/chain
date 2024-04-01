@@ -204,6 +204,7 @@ func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
 
 		case <-ctx.Done():
 			close(sub.dbCh)
+			return
 		}
 	}
 }
@@ -235,7 +236,6 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 			sub.dbCh <- event
 		case <-ctx.Done():
 			sub.logger.Info("fetchLoop stopped")
-			close(sub.dbCh)
 			return
 		}
 	}
