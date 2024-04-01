@@ -1,28 +1,34 @@
 package subscriber
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
+	"net/http"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
+
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 
 	"github.com/settlus/chain/tools/interop-node/repository"
 	"github.com/settlus/chain/tools/interop-node/types"
-	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 type EthereumSubscriber struct {
 	chainId string
 	repo    repository.Repository
-	client  *ethclient.Client
+	client  *http.Client
+	rpcUrl  string
 	logger  log.Logger
 	dbCh    chan *types.BlockEventData
 }
@@ -30,9 +36,8 @@ type EthereumSubscriber struct {
 var _ Subscriber = (*EthereumSubscriber)(nil)
 
 func NewEthereumSubscriber(chainId string, rpcUrl string, logger log.Logger, repo repository.Repository) (*EthereumSubscriber, error) {
-	client, err := ethclient.Dial(rpcUrl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to the Ethereum client: %v", err)
+	client := &http.Client{
+		Timeout: 10 * time.Second,
 	}
 
 	dbCh := make(chan *types.BlockEventData)
@@ -41,6 +46,7 @@ func NewEthereumSubscriber(chainId string, rpcUrl string, logger log.Logger, rep
 		chainId: chainId,
 		repo:    repo,
 		client:  client,
+		rpcUrl:  rpcUrl,
 		logger:  logger,
 		dbCh:    dbCh,
 	}, nil
@@ -57,24 +63,26 @@ func (sub *EthereumSubscriber) Start(ctx context.Context) {
 }
 
 func (sub *EthereumSubscriber) Stop() {
-	sub.client.Close()
+	sub.client.CloseIdleConnections()
 }
 
-func (sub *EthereumSubscriber) OwnerOf(ctx context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
+// OwnerOf returns the owner of the given NFT
+func (sub *EthereumSubscriber) OwnerOf(_ context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
 	ownerHex, err := sub.findOwnerFromDb(nftAddressHex, tokenIdHex, blockHash)
 
 	switch err.(type) {
 	case *types.NotFoundError:
 		sub.logger.Info("Not found in db, try to find from network", "error", err)
-		ownerHex, err := sub.findOwnerFromNetwork(ctx, nftAddressHex, tokenIdHex, blockHash)
+		ownerHex, err := sub.findOwnerFromNetwork(nftAddressHex, tokenIdHex, blockHash)
 		if err == nil {
 			// lazily register ownership data to db
 			go func() {
-				block, err := sub.client.BlockByHash(context.Background(), common.HexToHash(blockHash))
+				block, err := sub.blockByHash(blockHash)
 				if err != nil {
-					sub.logger.Error("Failed to get block", "blockHash", blockHash, "error", err)
+					sub.logger.Error("Failed to get block", "error", err)
 					return
 				}
+
 				events := []*types.OwnershipTransferEvent{{
 					ContractAddr: common.HexToAddress(nftAddressHex).Bytes(),
 					To:           common.HexToAddress(ownerHex).Bytes(),
@@ -96,7 +104,7 @@ func (sub *EthereumSubscriber) OwnerOf(ctx context.Context, nftAddressHex string
 	return ownerHex, err
 }
 
-// GetBlockData returns the latest block data
+// GetOldestBlock returns the latest block data
 func (sub *EthereumSubscriber) GetOldestBlock(timestamp uint64) (oracletypes.BlockData, error) {
 	block, err := sub.repo.GetOldestBlock(timestamp)
 	if err != nil {
@@ -110,7 +118,20 @@ func (sub *EthereumSubscriber) GetOldestBlock(timestamp uint64) (oracletypes.Blo
 	}, nil
 }
 
-func (sub *EthereumSubscriber) findOwnerFromNetwork(ctx context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
+type EthRpcInput struct {
+	JsonRpc string        `json:"jsonrpc"`
+	Method  string        `json:"method"`
+	Params  []interface{} `json:"params"`
+	Id      string        `json:"id"`
+}
+
+type OwnerOfOutput struct {
+	JsonRpc string `json:"jsonrpc"`
+	Id      string `json:"id"`
+	Result  string `json:"result"`
+}
+
+func (sub *EthereumSubscriber) findOwnerFromNetwork(nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
 	addr := common.HexToAddress(nftAddressHex)
 	data := common.Hex2Bytes(fmt.Sprintf("6352211e%064x", common.HexToHash(tokenIdHex))) // ownerOf = 0x6352211e
 	msg := ethereum.CallMsg{
@@ -118,9 +139,33 @@ func (sub *EthereumSubscriber) findOwnerFromNetwork(ctx context.Context, nftAddr
 		Data: data,
 	}
 
-	res, err := sub.client.CallContractAtHash(ctx, msg, common.HexToHash(blockHash))
+	body, err := json.Marshal(EthRpcInput{
+		JsonRpc: "2.0",
+		Method:  "eth_call",
+		Params:  []interface{}{msg, blockHash},
+		Id:      "1",
+	})
+	if err != nil {
+		return "failed to marshal json", err
+	}
 
-	return common.BytesToAddress(res).Hex(), err
+	res, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return "failed to get ownerOf http response", err
+	}
+	defer res.Body.Close()
+
+	resp, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "failed to read response body", err
+	}
+
+	var owner OwnerOfOutput
+	if err := json.Unmarshal(resp, &owner); err != nil {
+		return "failed to unmarshal json", err
+	}
+
+	return owner.Result, nil
 }
 
 func (sub *EthereumSubscriber) findOwnerFromDb(nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
@@ -170,12 +215,12 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			blockNumber, err := sub.client.BlockNumber(ctx)
+			blockNumber, err := sub.blockNumber()
 			if err != nil {
 				sub.logger.Error(err.Error(), "from", "latest block")
 				continue
 			}
-			block, err := sub.client.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+			block, err := sub.blockByNumber(blockNumber)
 			if err != nil {
 				sub.logger.Error(err.Error(), "from", "block fetch", "number", blockNumber)
 				continue
@@ -196,6 +241,7 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 
 }
 
+// parseBlock parses the block and returns the block event data
 func (sub *EthereumSubscriber) parseBlock(block *ethtypes.Block) (*types.BlockEventData, error) {
 	erc721Transferred, err := sub.getTransferEventsFromBlock(block)
 	if err != nil {
@@ -210,18 +256,74 @@ func (sub *EthereumSubscriber) parseBlock(block *ethtypes.Block) (*types.BlockEv
 	}, nil
 }
 
+// toFilterArg converts ethereum.FilterQuery to a filter argument for eth_getFilterLogs JSON RPC
+func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
+	arg := map[string]interface{}{
+		"address": q.Addresses,
+		"topics":  q.Topics,
+	}
+	if q.BlockHash != nil {
+		arg["blockHash"] = *q.BlockHash
+		if q.FromBlock != nil || q.ToBlock != nil {
+			return nil, fmt.Errorf("cannot specify both BlockHash and FromBlock/ToBlock")
+		}
+	} else {
+		if q.FromBlock == nil {
+			arg["fromBlock"] = "0x0"
+		} else {
+			arg["fromBlock"] = hexutil.EncodeBig(q.FromBlock)
+		}
+		arg["toBlock"] = hexutil.EncodeBig(q.ToBlock)
+	}
+	return arg, nil
+}
+
+type FilterLogOutput struct {
+	Jsonrpc string         `json:"jsonrpc"`
+	Id      string         `json:"id"`
+	Result  []ethtypes.Log `json:"result"`
+}
+
+// getTransferEventsFromBlock returns all transfer events from a block
 func (sub *EthereumSubscriber) getTransferEventsFromBlock(block *ethtypes.Block) ([]*types.OwnershipTransferEvent, error) {
-	logs, err := sub.client.FilterLogs(context.Background(), ethereum.FilterQuery{
+	filterArgs, err := toFilterArg(ethereum.FilterQuery{
 		FromBlock: block.Number(),
 		ToBlock:   block.Number(),
 		Topics:    [][]common.Hash{{common.HexToHash(types.EventTransferSignature)}},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create filter args: %w", err)
+	}
+
+	body, err := json.Marshal(EthRpcInput{
+		JsonRpc: "2.0",
+		Method:  "eth_getFilterLogs",
+		Params:  []interface{}{filterArgs},
+		Id:      "1",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal json: %w", err)
+	}
+
+	res, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get filter logs: %w", err)
+	}
+	defer res.Body.Close()
+
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var logs FilterLogOutput
+
+	if err := json.Unmarshal(respBody, &logs); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
 	}
 
 	erc721events := make([]*types.OwnershipTransferEvent, 0)
-	for _, vLog := range logs {
+	for _, vLog := range logs.Result {
 		if len(vLog.Topics) != 4 || vLog.Topics[0].Hex() != types.EventTransferSignature {
 			continue
 		}
@@ -236,4 +338,100 @@ func (sub *EthereumSubscriber) getTransferEventsFromBlock(block *ethtypes.Block)
 	}
 
 	return erc721events, nil
+}
+
+type BlockNumberOutput struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Id      string `json:"id"`
+	Result  string `json:"result"`
+}
+
+// blockNumber returns the latest block number
+func (sub *EthereumSubscriber) blockNumber() (*big.Int, error) {
+	resp, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer([]byte(`{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}`)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block number: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var blockNumber BlockNumberOutput
+	if err := json.NewDecoder(resp.Body).Decode(&blockNumber); err != nil {
+		return nil, fmt.Errorf("failed to decode block number: %w", err)
+	}
+
+	return common.HexToHash(blockNumber.Result).Big(), nil
+}
+
+type BlockByHashOutput struct {
+	Jsonrpc string          `json:"jsonrpc"`
+	Id      string          `json:"id"`
+	Result  *ethtypes.Block `json:"result"`
+}
+
+// blockByHash returns the block by hash
+func (sub *EthereumSubscriber) blockByHash(blockHash string) (*ethtypes.Block, error) {
+	body, err := json.Marshal(EthRpcInput{
+		JsonRpc: "2.0",
+		Method:  "eth_getBlockByHash",
+		Params:  []interface{}{common.HexToHash(blockHash), false},
+		Id:      "1",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal json: %w", err)
+	}
+
+	res, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block: %w", err)
+	}
+	defer res.Body.Close()
+
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var block BlockByHashOutput
+	if err := json.Unmarshal(respBody, &block); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
+	}
+
+	return block.Result, nil
+}
+
+type BlockByNumberOutput struct {
+	Jsonrpc string          `json:"jsonrpc"`
+	Id      string          `json:"id"`
+	Result  *ethtypes.Block `json:"result"`
+}
+
+// blockByNumber returns the block by number
+func (sub *EthereumSubscriber) blockByNumber(blockNumber *big.Int) (*ethtypes.Block, error) {
+	body, err := json.Marshal(EthRpcInput{
+		JsonRpc: "2.0",
+		Method:  "eth_getBlockByNumber",
+		Params:  []interface{}{common.Bytes2Hex(blockNumber.Bytes()), false},
+		Id:      "1",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal json: %w", err)
+	}
+
+	res, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block: %w", err)
+	}
+	defer res.Body.Close()
+
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var block BlockByNumberOutput
+	if err := json.Unmarshal(respBody, &block); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
+	}
+
+	return block.Result, nil
 }
