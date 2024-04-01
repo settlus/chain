@@ -235,11 +235,9 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 			sub.dbCh <- event
 		case <-ctx.Done():
 			sub.logger.Info("fetchLoop stopped")
-			close(sub.dbCh)
 			return
 		}
 	}
-
 }
 
 // parseBlock parses the block and returns the block event data
