@@ -19,7 +19,6 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	oracletypes "github.com/settlus/chain/x/oracle/types"
 	cometlog "github.com/tendermint/tendermint/libs/log"
 	httpclient "github.com/tendermint/tendermint/rpc/client/http"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -27,6 +26,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 
 	"github.com/settlus/chain/app"
 	"github.com/settlus/chain/evmos/encoding"
@@ -317,9 +318,9 @@ func (sc *SettlusClient) BuildAndSendTxWithRetry(ctx context.Context, msg sdk.Ms
 			return nil
 		}
 
-		if res != nil && res.DeliverTx.Code == errors.ErrWrongSequence.ABCICode() {
-			if err := sc.updateSequenceFromError(res); err != nil {
-				return fmt.Errorf("failed tup update sequence number: %w", err)
+		if res != nil && res.CheckTx.Code == errors.ErrWrongSequence.ABCICode() {
+			if err := sc.UpdateSequenceFromError(res.CheckTx.Log); err != nil {
+				return fmt.Errorf("failed to update sequence number: %w", err)
 			}
 			// retry immediately if sequence number mismatch
 			continue
@@ -334,9 +335,9 @@ func (sc *SettlusClient) BuildAndSendTxWithRetry(ctx context.Context, msg sdk.Ms
 	return fmt.Errorf("failed to send tx after %d attempts", TxRetryCount)
 }
 
-// updateSequenceFromError updates the sequence number from the error log
-func (sc *SettlusClient) updateSequenceFromError(res *coretypes.ResultBroadcastTxCommit) error {
-	chunk := strings.Split(res.DeliverTx.Log, "expected ")[1]
+// UpdateSequenceFromError updates the sequence number from the error log
+func (sc *SettlusClient) UpdateSequenceFromError(log string) error {
+	chunk := strings.Split(log, "expected ")[1]
 	sequence := strings.Split(chunk, ",")[0]
 	sequenceInt, err := strconv.ParseUint(sequence, 10, 64)
 	if err != nil {
