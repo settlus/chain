@@ -36,6 +36,9 @@ ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
            -X github.com/cosmos/cosmos-sdk/version.AppName=$(SETTLUS_BINARY) \
            -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
            -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+           -X github.com/settlus/chain/tools/interop-node/version.Name=interop-node \
+           -X github.com/settlus/chain/tools/interop-node/version.Version=$(VERSION) \
+           -X github.com/settlus/chain/tools/interop-node/version.Commit=$(COMMIT)
 
 # Build tags to linker flags
 build_tags_comma_sep := $(subst $(subst ,, ),,,$(build_tags))
