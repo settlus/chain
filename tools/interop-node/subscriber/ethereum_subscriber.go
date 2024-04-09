@@ -207,7 +207,7 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 				sub.logger.Error(err.Error(), "from", "latest block")
 				continue
 			}
-			blockHash, blockTime, err := sub.getBlockHash(blockNumber)
+			blockHash, blockTime, err := sub.getBlockByNumber(blockNumber)
 			if err != nil {
 				sub.logger.Error(err.Error(), "from", "block fetch", "hash", blockHash)
 				continue
@@ -234,7 +234,7 @@ func (sub *EthereumSubscriber) parseBlock(blockNumber *big.Int, blockHash string
 	}
 
 	return &types.BlockEventData{
-		BlockNumber:    big.NewInt(1),
+		BlockNumber:    blockNumber,
 		BlockHash:      []byte(blockHash),
 		Timestamp:      blockTime,
 		NftTransferred: erc721Transferred,
@@ -400,8 +400,8 @@ func toBlockNumArg(number *big.Int) string {
 	return hexutil.EncodeBig(number)
 }
 
-// getBlockHash returns the block by number
-func (sub *EthereumSubscriber) getBlockHash(blockNumber *big.Int) (string, uint64, error) {
+// getBlockByNumber returns the block by number
+func (sub *EthereumSubscriber) getBlockByNumber(blockNumber *big.Int) (string, uint64, error) {
 	body, err := json.Marshal(types.EthRpcInput{
 		JsonRpc: "2.0",
 		Method:  "eth_getBlockByNumber",
