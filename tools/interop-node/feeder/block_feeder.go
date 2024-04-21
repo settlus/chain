@@ -3,22 +3,22 @@ package feeder
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/client"
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/subscriber"
+	"github.com/settlus/chain/tools/interop-node/types"
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 const BlockTopic = "block"
 
 type BlockVoteInfo struct {
-	RoundId         uint64
-	Salt            string
-	BlockDataString string
+	RoundId  uint64
+	Salt     string
+	VoteData types.VoteDataArr
 }
 
 type BlockFeeder struct {
@@ -73,9 +73,9 @@ func (feeder *BlockFeeder) HandleVote(ctx context.Context) error {
 	}
 
 	feeder.lastVote = &BlockVoteInfo{
-		RoundId:         roundId,
-		Salt:            feeder.lastPreVote.Salt,
-		BlockDataString: feeder.lastPreVote.BlockDataString,
+		RoundId:  roundId,
+		Salt:     feeder.lastPreVote.Salt,
+		VoteData: feeder.lastPreVote.VoteData,
 	}
 
 	return nil
@@ -89,10 +89,32 @@ func (feeder *BlockFeeder) HandlePrevote(ctx context.Context) error {
 		return nil
 	}
 
-	blockDataStr, err := feeder.gatherBlockDataString(round)
-	if err != nil {
-		feeder.abstainRoundId = round.Id
-		return err
+	voteData := types.VoteDataArr{}
+	for _, od := range round.OracleData {
+		switch od.Topic {
+		case oracletypes.OralceTopic_Block:
+			blockDataStr, err := feeder.gatherBlockDataString(od.Sources, uint64(round.Timestamp))
+			if err != nil {
+				feeder.abstainRoundId = round.Id
+				return err
+			}
+
+			voteData = append(voteData, &oracletypes.VoteData{
+				Topic: oracletypes.OralceTopic_Block,
+				Data:  blockDataStr,
+			})
+
+		case oracletypes.OralceTopic_Ownership:
+			nftDataStr, err := feeder.gatherNftOwnerDataString(od.Sources, uint64(round.Timestamp))
+			if err != nil {
+				feeder.abstainRoundId = round.Id
+				return err
+			}
+			voteData = append(voteData, &oracletypes.VoteData{
+				Topic: oracletypes.OralceTopic_Ownership,
+				Data:  nftDataStr,
+			})
+		}
 	}
 
 	salt, err := GenerateSalt()
@@ -100,14 +122,14 @@ func (feeder *BlockFeeder) HandlePrevote(ctx context.Context) error {
 		return fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	if err := feeder.sendPrevote(ctx, blockDataStr, salt, round.Id); err != nil {
+	if err := feeder.sendPrevote(ctx, voteData, salt, round.Id); err != nil {
 		return fmt.Errorf("failed to send prevote: %w", err)
 	}
 
 	feeder.lastPreVote = &BlockVoteInfo{
-		RoundId:         round.Id,
-		Salt:            salt,
-		BlockDataString: blockDataStr,
+		RoundId:  round.Id,
+		Salt:     salt,
+		VoteData: voteData,
 	}
 
 	return nil
@@ -129,30 +151,26 @@ func (feeder *BlockFeeder) HandleAbstain(ctx context.Context) error {
 	}
 
 	// abstain from voting
-	abstainString := GenerateAbstainString(round.ChainIds)
-	if err := feeder.sendPrevote(ctx, abstainString, salt, round.Id); err != nil {
+	abstainData := []*oracletypes.VoteData{}
+	if err := feeder.sendPrevote(ctx, abstainData, salt, round.Id); err != nil {
 		return fmt.Errorf("failed to send abstain prevote: %w", err)
 	}
 
 	feeder.lastPreVote = &BlockVoteInfo{
-		RoundId:         round.Id,
-		Salt:            salt,
-		BlockDataString: abstainString,
+		RoundId:  round.Id,
+		Salt:     salt,
+		VoteData: abstainData,
 	}
 
 	return nil
 }
 
-func (feeder *BlockFeeder) gatherBlockDataString(round oracletypes.RoundInfo) (string, error) {
-	blockDataList := make([]oracletypes.BlockData, len(round.ChainIds))
-	for idx, cid := range round.ChainIds {
-		cc, ok := feeder.subscribers[cid]
-		if !ok {
-			return "", fmt.Errorf("chain client not found for chain id: %s", cc)
-		}
-		bd, err := cc.GetOldestBlock(uint64(round.Timestamp))
+func (feeder *BlockFeeder) gatherBlockDataString(chainIds []string, timestamp uint64) ([]string, error) {
+	blockDataList := make([]oracletypes.BlockData, len(chainIds))
+	for idx, cid := range chainIds {
+		bd, err := feeder.getOldestBlock(cid, timestamp)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		blockDataList[idx] = bd
@@ -161,9 +179,47 @@ func (feeder *BlockFeeder) gatherBlockDataString(round oracletypes.RoundInfo) (s
 	return BlockDataListToBlockDataString(blockDataList), nil
 }
 
+func (feeder *BlockFeeder) getOldestBlock(chainId string, timestamp uint64) (bd oracletypes.BlockData, err error) {
+	cc, ok := feeder.subscribers[chainId]
+	if !ok {
+		return bd, fmt.Errorf("chain client not found for chain id: %s", chainId)
+	}
+
+	return cc.GetOldestBlock(timestamp)
+}
+
+func (feeder *BlockFeeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64) ([]string, error) {
+	s := make([]string, len(nftIds))
+	for i, nftId := range nftIds {
+		nft, err := oracletypes.ParseNftId(nftId)
+		if err != nil {
+			return nil, err
+		}
+
+		bd, err := feeder.getOldestBlock(nft.ChainId, timestamp)
+		if err != nil {
+			return nil, err
+		}
+
+		cc, ok := feeder.subscribers[nft.ChainId]
+		if !ok {
+			return nil, fmt.Errorf("chain client not found for chain id: %s", nft.ChainId)
+		}
+
+		owner, err := cc.OwnerOf(context.TODO(), nft.ContractAddr.String(), nft.TokenId.String(), bd.BlockHash)
+		if err != nil {
+			return nil, err
+		}
+
+		s[i] = fmt.Sprintf("%s:%s", nftId, owner)
+	}
+
+	return s, nil
+}
+
 // sendVote sends a vote to the Settlus node
 func (feeder *BlockFeeder) sendVote(ctx context.Context) error {
-	if feeder.lastPreVote.Salt == "" || feeder.lastPreVote.BlockDataString == "" {
+	if feeder.lastPreVote.Salt == "" {
 		// we skip if salt is empty, which means no previous prevote was sent.
 		feeder.logger.Info("salt or blockDataString is empty, skipping this vote period...")
 		return nil
@@ -172,7 +228,7 @@ func (feeder *BlockFeeder) sendVote(ctx context.Context) error {
 	msg := oracletypes.NewMsgVote(
 		feeder.address,
 		feeder.validatorAddress,
-		feeder.lastPreVote.BlockDataString,
+		feeder.lastPreVote.VoteData,
 		feeder.lastPreVote.Salt,
 		feeder.lastPreVote.RoundId,
 	)
@@ -187,8 +243,8 @@ func (feeder *BlockFeeder) sendVote(ctx context.Context) error {
 }
 
 // sendPrevote sends a prevote to the Settlus node
-func (feeder *BlockFeeder) sendPrevote(ctx context.Context, bd, salt string, roundId uint64) error {
-	hash := GeneratePrevoteHash(bd, salt)
+func (feeder *BlockFeeder) sendPrevote(ctx context.Context, vda types.VoteDataArr, salt string, roundId uint64) error {
+	hash := GeneratePrevoteHash(vda, salt)
 
 	msg := oracletypes.NewMsgPrevote(
 		feeder.address,
@@ -197,33 +253,20 @@ func (feeder *BlockFeeder) sendPrevote(ctx context.Context, bd, salt string, rou
 		roundId,
 	)
 
-	feeder.logger.Debug("try to send prevote", "msg", msg.String(), "blockDataString", bd)
+	feeder.logger.Debug("try to send prevote", "msg", msg.String(), "vote data", vda)
 	if err := feeder.sc.BuildAndSendTxWithRetry(ctx, msg); err != nil {
 		return fmt.Errorf("failed to send prevote tx: %w", err)
 	}
-	feeder.logger.Info("prevote sent successfully", "msg", msg.String(), "blockDataString", bd)
+	feeder.logger.Info("prevote sent successfully", "msg", msg.String(), "vote data", vda)
 
 	return nil
 }
 
-// GenerateAbstainString generates an abstain string from a list of chains
-// To abstain from voting, we send a prevote with a negative blocknumber -1
-func GenerateAbstainString(chainIds []string) string {
-	var builder strings.Builder
-	for _, chainId := range chainIds {
-		builder.WriteString(fmt.Sprintf("%s:%d:%s", chainId, -1, ""))
-	}
-	return builder.String()
-}
-
 // BlockDataListToBlockDataString converts a list of BlockData to a string
-func BlockDataListToBlockDataString(bdList []oracletypes.BlockData) string {
-	var builder strings.Builder
+func BlockDataListToBlockDataString(bdList []oracletypes.BlockData) []string {
+	s := make([]string, len(bdList))
 	for i, bd := range bdList {
-		builder.WriteString(fmt.Sprintf("%s:%d:%s", bd.ChainId, bd.BlockNumber, bd.BlockHash))
-		if i != len(bdList)-1 {
-			builder.WriteString(",")
-		}
+		s[i] = fmt.Sprintf("%s:%d/%s", bd.ChainId, bd.BlockNumber, bd.BlockHash)
 	}
-	return builder.String()
+	return s
 }

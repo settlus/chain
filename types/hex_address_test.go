@@ -26,7 +26,7 @@ func Test_NewHexAddressString(t *testing.T) {
 	for _, testCase := range testCases {
 		_, bytes, err := bech32.DecodeAndConvert(testCase.Bech32)
 		require.NoError(t, err)
-		address := types.NewHexAddressString(bytes)
+		address := types.NewHexAddrFromAccAddr(bytes)
 		require.Equal(t, testCase.Hex, address.String())
 	}
 }
@@ -62,5 +62,34 @@ func TestHexAddressString_Unmarshal(t *testing.T) {
 
 		expectedAddress := types.HexAddressString(testCase.Hex)
 		require.Equal(t, expectedAddress, address)
+	}
+}
+
+func TestHexAddressString_Normalize(t *testing.T) {
+	cases := []struct {
+		before string
+		after  string
+	}{
+		{
+			before: "0x1",
+			after:  "0x0000000000000000000000000000000000000001",
+		},
+		{
+			before: "a8",
+			after:  "0x00000000000000000000000000000000000000a8",
+		},
+	}
+
+	for _, tc := range cases {
+		hexAddr := types.HexAddressString(tc.before)
+		temp := make([]byte, hexAddr.Size())
+		size, err := hexAddr.MarshalTo(temp)
+		require.NoError(t, err)
+		require.Equal(t, 20, size)
+
+		var normHexAddr types.HexAddressString
+		err = (&normHexAddr).Unmarshal(temp)
+		require.NoError(t, err)
+		require.Equal(t, tc.after, normHexAddr.String())
 	}
 }

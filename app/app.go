@@ -125,9 +125,7 @@ import (
 	"github.com/settlus/chain/app/ante"
 
 	"github.com/settlus/chain/swagger"
-	nftownershipmodule "github.com/settlus/chain/x/nftownership"
-	nftownershipmodulekeeper "github.com/settlus/chain/x/nftownership/keeper"
-	nftownershipmoduletypes "github.com/settlus/chain/x/nftownership/types"
+
 	oraclemodule "github.com/settlus/chain/x/oracle"
 	oraclemodulekeeper "github.com/settlus/chain/x/oracle/keeper"
 	oraclemoduletypes "github.com/settlus/chain/x/oracle/types"
@@ -184,7 +182,6 @@ var (
 
 		// Settlus modules
 		settlementmodule.AppModuleBasic{},
-		nftownershipmodule.AppModuleBasic{},
 		oraclemodule.AppModuleBasic{},
 	)
 
@@ -203,9 +200,8 @@ var (
 		erc20types.ModuleName: {authtypes.Minter, authtypes.Burner},
 
 		// settlus modules
-		settlementmoduletypes.ModuleName:   nil,
-		nftownershipmoduletypes.ModuleName: nil,
-		oraclemoduletypes.ModuleName:       nil,
+		settlementmoduletypes.ModuleName: nil,
+		oraclemoduletypes.ModuleName:     nil,
 	}
 )
 
@@ -273,9 +269,8 @@ type App struct {
 	Erc20Keeper     erc20keeper.Keeper
 
 	// Settlus keepers
-	SettlementKeeper   *settlementmodulekeeper.SettlementKeeper
-	NftOwnershipKeeper *nftownershipmodulekeeper.Keeper
-	OracleKeeper       *oraclemodulekeeper.Keeper
+	SettlementKeeper *settlementmodulekeeper.SettlementKeeper
+	OracleKeeper     *oraclemodulekeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -329,7 +324,6 @@ func New(
 		erc20types.StoreKey,
 		// Settlus keys
 		settlementmoduletypes.StoreKey,
-		nftownershipmoduletypes.StoreKey,
 		oraclemoduletypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -527,26 +521,6 @@ func New(
 	)
 
 	// Settlus Keeper
-	app.OracleKeeper = oraclemodulekeeper.NewKeeper(
-		appCodec,
-		keys[oraclemoduletypes.StoreKey],
-		app.GetSubspace(oraclemoduletypes.ModuleName),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.DistrKeeper,
-		&stakingKeeper,
-		distrtypes.ModuleName,
-	)
-
-	app.NftOwnershipKeeper = nftownershipmodulekeeper.NewKeeper(
-		appCodec,
-		keys[nftownershipmoduletypes.StoreKey],
-		app.GetSubspace(nftownershipmoduletypes.ModuleName),
-		app.AccountKeeper,
-		app.EvmKeeper,
-		app.OracleKeeper,
-	)
-
 	app.SettlementKeeper = settlementmodulekeeper.NewKeeper(
 		appCodec,
 		keys[settlementmoduletypes.StoreKey],
@@ -555,7 +529,18 @@ func New(
 		app.BankKeeper,
 		app.Erc20Keeper,
 		app.EvmKeeper,
-		app.NftOwnershipKeeper,
+	)
+
+	app.OracleKeeper = oraclemodulekeeper.NewKeeper(
+		appCodec,
+		keys[oraclemoduletypes.StoreKey],
+		app.GetSubspace(oraclemoduletypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		&stakingKeeper,
+		app.SettlementKeeper,
+		distrtypes.ModuleName,
 	)
 
 	// NOTE: app.Erc20Keeper is already initialized elsewhere
@@ -660,7 +645,6 @@ func New(
 
 		// Settlus app modules
 		settlementmodule.NewAppModule(appCodec, app.SettlementKeeper, app.AccountKeeper, app.BankKeeper),
-		nftownershipmodule.NewAppModule(appCodec, *app.NftOwnershipKeeper, app.AccountKeeper, app.EvmKeeper),
 		oraclemodule.NewAppModule(appCodec, *app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
@@ -697,7 +681,6 @@ func New(
 
 		// Settlus modules
 		settlementmoduletypes.ModuleName,
-		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
 	)
 
@@ -729,7 +712,6 @@ func New(
 
 		// Settlus modules
 		settlementmoduletypes.ModuleName,
-		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
 	)
 
@@ -767,7 +749,6 @@ func New(
 
 		// Settlus modules
 		settlementmoduletypes.ModuleName,
-		nftownershipmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
 
 		// NOTE: crisis module must go at the end to check for invariants on each module
@@ -1067,7 +1048,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 	// Settlus modules
 	paramsKeeper.Subspace(settlementmoduletypes.ModuleName)
-	paramsKeeper.Subspace(nftownershipmoduletypes.ModuleName)
 	paramsKeeper.Subspace(oraclemoduletypes.ModuleName)
 
 	return paramsKeeper

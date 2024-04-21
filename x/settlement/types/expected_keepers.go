@@ -40,9 +40,3 @@ type EvmKeeper interface {
 	CallEVM(ctx sdk.Context, abi abi.ABI, from, contract common.Address, commit bool, method string, args ...interface{}) (*evmtypes.MsgEthereumTxResponse, error)
 	CallEVMWithData(ctx sdk.Context, from common.Address, contract *common.Address, data []byte, commit bool) (*evmtypes.MsgEthereumTxResponse, error)
 }
-
-// NftOwnershipKeeper defines the expected interface needed to retrieve owner of NFT.
-type NftOwnershipKeeper interface {
-	CheckValidChainId(ctx sdk.Context, chainId string) bool
-	OwnerOf(ctx sdk.Context, chainId string, contractAddr string, tokenIdHex string) (*common.Address, error)
-}

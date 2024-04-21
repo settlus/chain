@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -58,7 +59,6 @@ func (sub *EthereumSubscriber) Id() string {
 func (sub *EthereumSubscriber) Start(ctx context.Context) {
 	go sub.dbLoop(ctx)
 	go sub.fetchLoop(ctx)
-	go sub.fillDB()
 }
 
 func (sub *EthereumSubscriber) Stop() {
@@ -67,40 +67,7 @@ func (sub *EthereumSubscriber) Stop() {
 
 // OwnerOf returns the owner of the given NFT
 func (sub *EthereumSubscriber) OwnerOf(_ context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
-	ownerHex, err := sub.findOwnerFromDb(nftAddressHex, tokenIdHex, blockHash)
-
-	switch err.(type) {
-	case *types.NotFoundError:
-		sub.logger.Info("Not found in db, try to find from network", "error", err)
-		ownerHex, err := sub.findOwnerFromNetwork(nftAddressHex, tokenIdHex, blockHash)
-		if err == nil {
-			// lazily register ownership data to db
-			go func() {
-				blockNumber, blockTime, err := sub.blockByHash(blockHash)
-				if err != nil {
-					sub.logger.Error("Failed to get block", "error", err)
-					return
-				}
-
-				events := []*types.OwnershipTransferEvent{{
-					ContractAddr: common.HexToAddress(nftAddressHex).Bytes(),
-					To:           common.HexToAddress(ownerHex).Bytes(),
-					TokenId:      common.HexToHash(tokenIdHex).Big(),
-				}}
-
-				if err := sub.repo.PutBlockData([]byte(blockHash), blockNumber.Bytes(), blockTime, events); err != nil {
-					sub.logger.Error("Failed to putBlockData", "error", err)
-				} else {
-					sub.logger.Info("put new block", "number", blockNumber, "hash", blockHash, "timestamp", blockTime)
-				}
-			}()
-			return ownerHex, nil
-		}
-	default:
-		return ownerHex, err
-	}
-
-	return ownerHex, err
+	return sub.findOwnerFromNetwork(nftAddressHex, tokenIdHex, blockHash)
 }
 
 // GetOldestBlock returns the latest block data
@@ -118,18 +85,35 @@ func (sub *EthereumSubscriber) GetOldestBlock(timestamp uint64) (oracletypes.Blo
 }
 
 func (sub *EthereumSubscriber) findOwnerFromNetwork(nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
-	addr := common.HexToAddress(nftAddressHex)
-	data := common.Hex2Bytes(fmt.Sprintf("6352211e%064x", common.HexToHash(tokenIdHex))) // ownerOf = 0x6352211e
-	msg := ethereum.CallMsg{
-		To:   &addr,
-		Data: data,
+	if !strings.HasPrefix(nftAddressHex, "0x") {
+		nftAddressHex = "0x" + nftAddressHex
+	}
+
+	if !strings.HasPrefix(blockHash, "0x") {
+		blockHash = "0x" + blockHash
+	}
+
+	data := fmt.Sprintf("0x6352211e%064x", common.HexToHash(tokenIdHex))
+
+	type CallMsg struct {
+		To   string `json:"to"`
+		Data string `json:"data"`
+	}
+
+	type BlockHash struct {
+		BlockHash string `json:"blockHash"`
 	}
 
 	body, err := json.Marshal(types.EthRpcInput{
 		JsonRpc: "2.0",
 		Method:  "eth_call",
-		Params:  []interface{}{msg, blockHash},
-		Id:      "1",
+		Params: []interface{}{CallMsg{
+			To:   nftAddressHex,
+			Data: data,
+		}, BlockHash{
+			BlockHash: blockHash,
+		}},
+		Id: "1",
 	})
 	if err != nil {
 		return "failed to marshal json", err
@@ -151,16 +135,15 @@ func (sub *EthereumSubscriber) findOwnerFromNetwork(nftAddressHex string, tokenI
 		return "failed to unmarshal json", err
 	}
 
-	return owner.Result, nil
-}
+	if owner.Error != nil {
+		if owner.Error.Code == 3 { //Tranasction Reverted
+			return "0x00", nil
+		}
 
-func (sub *EthereumSubscriber) findOwnerFromDb(nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
-	blockNumberHex, err := sub.repo.GetBlockNumber(blockHash)
-	if err != nil {
-		return "", types.NewNotFoundError(fmt.Sprintf("block(%s) data not found", blockHash))
+		return "", fmt.Errorf("failed to get ownerOf: %s code: %d", owner.Error.Message, owner.Error.Code)
 	}
 
-	return sub.repo.GetNftOwnership(nftAddressHex, tokenIdHex, blockNumberHex)
+	return owner.Result, nil
 }
 
 func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
@@ -235,7 +218,7 @@ func (sub *EthereumSubscriber) parseBlock(blockNumber *big.Int, blockHash string
 
 	return &types.BlockEventData{
 		BlockNumber:    blockNumber,
-		BlockHash:      []byte(blockHash),
+		BlockHash:      common.FromHex(blockHash),
 		Timestamp:      blockTime,
 		NftTransferred: erc721Transferred,
 	}, nil

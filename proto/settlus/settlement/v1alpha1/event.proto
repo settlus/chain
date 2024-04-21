@@ -2,6 +2,9 @@ syntax = "proto3";
 package settlus.settlement;
 
 import "cosmos/base/v1beta1/coin.proto";
+import "settlus/oracle/v1alpha1/oracle.proto";
+import "settlus/settlement/v1alpha1/settlement.proto";
+
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/settlus/chain/x/settlement/types";
@@ -10,8 +13,6 @@ message EventSettled {
   uint64 tenant = 1;
   uint64 utxr_id = 2;
   string request_id = 3;
-  cosmos.base.v1beta1.Coin amount = 4 [ (gogoproto.nullable) = false ];
-  string recipient = 5;
 }
 
 message EventRecord {
@@ -20,12 +21,10 @@ message EventRecord {
   uint64 utxr_id = 3;
   string request_id = 4;
   cosmos.base.v1beta1.Coin amount = 5 [ (gogoproto.nullable) = false ];
-  string chain_id = 6;
-  string contract_address = 7;
-  string token_id_hex = 8;
-  string recipient = 9;
-  string metadata = 10;
-  uint64 payout_block = 11;
+  settlus.oracle.v1alpha1.Nft nft = 6;
+  repeated settlus.settlement.Recipient recipients = 7;
+  string metadata = 8;
+  uint64 created_at = 9;
 }
 
 message EventCancel {

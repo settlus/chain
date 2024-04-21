@@ -74,14 +74,15 @@ func CmdPrevote() *cobra.Command {
 // CmdVote is the CLI command for sending a Vote message
 func CmdVote() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote [validator] [blockData] [salt] [roundId]",
+		Use:   "vote [validator] [topic] [data] [salt] [roundId]",
 		Short: "Broadcast message vote",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argValidator := args[0]
-			argBlockDataStr := args[1]
-			argSalt := args[2]
-			argRoundId := args[3]
+			argTopic := args[1]
+			argData := args[2]
+			argSalt := args[3]
+			argRoundId := args[4]
 			roundId, err := cast.ToUint64E(argRoundId)
 			if err != nil {
 				return err
@@ -92,12 +93,22 @@ func CmdVote() *cobra.Command {
 				return err
 			}
 
+			topic, err := TopicStringToEnum(argTopic)
+			if err != nil {
+				return err
+			}
+
 			feeder := clientCtx.GetFromAddress().String()
 
 			msg := types.NewMsgVote(
 				feeder,
 				argValidator,
-				argBlockDataStr,
+				[]*types.VoteData{
+					{
+						Topic: topic,
+						Data:  []string{argData},
+					},
+				},
 				argSalt,
 				roundId,
 			)
@@ -143,4 +154,15 @@ func CmdFeederDelegationConsent() *cobra.Command {
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+func TopicStringToEnum(topic string) (types.OralceTopic, error) {
+	switch topic {
+	case "block":
+		return types.OralceTopic_Block, nil
+	case "nft":
+		return types.OralceTopic_Ownership, nil
+	default:
+		return 0, fmt.Errorf("invalid topic: %s", topic)
+	}
 }

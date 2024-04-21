@@ -14,7 +14,7 @@ message EventPrevote {
 message EventVote {
   string feeder = 1;
   string validator = 2;
-  repeated BlockData block_data = 3;
+  repeated VoteData vote_data = 3;
 }
 
 message EventFeederDelegationConsent {

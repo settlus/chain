@@ -44,8 +44,12 @@ type EthRpcInput struct {
 
 type OwnerOfOutput struct {
 	JsonRpc string `json:"jsonrpc"`
-	Id      int    `json:"id"`
+	Id      string `json:"id"`
 	Result  string `json:"result"`
+	Error   *struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 type FilterLogOutput struct {

@@ -269,6 +269,10 @@ func (p Params) GetWhitelistChainIds() []string {
 }
 
 func CalculateRoundId(blockHeight int64, votePeriod uint64) uint64 {
+	return CalculateRoundStartHeight(blockHeight, votePeriod)
+}
+
+func CalculateRoundStartHeight(blockHeight int64, votePeriod uint64) uint64 {
 	uBlockHeight := uint64(blockHeight)
 	return uBlockHeight - uBlockHeight%(votePeriod*2)
 }

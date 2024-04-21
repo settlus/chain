@@ -3,10 +3,10 @@ package e2e
 import (
 	"math/rand"
 	"strconv"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/settlus/chain/x/settlement/types"
 )
@@ -33,6 +33,7 @@ func (s *IntegrationTestSuite) SetupSettlementTestSuite() {
 	contractAddr, err := mintNFTContract(ethClient)
 	s.Require().NoError(err)
 	s.internalNftAddr = contractAddr
+	s.T().Log("NFT:", contractAddr)
 
 	err = mintNFT(ethClient, contractAddr, internalNftOwner)
 	s.Require().NoError(err)
@@ -84,7 +85,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(internalNftOwner, strings.ToLower(utxr.Recipient.String()))
+		s.Require().Equal(common.FromHex(internalNftOwner), utxr.Recipients[0].Address.Bytes())
 		s.Require().Equal(revenue, utxr.Amount)
 	})
 	s.Require().True(pass)
@@ -102,7 +103,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(extNftOwner, strings.ToLower(utxr.Recipient.String()))
+		s.Require().Equal(common.FromHex(extNftOwner), utxr.Recipients[0].Address.Bytes())
 		s.Require().Equal(revenue, utxr.Amount)
 	})
 	s.Require().True(pass)
@@ -192,7 +193,7 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(internalNftOwner, strings.ToLower(utxr.Recipient.String()))
+		s.Require().Equal(common.FromHex(internalNftOwner), utxr.Recipients[0].Address.Bytes())
 		s.Require().Equal(revenue, utxr.Amount)
 
 		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
@@ -223,7 +224,7 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 			time.Minute,
 			2*time.Second,
 		)
-		s.Require().Equal(extNftOwner, strings.ToLower(utxr.Recipient.String()))
+		s.Require().Equal(common.FromHex(extNftOwner), utxr.Recipients[0].Address.Bytes())
 		s.Require().Equal(revenue, utxr.Amount)
 
 		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)

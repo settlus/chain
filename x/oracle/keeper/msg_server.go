@@ -6,8 +6,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"golang.org/x/exp/slices"
-
 	"github.com/settlus/chain/x/oracle/types"
 )
 
@@ -42,9 +40,8 @@ func (m msgServer) Prevote(goCtx context.Context, prevote *types.MsgPrevote) (*t
 	}
 
 	aggregatePrevote := types.AggregatePrevote{
-		Hash:        prevote.Hash,
-		Voter:       prevote.Validator,
-		SubmitBlock: uint64(ctx.BlockHeight()),
+		Hash:  prevote.Hash,
+		Voter: prevote.Validator,
 	}
 	m.SetAggregatePrevote(ctx, aggregatePrevote)
 
@@ -71,6 +68,10 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "vote period is over")
 	}
 
+	if !types.ValidateVoteData(vote.VoteData, m.GetParams(ctx).GetWhitelistChainIds()) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "invalid vote data")
+	}
+
 	// validator and feeder addresses are validated in the ValidateBasic()
 	if v, err := m.ValidateFeeder(ctx, vote.Feeder, vote.Validator); err != nil && v {
 		return nil, err
@@ -83,7 +84,7 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 	}
 
 	// Check if the vote matches the aggregate prevote hash
-	hash, err := types.GetAggregateVoteHash(vote.BlockDataString, vote.Salt)
+	hash, err := types.GetAggregateVoteHash(vote.VoteData, vote.Salt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aggregate vote hash (%s)", err)
 	}
@@ -91,25 +92,9 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "hash submitted in prevote (%s) does not match the hash of the vote (%s)", aggregatePrevote.Hash, hash)
 	}
 
-	// Check if all whitelisted chains are included in the vote
-	blockData, err := types.ParseBlockDataString(vote.BlockDataString)
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "failed to parse block data string (%s)", err)
-	}
-
-	var voteChainIds []string
-	for _, chain := range blockData {
-		voteChainIds = append(voteChainIds, chain.ChainId)
-	}
-
-	chainIds := m.GetCurrentRoundInfo(ctx).ChainIds
-	if !slices.Equal(chainIds, voteChainIds) {
-		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "chain ids are not matched with the whitelist")
-	}
-
 	aggregateVote := types.AggregateVote{
-		BlockData: blockData,
-		Voter:     vote.Validator,
+		VoteData: vote.VoteData,
+		Voter:    vote.Validator,
 	}
 
 	m.SetAggregateVote(ctx, aggregateVote)
@@ -118,7 +103,7 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 	err = ctx.EventManager().EmitTypedEvent(&types.EventVote{
 		Feeder:    vote.Feeder,
 		Validator: vote.Validator,
-		BlockData: blockData,
+		VoteData:  vote.VoteData,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to emit event (%s)", err)

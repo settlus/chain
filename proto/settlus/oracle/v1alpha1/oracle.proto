@@ -31,14 +31,28 @@ message Chain {
   string chain_url = 3;
 }
 
+enum OralceTopic {
+  Block = 0;
+  Ownership = 1;
+}
+
+message OracleData {
+  OralceTopic topic = 1;
+  repeated string sources = 2;
+}
+
+message VoteData {
+  OralceTopic topic = 1;
+  repeated string data = 2;
+}
+
 message AggregatePrevote {
   string hash = 1;
   string voter = 2;
-  uint64 submit_block = 3;
 }
 
 message AggregateVote {
-  repeated BlockData block_data = 1;
+  repeated VoteData vote_data = 1;
   string voter = 2;
 }
 
@@ -62,8 +76,19 @@ message RoundInfo {
   uint64 id = 1;
   int64 prevote_end = 2;
   int64 vote_end = 3;
-
-  repeated string chain_ids = 4;
+  repeated OracleData oracle_data = 4;
   // UNIX time in milliseconds
   int64 timestamp = 5;
+}
+
+message Nft {
+  string chain_id = 1;
+  string contract_addr = 2 [
+    (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
+    (gogoproto.nullable) = false
+  ];
+  string token_id = 3 [
+    (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
+    (gogoproto.nullable) = false
+  ];
 }

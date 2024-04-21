@@ -8,6 +8,7 @@ import (
 
 	"github.com/settlus/chain/x/oracle/keeper"
 	"github.com/settlus/chain/x/oracle/types"
+	"github.com/settlus/chain/x/oracle/voteprocessor"
 )
 
 // EndBlocker runs at the end of every block
@@ -24,16 +25,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	logger := k.Logger(ctx)
 
-	// Build claim map over all validators in active set
-	validatorClaimMap := make(map[string]types.Claim)
-
-	whitelistChainCount := len(params.Whitelist)
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
 	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
 
 	// Add all active validators to the claim map
 	i := 0
+	// Build claim map over all validators in active set
+	validatorClaimMap := make(map[string]types.Claim)
 	for ; iterator.Valid() && i < int(maxValidators); iterator.Next() {
 		validator, found := k.StakingKeeper.GetValidator(ctx, iterator.Value())
 		if !found {
@@ -44,10 +43,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		if validator.IsBonded() && !validator.IsJailed() {
 			valAddr := validator.GetOperator()
 			validatorClaimMap[valAddr.String()] = types.Claim{
-				Weight:    validator.GetConsensusPower(k.StakingKeeper.PowerReduction(ctx)),
-				MissCount: int64(whitelistChainCount),
-				Recipient: valAddr,
-				Abstain:   false,
+				Weight:  validator.GetConsensusPower(k.StakingKeeper.PowerReduction(ctx)),
+				Miss:    false,
+				Abstain: false,
 			}
 			i++
 		}
@@ -59,72 +57,32 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	voteThreshold := params.VoteThreshold
 	thresholdVotes := voteThreshold.MulInt64(totalBondedPower).RoundInt()
 
-	// Organize votes by chain IDs
-	votesByChainId := k.GroupVotesByChainId(ctx)
-	voteResults := types.TallyVotes(votesByChainId, validatorClaimMap, thresholdVotes)
+	// Get all aggregate votes
+	aggregateVotes := k.GetAggregateVotes(ctx)
 
-	// set block data
-	for chainId, blockData := range voteResults {
-		if blockData == nil {
-			logger.Debug("consensus failed")
-			if err := ctx.EventManager().EmitTypedEvent(&types.EventOracleConsensusFailed{
-				ChainId:     chainId,
-				BlockHeight: ctx.BlockHeight(),
-			}); err != nil {
-				logger.Error("failed to emit event", "error", err)
-			}
-
-			continue
+	// Check abstain
+	for _, vote := range aggregateVotes {
+		if len(vote.VoteData) == 0 {
+			claim := validatorClaimMap[vote.Voter]
+			claim.Abstain = true
 		}
-		k.SetBlockData(ctx, *blockData)
 	}
 
-	// increase win count for validators who voted for the winning block data
-	for chainId, vote := range votesByChainId {
-		correctBlockData := voteResults[chainId]
-
-		if correctBlockData == nil {
-			continue
-		}
-
-		for _, voteData := range vote {
-			claim, ok := validatorClaimMap[voteData.Voter.String()]
-			if !ok {
-				// if the validator is not in the active set or is jailed, skip
-				logger.Info("validator not found in active set", "validator", voteData.Voter.String())
-				continue
-			}
-
-			// if abstain flag is set, continue
-			if claim.Abstain {
-				continue
-			}
-
-			// if the validator voted abstain, set abstain flag to true and continue
-			if voteData.BlockData.BlockNumber < 0 {
-				claim.Abstain = true
-				validatorClaimMap[voteData.Voter.String()] = claim
-				continue
-			}
-
-			// if the validator did not abstain and voted for the block number outside the tolerated error band, increase miss count
-			if *voteData.BlockData == *correctBlockData {
-				claim.MissCount--
-				validatorClaimMap[voteData.Voter.String()] = claim
-			}
-		}
+	vps := voteprocessor.NewSettlusVoteProcessors(k, aggregateVotes, thresholdVotes)
+	for _, vp := range vps {
+		vp.TallyVotes(ctx, validatorClaimMap)
 	}
 
 	// do miss counting
-	for _, claim := range validatorClaimMap {
-		if claim.MissCount > 0 {
+	for addr, claim := range validatorClaimMap {
+		if claim.Miss {
 			// get miss count and increase it by 1
-			k.SetMissCount(ctx, claim.Recipient.String(), k.GetMissCount(ctx, claim.Recipient.String())+1)
+			k.SetMissCount(ctx, addr, k.GetMissCount(ctx, addr)+1)
 		}
 	}
 
 	// distribute rewards to winners
-	if err := k.RewardBallotWinners(ctx, &validatorClaimMap); err != nil {
+	if err := k.RewardBallotWinners(ctx, validatorClaimMap); err != nil {
 		logger.Error("failed to distribute rewards", "error", err)
 	}
 
@@ -135,13 +93,4 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if types.IsLastBlockOfSlashWindow(ctx, params.SlashWindow) {
 		k.SlashValidatorsAndResetMissCount(ctx)
 	}
-}
-
-// Abs returns the absolute value of x.
-// (How is this not included in the Go standard library? Math.abs() is only for float64.)
-func Abs(x int64) int64 {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

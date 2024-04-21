@@ -24,6 +24,8 @@ func InitGenesis(ctx sdk.Context, k *keeper.SettlementKeeper, genState types.Gen
 		k.CreateTreasuryAccount(ctx, tenant.Id)
 		k.SetTenant(ctx, &tenant)
 	}
+
+	k.InitAccountModule(ctx)
 }
 
 // ExportGenesis returns the module's exported genesis

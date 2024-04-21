@@ -13,7 +13,6 @@ import (
 
 	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
 	"github.com/settlus/chain/testutil/sample"
-	settlustypes "github.com/settlus/chain/types"
 
 	"github.com/settlus/chain/app"
 	utiltx "github.com/settlus/chain/testutil/tx"
@@ -98,10 +97,10 @@ func (suite *GenesisTestSuite) TestGenesis_ExportGenesis() {
 						Id:       1,
 						TenantId: 1,
 						Utxr: types.UTXR{
-							RequestId:   "request-0",
-							Recipient:   settlustypes.NewHexAddressString(sdk.MustAccAddressFromBech32(suite.creator)),
-							Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-							PayoutBlock: 101,
+							RequestId:  "request-0",
+							Recipients: types.SingleRecipients(sdk.MustAccAddressFromBech32(suite.creator)),
+							Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+							CreatedAt:  101,
 						},
 					},
 				},

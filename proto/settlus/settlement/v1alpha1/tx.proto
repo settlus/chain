@@ -55,10 +55,7 @@ message MsgRecord {
 
 // MsgRecordResponse defines the response structure for executing a MsgRecord
 // message.
-message MsgRecordResponse {
-  uint64 utxr_id = 1;
-  string recipient = 2;
-}
+message MsgRecordResponse { uint64 utxr_id = 1; }
 
 // MsgCancel is the Cancel request type.
 message MsgCancel {

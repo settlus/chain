@@ -8,7 +8,6 @@ import (
 
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
-	settlustypes "github.com/settlus/chain/types"
 
 	"github.com/settlus/chain/x/settlement/types"
 )
@@ -31,7 +30,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record() {
 	utxr := suite.keeper.GetUTXRByRequestId(suite.ctx, 1, "request-1")
 	suite.NotNil(utxr)
 	suite.EqualValues(utxr.Amount.Amount.Int64(), 10)
-	suite.EqualValues(utxr.Recipient, suite.nftOwner)
+	suite.EqualValues(utxr.Recipients[0].Address, suite.nftOwner)
 }
 
 func (suite *SettlementTestSuite) TestMsgServer_Record_CreateAccount() {
@@ -380,10 +379,10 @@ func (suite *SettlementTestSuite) TestMsgServer_DepositToTreasury_MultipleTenant
 func (suite *SettlementTestSuite) TestMsgServer_Cancel() {
 	requestId := "request-cancel"
 	_, err := suite.keeper.CreateUTXR(suite.ctx, 1, &types.UTXR{
-		RequestId:   requestId,
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", math.NewInt(10)),
-		PayoutBlock: uint64(100),
+		RequestId:  requestId,
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", math.NewInt(10)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 
@@ -404,10 +403,10 @@ func (suite *SettlementTestSuite) TestMsgServer_Cancel() {
 func (suite *SettlementTestSuite) TestMsgServer_Cancel_InvalidTenant() {
 	requestId := "request-cancel"
 	_, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   requestId,
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", math.NewInt(10)),
-		PayoutBlock: uint64(100),
+		RequestId:  requestId,
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", math.NewInt(10)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 
@@ -429,10 +428,10 @@ func (suite *SettlementTestSuite) TestMsgServer_Cancel_InvalidTenant() {
 func (suite *SettlementTestSuite) TestMsgServer_Cancel_NonAdmin() {
 	requestId := "request-cancel"
 	_, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   requestId,
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", math.NewInt(10)),
-		PayoutBlock: uint64(100),
+		RequestId:  requestId,
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", math.NewInt(10)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 

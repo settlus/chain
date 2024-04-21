@@ -9,13 +9,7 @@ import (
 
 func (suite *OracleTestSuite) TestMsgServer_Prevote() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
-	blockHash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
-	blockDataStr := types.BlockDataToString(&types.BlockData{
-		ChainId: "1", BlockNumber: 100, BlockHash: blockHash,
-	})
-	salt := "TestMsgServer_Prevote"
-	hash, _ := types.GetAggregateVoteHash(blockDataStr, salt)
-
+	hash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
 	response, err := msgSvr.Prevote(s.ctx.WithBlockHeight(1), &types.MsgPrevote{
 		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
 		Validator: s.validators[0].GetOperator().String(),
@@ -30,12 +24,7 @@ func (suite *OracleTestSuite) TestMsgServer_Prevote() {
 
 func (suite *OracleTestSuite) TestMsgServer_Prevote_should_be_failed_with_different_round_id() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
-	blockHash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
-	blockDataStr := types.BlockDataToString(&types.BlockData{
-		ChainId: "1", BlockNumber: 100, BlockHash: blockHash,
-	})
-	salt := "TestMsgServer_Prevote"
-	hash, _ := types.GetAggregateVoteHash(blockDataStr, salt)
+	hash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
 
 	_, err := msgSvr.Prevote(s.ctx.WithBlockHeight(20), &types.MsgPrevote{
 		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
@@ -48,12 +37,7 @@ func (suite *OracleTestSuite) TestMsgServer_Prevote_should_be_failed_with_differ
 
 func (suite *OracleTestSuite) TestMsgServer_Prevote_should_be_failed_if_exceed_prevote_period() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
-	blockHash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
-	blockDataStr := types.BlockDataToString(&types.BlockData{
-		ChainId: "1", BlockNumber: 100, BlockHash: blockHash,
-	})
-	salt := "TestMsgServer_Prevote"
-	hash, _ := types.GetAggregateVoteHash(blockDataStr, salt)
+	hash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
 
 	_, err := msgSvr.Prevote(s.ctx.WithBlockHeight(10), &types.MsgPrevote{
 		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
@@ -67,37 +51,57 @@ func (suite *OracleTestSuite) TestMsgServer_Prevote_should_be_failed_if_exceed_p
 func (suite *OracleTestSuite) TestMsgServer_Vote() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
 	salt := "TestMsgServer_Vote"
-	blockData := &types.BlockData{
-		ChainId: "1", BlockNumber: 100, BlockHash: "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
+	blockStr := []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"}
+	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
+	voteData := []*types.VoteData{
+		{
+			Topic: types.OralceTopic_Block,
+			Data:  blockStr,
+		},
+		{
+			Topic: types.OralceTopic_Ownership,
+			Data:  ownershipStr,
+		},
 	}
-	blockDataStr := suite.doPrevote(msgSvr, blockData, salt, 1)
 
+	suite.doPrevote(msgSvr, voteData, salt, 1)
 	_, err := msgSvr.Vote(s.ctx.WithBlockHeight(10), &types.MsgVote{
-		Feeder:          sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
-		Validator:       s.validators[0].GetOperator().String(),
-		BlockDataString: blockDataStr,
-		Salt:            salt,
+		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
+		Validator: s.validators[0].GetOperator().String(),
+		VoteData:  voteData,
+		Salt:      salt,
 	})
 	suite.NoError(err)
 
 	vote := s.app.OracleKeeper.GetAggregateVote(s.ctx, s.validators[0].GetOperator().String())
-	suite.Equal(vote.BlockData[0], blockData)
+	suite.Equal(vote.VoteData[0].Data, blockStr)
+	suite.Equal(vote.VoteData[1].Data, ownershipStr)
 }
 
 func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_with_different_round_id() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
 	salt := "TestMsgServer_Vote"
-	blockData := &types.BlockData{
-		ChainId: "1", BlockNumber: 100, BlockHash: "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
+	blockStr := []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"}
+	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
+	voteData := []*types.VoteData{
+		{
+			Topic: types.OralceTopic_Block,
+			Data:  blockStr,
+		},
+		{
+			Topic: types.OralceTopic_Ownership,
+			Data:  ownershipStr,
+		},
 	}
-	blockDataStr := suite.doPrevote(msgSvr, blockData, salt, 1)
+
+	suite.doPrevote(msgSvr, voteData, salt, 1)
 
 	_, err := msgSvr.Vote(s.ctx.WithBlockHeight(39), &types.MsgVote{
-		Feeder:          sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
-		Validator:       s.validators[0].GetOperator().String(),
-		BlockDataString: blockDataStr,
-		Salt:            salt,
-		RoundId:         1,
+		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
+		Validator: s.validators[0].GetOperator().String(),
+		VoteData:  voteData,
+		Salt:      salt,
+		RoundId:   1,
 	})
 	suite.Error(err)
 }
@@ -105,17 +109,63 @@ func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_with_different
 func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_if_exceed_vote_period() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
 	salt := "TestMsgServer_Vote"
-	blockData := &types.BlockData{
-		ChainId: "1", BlockNumber: 100, BlockHash: "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
+	blockStr := []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"}
+	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
+	voteData := []*types.VoteData{
+		{
+			Topic: types.OralceTopic_Block,
+			Data:  blockStr,
+		},
+		{
+			Topic: types.OralceTopic_Ownership,
+			Data:  ownershipStr,
+		},
 	}
-	blockDataStr := suite.doPrevote(msgSvr, blockData, salt, 1)
+
+	suite.doPrevote(msgSvr, voteData, salt, 1)
 
 	_, err := msgSvr.Vote(s.ctx.WithBlockHeight(20), &types.MsgVote{
-		Feeder:          sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
-		Validator:       s.validators[0].GetOperator().String(),
-		BlockDataString: blockDataStr,
-		Salt:            salt,
-		RoundId:         0,
+		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
+		Validator: s.validators[0].GetOperator().String(),
+		VoteData:  voteData,
+		Salt:      salt,
+		RoundId:   0,
+	})
+	suite.Error(err)
+}
+
+func (suite *OracleTestSuite) TestMsgServer_vote_should_fail_if_block_str_is_invalid() {
+	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
+	salt := "TestMsgServer_Vote"
+	voteData := buildVoteData(
+		"1100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
+		"1/0x1234567890abcdef/0x1234567890abcdef:0x77791")
+	suite.doPrevote(msgSvr, voteData, salt, 1)
+
+	_, err := msgSvr.Vote(s.ctx.WithBlockHeight(10), &types.MsgVote{
+		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
+		Validator: s.validators[0].GetOperator().String(),
+		VoteData:  voteData,
+		Salt:      salt,
+		RoundId:   0,
+	})
+	suite.Error(err)
+}
+
+func (suite *OracleTestSuite) TestMsgServer_vote_should_fail_if_nft_str_is_invalid() {
+	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
+	salt := "TestMsgServer_Vote"
+	voteData := buildVoteData(
+		"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
+		"10x1234567890abcdef/0x1234567890abcdef:0x77791")
+	suite.doPrevote(msgSvr, voteData, salt, 1)
+
+	_, err := msgSvr.Vote(s.ctx.WithBlockHeight(10), &types.MsgVote{
+		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
+		Validator: s.validators[0].GetOperator().String(),
+		VoteData:  voteData,
+		Salt:      salt,
+		RoundId:   0,
 	})
 	suite.Error(err)
 }
@@ -133,15 +183,26 @@ func (suite *OracleTestSuite) TestMsgServer_FeederDelegationConsent() {
 	suite.Equal(feeder, s.address)
 }
 
-func (suite *OracleTestSuite) doPrevote(msgSvr types.MsgServer, blockData *types.BlockData, salt string, height int64) string {
-	blockDataStr := types.BlockDataToString(blockData)
-	hash, _ := types.GetAggregateVoteHash(blockDataStr, salt)
-
+func (suite *OracleTestSuite) doPrevote(msgSvr types.MsgServer, voteData []*types.VoteData, salt string, height int64) []string {
+	hash, _ := types.GetAggregateVoteHash(voteData, salt)
 	_, _ = msgSvr.Prevote(s.ctx.WithBlockHeight(height), &types.MsgPrevote{
 		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
 		Validator: s.validators[0].GetOperator().String(),
 		Hash:      hash,
 	})
 
-	return blockDataStr
+	return voteData[0].Data
+}
+
+func buildVoteData(blockStr, ownershipStr string) []*types.VoteData {
+	return []*types.VoteData{
+		{
+			Topic: types.OralceTopic_Block,
+			Data:  []string{blockStr},
+		},
+		{
+			Topic: types.OralceTopic_Ownership,
+			Data:  []string{ownershipStr},
+		},
+	}
 }
