@@ -28,7 +28,7 @@ type Server struct {
 	sc *client.SettlusClient
 
 	subscribers map[string]subscriber.Subscriber
-	feeders     []feeder.Feeder
+	feeder      *feeder.Feeder
 }
 
 // NewServer creates a new interop server
@@ -60,7 +60,7 @@ func NewServer(
 		subscribersMap[ss.Id()] = ss
 	}
 
-	feeders, err := feeder.InitFeeders(config, sc, subscribers, logger)
+	feeder, err := feeder.NewFeeder(config, sc, subscribers, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create block feeder: %w", err)
 	}
@@ -71,7 +71,7 @@ func NewServer(
 		config:      config,
 		sc:          sc,
 		subscribers: subscribersMap,
-		feeders:     feeders,
+		feeder:      feeder,
 	}, nil
 }
 
@@ -109,23 +109,22 @@ func (s *Server) handleIteration() {
 	}
 	nextHeight := latestHeight + 1
 
-	for _, f := range s.feeders {
-		switch {
-		case f.WantAbstain(nextHeight):
-			if err := f.HandleAbstain(s.ctx); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to handle abstain: %v", err))
-			}
-		case f.IsVotingPeriod(nextHeight):
-			if err := f.HandleVote(s.ctx); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to handle vote: %v", err))
-			}
-		case f.IsPreVotingPeriod(nextHeight):
-			if err := f.HandlePrevote(s.ctx); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to handle prevote: %v", err))
-			}
-		default:
-			f.FetchNewRoundInfo(s.ctx)
+	f := s.feeder
+	switch {
+	case f.WantAbstain(nextHeight):
+		if err := f.HandleAbstain(s.ctx); err != nil {
+			s.logger.Error(fmt.Sprintf("failed to handle abstain: %v", err))
 		}
+	case f.IsVotingPeriod(nextHeight):
+		if err := f.HandleVote(s.ctx); err != nil {
+			s.logger.Error(fmt.Sprintf("failed to handle vote: %v", err))
+		}
+	case f.IsPreVotingPeriod(nextHeight):
+		if err := f.HandlePrevote(s.ctx); err != nil {
+			s.logger.Error(fmt.Sprintf("failed to handle prevote: %v", err))
+		}
+	default:
+		f.FetchNewRoundInfo(s.ctx)
 	}
 }
 

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package settlus.settlement;
+package settlus.settlement.v1alpha1;
 
 import "gogoproto/gogo.proto";
 import "settlus/settlement/v1alpha1/settlement.proto";

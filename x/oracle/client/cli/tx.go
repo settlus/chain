@@ -159,9 +159,9 @@ func CmdFeederDelegationConsent() *cobra.Command {
 func TopicStringToEnum(topic string) (types.OralceTopic, error) {
 	switch topic {
 	case "block":
-		return types.OralceTopic_Block, nil
+		return types.OralceTopic_BLOCK, nil
 	case "nft":
-		return types.OralceTopic_Ownership, nil
+		return types.OralceTopic_OWNERSHIP, nil
 	default:
 		return 0, fmt.Errorf("invalid topic: %s", topic)
 	}

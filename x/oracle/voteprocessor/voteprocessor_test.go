@@ -32,7 +32,7 @@ func TestBlockVoteProcessor(t *testing.T) {
 			Voter: addrs[0].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_Block,
+					Topic: types.OralceTopic_BLOCK,
 					Data:  []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"},
 				},
 			},
@@ -41,7 +41,7 @@ func TestBlockVoteProcessor(t *testing.T) {
 			Voter: addrs[1].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_Block,
+					Topic: types.OralceTopic_BLOCK,
 					Data:  []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"},
 				},
 			},
@@ -50,7 +50,7 @@ func TestBlockVoteProcessor(t *testing.T) {
 			Voter: addrs[2].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_Block,
+					Topic: types.OralceTopic_BLOCK,
 					Data:  []string{"1:101/415f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"},
 				},
 			},
@@ -104,7 +104,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 			Voter: addrs[0].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_Ownership,
+					Topic: types.OralceTopic_OWNERSHIP,
 					Data:  []string{"1/0x123/0x0:0x777"},
 				},
 			},
@@ -113,7 +113,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 			Voter: addrs[1].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_Ownership,
+					Topic: types.OralceTopic_OWNERSHIP,
 					Data:  []string{"1/0x123/0x0:0x777"},
 				},
 			},
@@ -122,7 +122,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 			Voter: addrs[2].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_Ownership,
+					Topic: types.OralceTopic_OWNERSHIP,
 					Data:  []string{"1/0x123/0x0:0x666"},
 				},
 			},

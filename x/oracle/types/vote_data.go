@@ -16,7 +16,7 @@ func ValidateVoteData(voteData []*VoteData, chainList []string) bool {
 
 	for _, vd := range voteData {
 		switch vd.Topic {
-		case OralceTopic_Block:
+		case OralceTopic_BLOCK:
 			for _, data := range vd.Data {
 				chainId, _, err := StringToBlockData(data)
 				if err != nil {
@@ -27,7 +27,7 @@ func ValidateVoteData(voteData []*VoteData, chainList []string) bool {
 				}
 			}
 
-		case OralceTopic_Ownership:
+		case OralceTopic_OWNERSHIP:
 			for _, data := range vd.Data {
 				nft, _, err := StringToOwnershipData(data)
 				if err != nil {

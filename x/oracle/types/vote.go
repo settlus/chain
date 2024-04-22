@@ -35,7 +35,7 @@ func GetAggregateVoteHash(voteData []*VoteData, salt string) (string, error) {
 func BlockDataToVoteData(bd *BlockData) []*VoteData {
 	return []*VoteData{
 		{
-			Topic: OralceTopic_Block,
+			Topic: OralceTopic_BLOCK,
 			Data:  []string{fmt.Sprintf("%s:%d/%s", bd.ChainId, bd.BlockNumber, bd.BlockHash)},
 		},
 	}

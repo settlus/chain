@@ -1,5 +1,5 @@
 syntax = "proto3";
-package settlus.settlement;
+package settlus.settlement.v1alpha1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "settlus/oracle/v1alpha1/oracle.proto";
@@ -22,7 +22,7 @@ message EventRecord {
   string request_id = 4;
   cosmos.base.v1beta1.Coin amount = 5 [ (gogoproto.nullable) = false ];
   settlus.oracle.v1alpha1.Nft nft = 6;
-  repeated settlus.settlement.Recipient recipients = 7;
+  repeated settlus.settlement.v1alpha1.Recipient recipients = 7;
   string metadata = 8;
   uint64 created_at = 9;
 }

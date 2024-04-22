@@ -101,7 +101,7 @@ func (k Keeper) blockOracleData(whitelist []*types.Chain) *types.OracleData {
 	}
 
 	return &types.OracleData{
-		Topic:   types.OralceTopic_Block,
+		Topic:   types.OralceTopic_BLOCK,
 		Sources: source,
 	}
 }
@@ -117,7 +117,7 @@ func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) *types.O
 	}
 
 	return &types.OracleData{
-		Topic:   types.OralceTopic_Ownership,
+		Topic:   types.OralceTopic_OWNERSHIP,
 		Sources: sources,
 	}
 }

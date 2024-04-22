@@ -32,8 +32,8 @@ message Chain {
 }
 
 enum OralceTopic {
-  Block = 0;
-  Ownership = 1;
+  BLOCK = 0;
+  OWNERSHIP = 1;
 }
 
 message OracleData {

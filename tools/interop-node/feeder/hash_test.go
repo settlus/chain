@@ -53,7 +53,7 @@ func Test_GeneratePrevoteHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			voteData := types.VoteDataArr{
 				{
-					Topic: oracletypes.OralceTopic_Block,
+					Topic: oracletypes.OralceTopic_BLOCK,
 					Data:  tt.args.blockDataString,
 				},
 			}
