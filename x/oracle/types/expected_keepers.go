@@ -68,5 +68,5 @@ type DistributionKeeper interface {
 
 type SettlementKeeper interface {
 	GetAllUniqueNftToVerify(ctx sdk.Context, height uint64) (list []Nft)
-	SetRecipients(ctx sdk.Context, nfts map[Nft]ctypes.HexAddressString, height uint64) error
+	SetRecipients(ctx sdk.Context, nfts map[Nft]ctypes.HexAddressString, height uint64)
 }

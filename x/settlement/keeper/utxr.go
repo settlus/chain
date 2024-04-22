@@ -165,7 +165,7 @@ func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, height uint64
 	return list
 }
 
-func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[oracletypes.Nft]ctypes.HexAddressString, until uint64) error {
+func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[oracletypes.Nft]ctypes.HexAddressString, until uint64) {
 	store := ctx.KVStore(k.storeKey)
 	utxrStore := prefix.NewStore(store, types.UTXRPrefix)
 	iterator := utxrStore.Iterator(nil, nil)
@@ -186,6 +186,4 @@ func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[oracletypes.Nf
 			utxrStore.Set(iterator.Key(), bz)
 		}
 	}
-
-	return nil
 }

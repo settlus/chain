@@ -1,6 +1,8 @@
 package ante
 
 import (
+	"strings"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -36,7 +38,8 @@ func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
 func calculateGasCost(tx sdk.Tx) (gas uint64) {
 	for _, msg := range tx.GetMsgs() {
 		gas += SettlementBasicGasCost
-		if sdk.MsgTypeURL(msg) == "/settlus.settlement.MsgCreateTenant" {
+		url := sdk.MsgTypeURL(msg)
+		if strings.HasPrefix(url, "/settlus.settlement") && strings.HasSuffix(url, "MsgCreateTenant") {
 			gas += SettlementCreateTenantGasCost
 		}
 	}

@@ -323,47 +323,6 @@ func (sub *EthereumSubscriber) blockNumber() (*big.Int, error) {
 	return common.HexToHash(blockNumber.Result).Big(), nil
 }
 
-// blockByHash returns the block by hash
-func (sub *EthereumSubscriber) blockByHash(blockHash string) (*big.Int, uint64, error) {
-	body, err := json.Marshal(types.EthRpcInput{
-		JsonRpc: "2.0",
-		Method:  "eth_getBlockByHash",
-		Params:  []interface{}{common.HexToHash(blockHash), false},
-		Id:      "1",
-	})
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to marshal json: %w", err)
-	}
-
-	res, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to get block: %w", err)
-	}
-	defer res.Body.Close()
-
-	respBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var block types.BlockByHashOutput
-	if err := json.Unmarshal(respBody, &block); err != nil {
-		return nil, 0, fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-
-	timestamp, err := hexutil.DecodeUint64(block.Result.Timestamp)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to decode timestamp: %w", err)
-	}
-
-	blockNumber, err := hexutil.DecodeBig(block.Result.Number)
-	if err != nil {
-		return nil, 0, fmt.Errorf("failed to decode block number: %w", err)
-	}
-
-	return blockNumber, timestamp * 1000, nil
-}
-
 func toBlockNumArg(number *big.Int) string {
 	if number == nil {
 		return "latest"
