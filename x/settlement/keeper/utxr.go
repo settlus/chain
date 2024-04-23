@@ -183,7 +183,14 @@ func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[oracletypes.Nf
 				Address: owner,
 			}}
 			bz := k.cdc.MustMarshal(&utxr)
-			utxrStore.Set(iterator.Key(), bz)
+			key := iterator.Key()
+			utxrStore.Set(key, bz)
+
+			ctx.EventManager().EmitTypedEvents(&types.EventSetRecipients{
+				Tenant:     sdk.BigEndianToUint64(key[0:8]),
+				UtxrId:     sdk.BigEndianToUint64(key[8:]),
+				Recipients: utxr.Recipients,
+			})
 		}
 	}
 }

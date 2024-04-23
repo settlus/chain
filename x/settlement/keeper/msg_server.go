@@ -125,9 +125,8 @@ func (k msgServer) Cancel(goCtx context.Context, msg *types.MsgCancel) (*types.M
 	}
 
 	if err := ctx.EventManager().EmitTypedEvents(&types.EventCancel{
-		Tenant:    msg.TenantId,
-		UtxrId:    utxrId,
-		RequestId: msg.RequestId,
+		Tenant: msg.TenantId,
+		UtxrId: utxrId,
 	}); err != nil {
 		return nil, errorsmod.Wrapf(types.ErrEventCreationFailed, "EventCancel event creation failed")
 	}

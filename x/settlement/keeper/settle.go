@@ -54,9 +54,8 @@ func (k SettlementKeeper) settleUTXRs(ctx sdk.Context, tenantId uint64) error {
 		}
 
 		if err := ctx.EventManager().EmitTypedEvents(&types.EventSettled{
-			Tenant:    tenantId,
-			UtxrId:    utxrId,
-			RequestId: utxr.RequestId,
+			Tenant: tenantId,
+			UtxrId: utxrId,
 		}); err != nil {
 			logger.Error("failed to emit EventSettled event", "tenant", tenantId, "error", err)
 		}
