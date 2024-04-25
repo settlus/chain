@@ -142,7 +142,7 @@ func (k SettlementKeeper) GetAllUTXRWithTenantAndID(ctx sdk.Context) (list []typ
 	return list
 }
 
-func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, height uint64) (list []oracletypes.Nft) {
+func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, until uint64) (list []oracletypes.Nft) {
 	nfts := make(map[oracletypes.Nft]struct{})
 
 	store := ctx.KVStore(k.storeKey)
@@ -153,7 +153,7 @@ func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, height uint64
 	for ; iterator.Valid(); iterator.Next() {
 		var utxr types.UTXR
 		k.cdc.MustUnmarshal(iterator.Value(), &utxr)
-		if len(utxr.Recipients) == 0 && height > utxr.CreatedAt {
+		if len(utxr.Recipients) == 0 && until >= utxr.CreatedAt {
 			nfts[*utxr.Nft] = struct{}{}
 		}
 	}

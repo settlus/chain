@@ -16,7 +16,7 @@ func NewSettlusVoteProcessors(keeper keeper.Keeper, aggregateVotes []types.Aggre
 	}
 
 	ownershipConsensus := func(ctx sdk.Context, voteData map[types.Nft]ctypes.HexAddressString) {
-		keeper.FillSettlementOwnership(ctx, voteData)
+		keeper.FillSettlementRecipients(ctx, voteData)
 	}
 
 	return []IVoteProcessor{
