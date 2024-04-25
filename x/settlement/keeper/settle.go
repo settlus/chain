@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -72,26 +73,44 @@ func (k SettlementKeeper) settleUTXRs(ctx sdk.Context, tenantId uint64) error {
 
 func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *types.UTXR) error {
 	treasuryAddr := types.GetTenantTreasuryAccount(tenantId)
+	tenant := k.GetTenant(ctx, tenantId)
+	if tenant == nil {
+		return fmt.Errorf("tenant [%d] not found", tenantId)
+	}
+
+	var totalWeight uint32 = 0
+	for _, recipient := range utxr.Recipients {
+		totalWeight += recipient.Weight
+	}
+
 	for _, recipient := range utxr.Recipients {
 		recipientCosmosAddr := sdk.AccAddress(common.FromHex(recipient.Address.String()))
-		tenant := k.GetTenant(ctx, tenantId)
-		if tenant == nil {
-			return fmt.Errorf("tenant [%d] not found", tenantId)
+
+		// if total weight is 0, payout should be distributed equally
+		// otherwise it will be distributed based on the weight
+		amount := sdk.Coin{
+			Denom:  utxr.Amount.Denom,
+			Amount: math.ZeroInt(),
+		}
+
+		if totalWeight == 0 {
+			amount.Amount = utxr.Amount.Amount.Quo(sdk.NewInt(int64(len(utxr.Recipients))))
+		} else {
+			amount.Amount = utxr.Amount.Amount.Mul(sdk.NewInt(int64(recipient.Weight))).Quo(sdk.NewInt(int64(totalWeight)))
 		}
 
 		var err error
 		switch payoutMethod := tenant.PayoutMethod; {
 		case payoutMethod == types.PayoutMethod_Native:
-			if k.erc20k.IsDenomRegistered(ctx, utxr.Amount.Denom) {
-				msg := erc20types.NewMsgConvertCoin(utxr.Amount, common.BytesToAddress(recipientCosmosAddr), treasuryAddr)
-				_, err = k.erc20k.ConvertCoin(ctx, msg)
+			if k.erc20k.IsDenomRegistered(ctx, amount.Denom) {
+				_, err = k.erc20k.ConvertCoin(ctx, erc20types.NewMsgConvertCoin(amount, common.BytesToAddress(recipientCosmosAddr), treasuryAddr))
 			} else {
-				err = k.bk.SendCoins(ctx, treasuryAddr, recipientCosmosAddr, sdk.NewCoins(utxr.Amount))
+				err = k.bk.SendCoins(ctx, treasuryAddr, recipientCosmosAddr, sdk.NewCoins(amount))
 			}
 		case payoutMethod == types.PayoutMethod_MintContract:
 			contractAddr := tenant.GetContractAddress()
 			_, err = k.evmk.CallEVM(ctx, contracts.SBTContract.ABI, common.BytesToAddress(treasuryAddr), common.HexToAddress(contractAddr),
-				true, "mint", common.BytesToAddress(recipientCosmosAddr), utxr.Amount.Amount.BigInt())
+				true, "mint", common.BytesToAddress(recipientCosmosAddr), amount.Amount.BigInt())
 		default:
 			return fmt.Errorf("invalid payout method: %s", payoutMethod)
 		}

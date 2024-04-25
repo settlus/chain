@@ -7,7 +7,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/config"
-	"github.com/settlus/chain/tools/interop-node/repository"
 	"github.com/settlus/chain/tools/interop-node/types"
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
@@ -23,8 +22,7 @@ type Subscriber interface {
 func InitSubscribers(config *config.Config, logger log.Logger) (subscribers []Subscriber, err error) {
 	subscribers = make([]Subscriber, len(config.Chains))
 	for i, chain := range config.Chains {
-		repo := repository.NewLevelDbRepostiory(config.DBHome, chain.ChainID)
-		subscriber, err := NewSubscriber(chain, logger, repo)
+		subscriber, err := NewSubscriber(chain, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -34,9 +32,9 @@ func InitSubscribers(config *config.Config, logger log.Logger) (subscribers []Su
 	return subscribers, err
 }
 
-func NewSubscriber(config config.ChainConfig, logger log.Logger, repo repository.Repository) (Subscriber, error) {
+func NewSubscriber(config config.ChainConfig, logger log.Logger) (Subscriber, error) {
 	if config.ChainType == types.CHAINTYPE_ETHEREUM {
-		return NewEthereumSubscriber(config.ChainID, config.RpcUrl, logger, repo)
+		return NewEthereumSubscriber(config.ChainID, config.RpcUrl, logger)
 	}
 
 	return nil, fmt.Errorf("unsupported chain type: %s", config.ChainType)

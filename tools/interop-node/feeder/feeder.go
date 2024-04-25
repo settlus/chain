@@ -199,16 +199,21 @@ func (feeder *Feeder) gatherBlockDataString(chainIds []string, timestamp uint64)
 		blockDataList[idx] = bd
 	}
 
-	return BlockDataListToBlockDataString(blockDataList), nil
+	return blockDataListToBlockDataString(blockDataList), nil
 }
 
-func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (bd oracletypes.BlockData, err error) {
-	cc, ok := feeder.subscribers[chainId]
+func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (oracletypes.BlockData, error) {
+	sub, ok := feeder.subscribers[chainId]
 	if !ok {
-		return bd, fmt.Errorf("chain client not found for chain id: %s", chainId)
+		return oracletypes.BlockData{}, fmt.Errorf("chain client not found for chain id: %s", chainId)
 	}
 
-	return cc.GetOldestBlock(timestamp)
+	bd, err := sub.GetOldestBlock(timestamp)
+	return oracletypes.BlockData{
+		ChainId:     chainId,
+		BlockNumber: bd.BlockNumber,
+		BlockHash:   bd.BlockHash,
+	}, err
 }
 
 func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64) ([]string, error) {
@@ -224,12 +229,12 @@ func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64
 			return nil, err
 		}
 
-		cc, ok := feeder.subscribers[nft.ChainId]
+		sub, ok := feeder.subscribers[nft.ChainId]
 		if !ok {
 			return nil, fmt.Errorf("chain client not found for chain id: %s", nft.ChainId)
 		}
 
-		owner, err := cc.OwnerOf(context.TODO(), nft.ContractAddr.String(), nft.TokenId.String(), bd.BlockHash)
+		owner, err := sub.OwnerOf(context.TODO(), nft.ContractAddr.String(), nft.TokenId.String(), bd.BlockHash)
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +291,7 @@ func (feeder *Feeder) sendPrevote(ctx context.Context, vda types.VoteDataArr, sa
 }
 
 // BlockDataListToBlockDataString converts a list of BlockData to a string
-func BlockDataListToBlockDataString(bdList []oracletypes.BlockData) []string {
+func blockDataListToBlockDataString(bdList []oracletypes.BlockData) []string {
 	s := make([]string, len(bdList))
 	for i, bd := range bdList {
 		s[i] = fmt.Sprintf("%s:%d/%s", bd.ChainId, bd.BlockNumber, bd.BlockHash)

@@ -1,9 +1,8 @@
-package feeder_test
+package feeder
 
 import (
 	"testing"
 
-	"github.com/settlus/chain/tools/interop-node/feeder"
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
@@ -38,7 +37,7 @@ func Test_BlockDataListToBlockDataString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := feeder.BlockDataListToBlockDataString(tt.args.bdList)
+			got := blockDataListToBlockDataString(tt.args.bdList)
 			require.EqualValues(t, tt.want, got)
 		})
 	}

@@ -11,44 +11,37 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	oracletypes "github.com/settlus/chain/x/oracle/types"
-
-	"github.com/settlus/chain/tools/interop-node/repository"
 	"github.com/settlus/chain/tools/interop-node/types"
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 type EthereumSubscriber struct {
 	chainId string
-	repo    repository.Repository
+	cache   *BlockCache
 	client  *http.Client
 	rpcUrl  string
 	logger  log.Logger
-	dbCh    chan *types.BlockEventData
 }
 
 var _ Subscriber = (*EthereumSubscriber)(nil)
 
-func NewEthereumSubscriber(chainId string, rpcUrl string, logger log.Logger, repo repository.Repository) (*EthereumSubscriber, error) {
+func NewEthereumSubscriber(chainId string, rpcUrl string, logger log.Logger) (*EthereumSubscriber, error) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	dbCh := make(chan *types.BlockEventData)
-
 	return &EthereumSubscriber{
 		chainId: chainId,
-		repo:    repo,
+		cache:   NewBlockCache(100),
 		client:  client,
 		rpcUrl:  rpcUrl,
 		logger:  logger,
-		dbCh:    dbCh,
 	}, nil
 }
 
@@ -57,7 +50,6 @@ func (sub *EthereumSubscriber) Id() string {
 }
 
 func (sub *EthereumSubscriber) Start(ctx context.Context) {
-	go sub.dbLoop(ctx)
 	go sub.fetchLoop(ctx)
 }
 
@@ -68,20 +60,6 @@ func (sub *EthereumSubscriber) Stop() {
 // OwnerOf returns the owner of the given NFT
 func (sub *EthereumSubscriber) OwnerOf(_ context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
 	return sub.findOwnerFromNetwork(nftAddressHex, tokenIdHex, blockHash)
-}
-
-// GetOldestBlock returns the latest block data
-func (sub *EthereumSubscriber) GetOldestBlock(timestamp uint64) (oracletypes.BlockData, error) {
-	block, err := sub.repo.GetOldestBlock(timestamp)
-	if err != nil {
-		return oracletypes.BlockData{}, err
-	}
-
-	return oracletypes.BlockData{
-		ChainId:     sub.chainId,
-		BlockNumber: common.BytesToHash(block.Number).Big().Int64(),
-		BlockHash:   common.Bytes2Hex(block.Hash),
-	}, nil
 }
 
 func (sub *EthereumSubscriber) findOwnerFromNetwork(nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
@@ -146,37 +124,6 @@ func (sub *EthereumSubscriber) findOwnerFromNetwork(nftAddressHex string, tokenI
 	return owner.Result, nil
 }
 
-func (sub *EthereumSubscriber) dbLoop(ctx context.Context) {
-	for {
-		select {
-		case event := <-sub.dbCh:
-			// if channel closed
-			if event == nil {
-				return
-			}
-
-			// check whether block data already exists
-			if hash, err := sub.repo.GetBlockHash(common.Bytes2Hex(event.BlockNumber.Bytes())); err == nil {
-				if hash != "" && hash != common.Bytes2Hex(event.BlockHash) {
-					sub.logger.Error("BlockHash mismatch", "db", hash, "new", common.Bytes2Hex(event.BlockHash))
-				}
-				continue
-			}
-
-			if err := sub.repo.PutBlockData(event.BlockHash, event.BlockNumber.Bytes(), event.Timestamp, event.NftTransferred); err != nil {
-				sub.logger.Error("Failed to putBlockData", "error", err)
-				continue
-			}
-
-			sub.logger.Info("put new block", "number", event.BlockNumber.Int64(), "hash", common.Bytes2Hex(event.BlockHash), "timestamp", event.Timestamp)
-
-		case <-ctx.Done():
-			close(sub.dbCh)
-			return
-		}
-	}
-}
-
 const fetchInterval = 5 * time.Second
 
 func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
@@ -195,13 +142,8 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 				sub.logger.Error(err.Error(), "from", "block fetch", "hash", blockHash)
 				continue
 			}
-			event, err := sub.parseBlock(blockNumber, blockHash, blockTime)
-			if err != nil {
-				sub.logger.Error(err.Error(), "from", "parse block", "number", blockNumber)
-				continue
-			}
 
-			sub.dbCh <- event
+			sub.cache.PutBlockData(blockHash, blockNumber.Int64(), blockTime)
 		case <-ctx.Done():
 			sub.logger.Info("fetchLoop stopped")
 			return
@@ -209,97 +151,18 @@ func (sub *EthereumSubscriber) fetchLoop(ctx context.Context) {
 	}
 }
 
-// parseBlock parses the block and returns the block event data
-func (sub *EthereumSubscriber) parseBlock(blockNumber *big.Int, blockHash string, blockTime uint64) (*types.BlockEventData, error) {
-	erc721Transferred, err := sub.getTransferEventsFromBlock(blockNumber)
-	if err != nil {
-		return nil, err
+// GetOldestBlock returns the latest block data
+func (sub *EthereumSubscriber) GetOldestBlock(timestamp uint64) (oracletypes.BlockData, error) {
+	hash, number := sub.cache.GetOldestBlock(timestamp)
+	if hash == "" || number == 0 {
+		return oracletypes.BlockData{}, fmt.Errorf("failed to get oldest block")
 	}
 
-	return &types.BlockEventData{
-		BlockNumber:    blockNumber,
-		BlockHash:      common.FromHex(blockHash),
-		Timestamp:      blockTime,
-		NftTransferred: erc721Transferred,
+	return oracletypes.BlockData{
+		ChainId:     sub.chainId,
+		BlockNumber: number,
+		BlockHash:   hash,
 	}, nil
-}
-
-// toFilterArg converts ethereum.FilterQuery to a filter argument for eth_getFilterLogs JSON RPC
-func toFilterArg(q ethereum.FilterQuery) (interface{}, error) {
-	arg := map[string]interface{}{
-		"address": q.Addresses,
-		"topics":  q.Topics,
-	}
-	if q.BlockHash != nil {
-		arg["blockHash"] = *q.BlockHash
-		if q.FromBlock != nil || q.ToBlock != nil {
-			return nil, fmt.Errorf("cannot specify both BlockHash and FromBlock/ToBlock")
-		}
-	} else {
-		if q.FromBlock == nil {
-			arg["fromBlock"] = "0x0"
-		} else {
-			arg["fromBlock"] = hexutil.EncodeBig(q.FromBlock)
-		}
-		arg["toBlock"] = hexutil.EncodeBig(q.ToBlock)
-	}
-	return arg, nil
-}
-
-// getTransferEventsFromBlock returns all transfer events from a block
-func (sub *EthereumSubscriber) getTransferEventsFromBlock(blockNumber *big.Int) ([]*types.OwnershipTransferEvent, error) {
-	filterArgs, err := toFilterArg(ethereum.FilterQuery{
-		FromBlock: blockNumber,
-		ToBlock:   blockNumber,
-		Topics:    [][]common.Hash{{common.HexToHash(types.EventTransferSignature)}},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create filter args: %w", err)
-	}
-
-	body, err := json.Marshal(types.EthRpcInput{
-		JsonRpc: "2.0",
-		Method:  "eth_getFilterLogs",
-		Params:  []interface{}{filterArgs},
-		Id:      "1",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal json: %w", err)
-	}
-
-	res, err := sub.client.Post(sub.rpcUrl, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get filter logs: %w", err)
-	}
-	defer res.Body.Close()
-
-	respBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var logs types.FilterLogOutput
-
-	if err := json.Unmarshal(respBody, &logs); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-
-	erc721events := make([]*types.OwnershipTransferEvent, 0)
-	for _, vLog := range logs.Result {
-		if len(vLog.Topics) != 4 || vLog.Topics[0].Hex() != types.EventTransferSignature {
-			continue
-		}
-
-		erc721events = append(erc721events, &types.OwnershipTransferEvent{
-			TxId:         vLog.TxHash.Hex(),
-			ContractAddr: vLog.Address.Bytes(),
-			To:           vLog.Topics[2].Bytes(),
-			TokenId:      vLog.Topics[3].Big(),
-			BlockNumber:  vLog.BlockNumber,
-		})
-	}
-
-	return erc721events, nil
 }
 
 // blockNumber returns the latest block number
