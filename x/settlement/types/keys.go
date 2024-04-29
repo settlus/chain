@@ -2,6 +2,8 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -17,6 +19,13 @@ const (
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_settlement"
 )
+
+// ModuleAddress is the native module address for EVM
+var ModuleAddress common.Address
+
+func init() {
+	ModuleAddress = common.BytesToAddress(authtypes.NewModuleAddress(ModuleName).Bytes())
+}
 
 var (
 	UTXRPrefix          = []byte{0x00}

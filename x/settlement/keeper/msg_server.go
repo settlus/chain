@@ -12,6 +12,7 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 type msgServer struct {
@@ -47,21 +48,26 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 		return nil, types.ErrInvalidTenant
 	}
 
-	recipient, err := k.GetRecipient(ctx, msg.ChainId, msg.ContractAddress, msg.TokenIdHex)
+	recipients, err := k.GetRecipients(ctx, msg.ChainId, msg.ContractAddress, msg.TokenIdHex)
 	if err != nil {
 		return nil, err
 	}
 
-	payoutBlock := uint64(ctx.BlockHeight()) + tenant.PayoutPeriod
+	payoutBlock := uint64(ctx.BlockHeight())
 
 	utxrId, err := k.CreateUTXR(
 		ctx,
 		msg.TenantId,
 		&types.UTXR{
-			RequestId:   msg.RequestId,
-			Recipient:   settlustypes.HexAddressString(recipient),
-			Amount:      msg.Amount,
-			PayoutBlock: payoutBlock,
+			RequestId:  msg.RequestId,
+			Recipients: recipients,
+			Amount:     msg.Amount,
+			Nft: &oracletypes.Nft{
+				ChainId:      msg.ChainId,
+				ContractAddr: settlustypes.HexAddressString(msg.ContractAddress),
+				TokenId:      settlustypes.HexAddressString(msg.TokenIdHex),
+			},
+			CreatedAt: payoutBlock,
 		},
 	)
 	if err != nil {
@@ -69,17 +75,19 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 	}
 
 	if err := ctx.EventManager().EmitTypedEvents(&types.EventRecord{
-		Sender:          msg.Sender,
-		Tenant:          msg.TenantId,
-		UtxrId:          utxrId,
-		RequestId:       msg.RequestId,
-		Amount:          msg.Amount,
-		ChainId:         msg.ChainId,
-		ContractAddress: msg.ContractAddress,
-		TokenIdHex:      msg.TokenIdHex,
-		Recipient:       recipient,
-		Metadata:        msg.Metadata,
-		PayoutBlock:     payoutBlock,
+		Sender:    msg.Sender,
+		Tenant:    msg.TenantId,
+		UtxrId:    utxrId,
+		RequestId: msg.RequestId,
+		Amount:    msg.Amount,
+		Nft: &oracletypes.Nft{
+			ChainId:      msg.ChainId,
+			ContractAddr: settlustypes.HexAddressString(msg.ContractAddress),
+			TokenId:      settlustypes.HexAddressString(msg.TokenIdHex),
+		},
+		Recipients: recipients,
+		Metadata:   msg.Metadata,
+		CreatedAt:  uint64(ctx.BlockHeight()),
 	}); err != nil {
 		return nil, errorsmod.Wrapf(types.ErrEventCreationFailed, "EventRecord event creation failed")
 	}
@@ -93,8 +101,7 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 	)
 
 	return &types.MsgRecordResponse{
-		UtxrId:    utxrId,
-		Recipient: recipient,
+		UtxrId: utxrId,
 	}, nil
 }
 
@@ -118,9 +125,8 @@ func (k msgServer) Cancel(goCtx context.Context, msg *types.MsgCancel) (*types.M
 	}
 
 	if err := ctx.EventManager().EmitTypedEvents(&types.EventCancel{
-		Tenant:    msg.TenantId,
-		UtxrId:    utxrId,
-		RequestId: msg.RequestId,
+		Tenant: msg.TenantId,
+		UtxrId: utxrId,
 	}); err != nil {
 		return nil, errorsmod.Wrapf(types.ErrEventCreationFailed, "EventCancel event creation failed")
 	}

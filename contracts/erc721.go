@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 
-	"github.com/settlus/chain/x/nftownership/types"
+	"github.com/settlus/chain/x/settlement/types"
 )
 
 var (

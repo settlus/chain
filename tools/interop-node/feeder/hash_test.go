@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/settlus/chain/tools/interop-node/feeder"
+	"github.com/settlus/chain/tools/interop-node/types"
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 func Test_GenerateSalt(t *testing.T) {
@@ -22,7 +24,7 @@ func Test_GenerateSalt(t *testing.T) {
 
 func Test_GeneratePrevoteHash(t *testing.T) {
 	type args struct {
-		blockDataString string
+		blockDataString []string
 		salt            string
 	}
 	tests := []struct {
@@ -33,23 +35,29 @@ func Test_GeneratePrevoteHash(t *testing.T) {
 		{
 			name: "single chain",
 			args: args{
-				blockDataString: "1:123:0x123",
+				blockDataString: []string{"1:123:0x123"},
 				salt:            "foo",
 			},
 			want: "01A164031A468DE61267F23A6BD7642AA33422C983D0E298085AEE1244A51F40",
 		}, {
 			name: "multiple chains",
 			args: args{
-				blockDataString: "1:123:0x123,2:456:0x456",
+				blockDataString: []string{"1:123:0x123", "2:456:0x456"},
 				salt:            "bar",
 			},
-			want: "701589DAB7F4883BFD8CCC3AE2A4A90D30C5AE3C21486BB0C346D47A02B4FE05",
+			want: "1776F5F1BCACEFC9E75DA6623C9C9B1AA6DDF9831DBDEC3453D0C69B380FBE97",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := feeder.GeneratePrevoteHash(tt.args.blockDataString, tt.args.salt); got != tt.want {
+			voteData := types.VoteDataArr{
+				{
+					Topic: oracletypes.OralceTopic_BLOCK,
+					Data:  tt.args.blockDataString,
+				},
+			}
+			if got := feeder.GeneratePrevoteHash(voteData, tt.args.salt); got != tt.want {
 				t.Errorf("GeneratePrevoteHash() = %v, want %v", got, tt.want)
 			}
 		})

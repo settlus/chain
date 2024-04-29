@@ -1,7 +1,8 @@
 syntax = "proto3";
-package settlus.settlement;
+package settlus.settlement.v1alpha1;
 
 import "cosmos/base/v1beta1/coin.proto";
+import "settlus/oracle/v1alpha1/oracle.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/settlus/chain/x/settlement/types";
@@ -33,10 +34,16 @@ message Tenant {
 // UTXR defines the unspent transaction record.
 message UTXR {
   string request_id = 1;
-  string recipient = 2 [
+  repeated Recipient recipients = 2;
+  cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
+  uint64 created_at = 4; // block number of the utxr creation
+  settlus.oracle.v1alpha1.Nft nft = 5;
+}
+
+message Recipient {
+  string address = 1 [
     (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
     (gogoproto.nullable) = false
   ];
-  cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
-  uint64 payout_block = 4;
+  uint32 weight = 2;
 }

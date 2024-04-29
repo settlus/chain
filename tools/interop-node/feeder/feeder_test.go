@@ -1,10 +1,10 @@
-package feeder_test
+package feeder
 
 import (
 	"testing"
 
-	"github.com/settlus/chain/tools/interop-node/feeder"
 	oracletypes "github.com/settlus/chain/x/oracle/types"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_BlockDataListToBlockDataString(t *testing.T) {
@@ -14,7 +14,7 @@ func Test_BlockDataListToBlockDataString(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
+		want []string
 	}{
 		{
 			name: "test",
@@ -32,14 +32,13 @@ func Test_BlockDataListToBlockDataString(t *testing.T) {
 					},
 				},
 			},
-			want: "1:123:0x123,2:456:0x456",
+			want: []string{"1:123/0x123", "2:456/0x456"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := feeder.BlockDataListToBlockDataString(tt.args.bdList); got != tt.want {
-				t.Errorf("BlockDataListToBlockDataString() = %v, want %v", got, tt.want)
-			}
+			got := blockDataListToBlockDataString(tt.args.bdList)
+			require.EqualValues(t, tt.want, got)
 		})
 	}
 }

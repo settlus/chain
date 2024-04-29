@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ctypes "github.com/settlus/chain/types"
 )
 
 type StakingKeeper interface {
@@ -63,4 +64,9 @@ type DistributionKeeper interface {
 	// AllocateTokensToValidator allocate tokens to a particular validator,
 	// splitting according to commission.
 	AllocateTokensToValidator(ctx sdk.Context, val stakingtypes.ValidatorI, tokens sdk.DecCoins)
+}
+
+type SettlementKeeper interface {
+	GetAllUniqueNftToVerify(ctx sdk.Context, height uint64) (list []Nft)
+	SetRecipients(ctx sdk.Context, nfts map[Nft]ctypes.HexAddressString, height uint64)
 }

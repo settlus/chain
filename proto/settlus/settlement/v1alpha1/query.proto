@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package settlus.settlement;
+package settlus.settlement.v1alpha1;
 
 import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "settlus/settlement/settlement.proto";
+import "settlus/settlement/v1alpha1/settlement.proto";
 
 option go_package = "github.com/settlus/chain/x/settlement/types";
 
@@ -14,28 +14,30 @@ option go_package = "github.com/settlus/chain/x/settlement/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/settlus/settlement/params";
+    option (google.api.http).get = "/settlus/settlement/v1alpha1/params";
   }
 
   // Queries a UTXR by tenant_id and request_id.
   rpc UTXR(QueryUTXRRRequest) returns (QueryUTXRResponse) {
     option (google.api.http).get =
-        "/settlus/settlement/utxr/{tenant_id}/{request_id}";
+        "/settlus/settlement/v1alpha1/utxr/{tenant_id}/{request_id}";
   }
 
   // Queries a list of TxRecord items.
   rpc UTXRs(QueryUTXRsRequest) returns (QueryUTXRsResponse) {
-    option (google.api.http).get = "/settlus/settlement/utxrs/{tenant_id}";
+    option (google.api.http).get =
+        "/settlus/settlement/v1alpha1/utxrs/{tenant_id}";
   }
 
   // Queries a tenant by tenant_id.
   rpc Tenant(QueryTenantRequest) returns (QueryTenantResponse) {
-    option (google.api.http).get = "/settlus/settlement/tenant/{tenant_id}";
+    option (google.api.http).get =
+        "/settlus/settlement/v1alpha1/tenant/{tenant_id}";
   }
 
   // Queries a all tenants.
   rpc Tenants(QueryTenantsRequest) returns (QueryTenantsResponse) {
-    option (google.api.http).get = "/settlus/settlement/tenants";
+    option (google.api.http).get = "/settlus/settlement/v1alpha1/tenants";
   }
 }
 

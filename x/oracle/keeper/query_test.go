@@ -53,9 +53,8 @@ func (suite *OracleTestSuite) TestKeeper_AllBlockData() {
 
 func (suite *OracleTestSuite) TestKeeper_AggregatePrevote() {
 	expectedAggregatePrevote := types.AggregatePrevote{
-		Hash:        "foobar",
-		Voter:       s.validators[0].GetOperator().String(),
-		SubmitBlock: 100,
+		Hash:  "foobar",
+		Voter: s.validators[0].GetOperator().String(),
 	}
 	s.app.OracleKeeper.SetAggregatePrevote(s.ctx, expectedAggregatePrevote)
 
@@ -69,14 +68,12 @@ func (suite *OracleTestSuite) TestKeeper_AggregatePrevote() {
 func (suite *OracleTestSuite) TestKeeper_AggregatePrevotes() {
 	expectedAggregatePrevotes := []types.AggregatePrevote{
 		{
-			Hash:        "foobar",
-			Voter:       s.validators[0].GetOperator().String(),
-			SubmitBlock: 100,
+			Hash:  "foobar",
+			Voter: s.validators[0].GetOperator().String(),
 		},
 		{
-			Hash:        "barbaz",
-			Voter:       s.validators[1].GetOperator().String(),
-			SubmitBlock: 200,
+			Hash:  "barbaz",
+			Voter: s.validators[1].GetOperator().String(),
 		},
 	}
 	for _, aggregatePrevote := range expectedAggregatePrevotes {
@@ -90,13 +87,11 @@ func (suite *OracleTestSuite) TestKeeper_AggregatePrevotes() {
 
 func (suite *OracleTestSuite) TestKeeper_AggregateVote() {
 	expectedAggregateVote := types.AggregateVote{
-		BlockData: []*types.BlockData{
-			{
-				ChainId:     "1",
-				BlockNumber: 100,
-				BlockHash:   "foobar",
-			},
-		},
+		VoteData: types.BlockDataToVoteData(&types.BlockData{
+			ChainId:     "1",
+			BlockNumber: 100,
+			BlockHash:   "foobar",
+		}),
 		Voter: s.validators[0].GetOperator().String(),
 	}
 	s.app.OracleKeeper.SetAggregateVote(s.ctx, expectedAggregateVote)
@@ -110,23 +105,22 @@ func (suite *OracleTestSuite) TestKeeper_AggregateVote() {
 func (suite *OracleTestSuite) TestKeeper_AggregateVotes() {
 	expectedAggregateVotes := []types.AggregateVote{
 		{
-			BlockData: []*types.BlockData{
-				{
-					ChainId:     "1",
-					BlockNumber: 100,
-					BlockHash:   "foobar",
-				},
+			VoteData: types.BlockDataToVoteData(&types.BlockData{
+				ChainId:     "1",
+				BlockNumber: 100,
+				BlockHash:   "foobar",
 			},
+			),
 			Voter: s.validators[0].GetOperator().String(),
 		},
 		{
-			BlockData: []*types.BlockData{
-				{
-					ChainId:     "2",
-					BlockNumber: 200,
-					BlockHash:   "barbaz",
-				},
+			VoteData: types.BlockDataToVoteData(&types.BlockData{
+
+				ChainId:     "2",
+				BlockNumber: 200,
+				BlockHash:   "barbaz",
 			},
+			),
 			Voter: s.validators[1].GetOperator().String(),
 		},
 	}

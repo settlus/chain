@@ -4,16 +4,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	settlustypes "github.com/settlus/chain/types"
 	"github.com/settlus/chain/x/settlement/types"
 )
 
 func (suite *SettlementTestSuite) TestKeeper_HasUTXRByRequestId() {
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(1), utxrId)
@@ -30,10 +29,10 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR() {
 	suite.Equal(uint64(0), id)
 
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(1), utxrId)
@@ -45,10 +44,10 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR() {
 	suite.Equal(uint64(1), id)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-2",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-2",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(2), utxrId)
@@ -78,10 +77,10 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 	suite.Equal(uint64(0), t1Id)
 
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(1), utxrId)
@@ -93,10 +92,10 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 	suite.Equal(uint64(1), t0Id)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 1, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(1), utxrId)
@@ -108,10 +107,10 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 	suite.Equal(uint64(1), t1Id)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-2",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-2",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(2), utxrId)
@@ -128,10 +127,10 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 
 func (suite *SettlementTestSuite) TestKeeper_CreateUTXR() {
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(1), utxrId)
@@ -142,25 +141,25 @@ func (suite *SettlementTestSuite) TestKeeper_CreateUTXR() {
 
 func (suite *SettlementTestSuite) TestKeeper_GetUTXRByRequestId() {
 	_, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.creator),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(10)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.creator),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(10)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 
 	utxr := suite.keeper.GetUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.NotNil(utxr)
 	suite.EqualValues(10, utxr.Amount.Amount.Int64())
-	suite.EqualValues(suite.creator, common.FromHex(utxr.Recipient.String()))
+	suite.EqualValues(suite.creator, utxr.Recipients[0].Address.Bytes())
 }
 
 func (suite *SettlementTestSuite) TestKeeper_DeleteUTXRByRequestId() {
 	_, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.creator),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(10)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.creator),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(10)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 
@@ -169,7 +168,7 @@ func (suite *SettlementTestSuite) TestKeeper_DeleteUTXRByRequestId() {
 	utxr := suite.keeper.GetUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.NotNil(utxr)
 	suite.EqualValues(10, utxr.Amount.Amount.Int64())
-	suite.EqualValues(suite.creator, common.FromHex(utxr.Recipient.String()))
+	suite.EqualValues(suite.creator, common.FromHex(utxr.Recipients[0].Address.String()))
 
 	utxrId, err := suite.keeper.DeleteUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.NoError(err)
@@ -181,19 +180,19 @@ func (suite *SettlementTestSuite) TestKeeper_DeleteUTXRByRequestId() {
 
 func (suite *SettlementTestSuite) TestKeeper_GetAllUTXRWithTenantAndID() {
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(1), utxrId)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
-		RequestId:   "request-2",
-		Recipient:   settlustypes.NewHexAddressString(suite.appAdmin),
-		Amount:      sdk.NewCoin("uusdc", sdk.NewInt(100)),
-		PayoutBlock: uint64(100),
+		RequestId:  "request-2",
+		Recipients: types.SingleRecipients(suite.appAdmin),
+		Amount:     sdk.NewCoin("uusdc", sdk.NewInt(100)),
+		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
 	suite.Equal(uint64(2), utxrId)

@@ -18,13 +18,13 @@ var (
 	_ sdk.Msg = &MsgFeederDelegationConsent{}
 )
 
-func NewMsgVote(feeder, validator, blockDataString, salt string, roundId uint64) *MsgVote {
+func NewMsgVote(feeder, validator string, voteData []*VoteData, salt string, roundId uint64) *MsgVote {
 	return &MsgVote{
-		Feeder:          feeder,
-		Validator:       validator,
-		BlockDataString: blockDataString,
-		Salt:            salt,
-		RoundId:         roundId,
+		Feeder:    feeder,
+		Validator: validator,
+		VoteData:  voteData,
+		Salt:      salt,
+		RoundId:   roundId,
 	}
 }
 
@@ -60,10 +60,13 @@ func (msg *MsgVote) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid validator address (%s)", err)
 	}
 
-	_, err = ParseBlockDataString(msg.BlockDataString)
-	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid block data string (%s)", err)
-	}
+	//TODO: Validate VoteData
+	/*
+		_, err = ParseBlockDataString(msg.BlockDataString)
+		if err != nil {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid block data string (%s)", err)
+		}
+	*/
 
 	return nil
 }

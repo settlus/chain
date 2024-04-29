@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	settlustypes "github.com/settlus/chain/types"
 	"github.com/settlus/chain/x/settlement/types"
 )
 
@@ -21,19 +20,19 @@ func (suite *SettlementTestSuite) TestKeeper_UTXR() {
 	// Create UTXRs
 	for i := 1; i < 4; i++ {
 		utxrId, err := s.keeper.CreateUTXR(s.ctx, uint64(1), &types.UTXR{
-			RequestId:   fmt.Sprintf("request-%d", i),
-			Recipient:   settlustypes.NewHexAddressString(s.creator),
-			Amount:      sdk.NewCoin("uusdc", sdk.NewInt(10)),
-			PayoutBlock: 100,
+			RequestId:  fmt.Sprintf("request-%d", i),
+			Recipients: types.SingleRecipients(s.creator),
+			Amount:     sdk.NewCoin("uusdc", sdk.NewInt(10)),
+			CreatedAt:  100,
 		})
 		s.NoError(err)
 		s.Equal(uint64(i), utxrId)
 
 		utxrId, err = s.keeper.CreateUTXR(s.ctx, uint64(2), &types.UTXR{
-			RequestId:   fmt.Sprintf("request-%d", i),
-			Recipient:   settlustypes.NewHexAddressString(s.creator),
-			Amount:      sdk.NewCoin("uusdc", sdk.NewInt(10)),
-			PayoutBlock: 100,
+			RequestId:  fmt.Sprintf("request-%d", i),
+			Recipients: types.SingleRecipients(s.creator),
+			Amount:     sdk.NewCoin("uusdc", sdk.NewInt(10)),
+			CreatedAt:  100,
 		})
 		s.NoError(err)
 		s.Equal(uint64(i), utxrId)
@@ -62,19 +61,19 @@ func (suite *SettlementTestSuite) TestKeeper_UTXRs() {
 	// Create UTXRs
 	for i := 1; i < 4; i++ {
 		utxrId, err := s.keeper.CreateUTXR(s.ctx, 1, &types.UTXR{
-			RequestId:   fmt.Sprintf("request-%d", i),
-			Recipient:   settlustypes.NewHexAddressString(s.creator),
-			Amount:      sdk.NewCoin("uusdc", sdk.NewInt(10)),
-			PayoutBlock: 100,
+			RequestId:  fmt.Sprintf("request-%d", i),
+			Recipients: types.SingleRecipients(s.creator),
+			Amount:     sdk.NewCoin("uusdc", sdk.NewInt(10)),
+			CreatedAt:  100,
 		})
 		s.NoError(err)
 		s.Equal(uint64(i), utxrId)
 
 		utxrId, err = s.keeper.CreateUTXR(s.ctx, 2, &types.UTXR{
-			RequestId:   fmt.Sprintf("request-%d", i),
-			Recipient:   settlustypes.NewHexAddressString(s.creator),
-			Amount:      sdk.NewCoin("uusdc", sdk.NewInt(10)),
-			PayoutBlock: 100,
+			RequestId:  fmt.Sprintf("request-%d", i),
+			Recipients: types.SingleRecipients(s.creator),
+			Amount:     sdk.NewCoin("uusdc", sdk.NewInt(10)),
+			CreatedAt:  100,
 		})
 		s.NoError(err)
 		s.Equal(uint64(i), utxrId)

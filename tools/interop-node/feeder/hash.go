@@ -4,6 +4,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
+	"strings"
+
+	"github.com/settlus/chain/tools/interop-node/types"
 )
 
 const SaltLength = 4
@@ -18,10 +21,16 @@ func GenerateSalt() (string, error) {
 }
 
 // GeneratePrevoteHash generates a prevote hash from a block data string and a salt
-func GeneratePrevoteHash(bd, salt string) string {
-	sourceStr := fmt.Sprintf("%s%s", salt, bd)
+func GeneratePrevoteHash(vda types.VoteDataArr, salt string) string {
+	var sb strings.Builder
+	sb.WriteString(salt)
+	for _, vd := range vda {
+		for _, d := range vd.Data {
+			sb.WriteString(d)
+		}
+	}
 	h := sha256.New()
-	h.Write([]byte(sourceStr))
+	h.Write([]byte(sb.String()))
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%X", bs)
 }

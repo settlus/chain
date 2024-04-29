@@ -11,7 +11,6 @@ import (
 	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
-	settlustypes "github.com/settlus/chain/types"
 	"github.com/settlus/chain/x/settlement/types"
 )
 
@@ -26,10 +25,10 @@ func (suite *SettlementTestSuite) TestSettle_Settle() {
 	requestId := "request-1"
 	recipient := sdk.MustAccAddressFromBech32(sample.AccAddress())
 	_, err = suite.keeper.CreateUTXR(suite.ctx, 1, &types.UTXR{
-		RequestId:   requestId,
-		Recipient:   settlustypes.NewHexAddressString(recipient),
-		Amount:      sdk.NewCoin("uusdc", math.NewInt(10)),
-		PayoutBlock: 10,
+		RequestId:  requestId,
+		Recipients: types.SingleRecipients(recipient),
+		Amount:     sdk.NewCoin("uusdc", math.NewInt(10)),
+		CreatedAt:  10,
 	})
 	suite.NoError(err)
 
@@ -63,10 +62,10 @@ func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance(
 	// total amount to settle is 100
 	for i := 0; i < 10; i++ {
 		res, err := suite.keeper.CreateUTXR(suite.ctx, 1, &types.UTXR{
-			RequestId:   fmt.Sprintf("request-%d", i),
-			Recipient:   settlustypes.NewHexAddressString(recipient),
-			Amount:      sdk.NewCoin("uusdc", math.NewInt(10)),
-			PayoutBlock: uint64(suite.ctx.BlockHeight()) + 10,
+			RequestId:  fmt.Sprintf("request-%d", i),
+			Recipients: types.SingleRecipients(recipient),
+			Amount:     sdk.NewCoin("uusdc", math.NewInt(10)),
+			CreatedAt:  uint64(suite.ctx.BlockHeight()),
 		})
 
 		suite.NoError(err)
@@ -104,10 +103,10 @@ func (suite *SettlementTestSuite) TestSettle_Settle_TopUpTreasuryBalance() {
 	recipient := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
 	_, err = suite.keeper.CreateUTXR(suite.ctx, 1, &types.UTXR{
-		RequestId:   "request-1",
-		Recipient:   settlustypes.NewHexAddressString(recipient),
-		Amount:      sdk.NewCoin("uusdc", math.NewInt(100)),
-		PayoutBlock: uint64(suite.ctx.BlockHeight()) + 10,
+		RequestId:  "request-1",
+		Recipients: types.SingleRecipients(recipient),
+		Amount:     sdk.NewCoin("uusdc", math.NewInt(100)),
+		CreatedAt:  uint64(suite.ctx.BlockHeight()),
 	})
 	suite.NoError(err)
 

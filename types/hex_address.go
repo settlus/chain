@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -9,12 +11,12 @@ const AccAddressByteSize = 20
 
 type HexAddressString string
 
-func NewHexAddressString(addr sdk.AccAddress) HexAddressString {
+func NewHexAddrFromAccAddr(addr sdk.AccAddress) HexAddressString {
 	return HexAddressString(common.BytesToAddress(addr.Bytes()).Hex())
 }
 
 func (a HexAddressString) Marshal() ([]byte, error) {
-	return common.FromHex(string(a)), nil
+	return a.Bytes(), nil
 }
 
 func (a HexAddressString) MarshalTo(data []byte) (int, error) {
@@ -38,4 +40,13 @@ func (a HexAddressString) Size() int {
 
 func (a HexAddressString) String() string {
 	return string(a)
+}
+
+func (a HexAddressString) Bytes() []byte {
+	aStr := strings.TrimPrefix(string(a), "0x")
+	if len(aStr)%2 == 1 {
+		aStr = "0" + aStr
+	}
+
+	return common.Hex2BytesFixed(aStr, AccAddressByteSize)
 }

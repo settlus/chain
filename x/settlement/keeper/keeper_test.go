@@ -114,11 +114,6 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 	err = suite.app.EvmKeeper.SetParams(suite.ctx, evmParams)
 	require.NoError(t, err)
 
-	// nft ownership module params
-	nftownershipParams := suite.app.NftOwnershipKeeper.GetParams(suite.ctx)
-	nftownershipParams.AllowedChainIds = []string{"settlus_5371-1"}
-	suite.app.NftOwnershipKeeper.SetParams(suite.ctx, nftownershipParams)
-
 	// keeper
 	suite.keeper = suite.app.SettlementKeeper
 

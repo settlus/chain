@@ -8,6 +8,8 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ctypes "github.com/settlus/chain/types"
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 // GetUTXRStore returns the UTXR store for the given tenantId
@@ -43,13 +45,15 @@ func (k SettlementKeeper) CreateUTXR(ctx sdk.Context, tenantId uint64, utxr *typ
 		return 0, sdkerrors.Wrapf(types.ErrDuplicateRequestId, "UTXR with [request ID: %s] [tenant ID: %d] already exists.", utxr.RequestId, tenantId)
 	}
 
-	if !common.IsHexAddress(utxr.Recipient.String()) {
-		return 0, sdkerrors.Wrapf(types.ErrInvalidAccount, "Invalid recipient address: %s", utxr.Recipient)
-	}
+	for _, recipient := range utxr.Recipients {
+		if !common.IsHexAddress(recipient.Address.String()) {
+			return 0, sdkerrors.Wrapf(types.ErrInvalidAccount, "Invalid recipient address: %s", recipient.Address)
+		}
 
-	recipient := common.HexToAddress(utxr.Recipient.String()).Bytes()
-	if !k.ak.HasAccount(ctx, recipient) {
-		k.ak.SetAccount(ctx, k.ak.NewAccountWithAddress(ctx, recipient))
+		accAddr := sdk.AccAddress(recipient.Address.Bytes())
+		if !k.ak.HasAccount(ctx, accAddr) {
+			k.ak.SetAccount(ctx, k.ak.NewAccountWithAddress(ctx, accAddr))
+		}
 	}
 
 	utxrId := k.GetLargestUTXRId(ctx, tenantId) + 1
@@ -136,4 +140,60 @@ func (k SettlementKeeper) GetAllUTXRWithTenantAndID(ctx sdk.Context) (list []typ
 	}
 
 	return list
+}
+
+func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, until uint64) (list []oracletypes.Nft) {
+	nfts := make(map[oracletypes.Nft]struct{})
+
+	store := ctx.KVStore(k.storeKey)
+	utxrStore := prefix.NewStore(store, types.UTXRPrefix)
+	iterator := utxrStore.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var utxr types.UTXR
+		k.cdc.MustUnmarshal(iterator.Value(), &utxr)
+		if len(utxr.Recipients) == 0 && until >= utxr.CreatedAt {
+			nfts[*utxr.Nft] = struct{}{}
+		}
+	}
+
+	for nft := range nfts {
+		list = append(list, nft)
+	}
+
+	return list
+}
+
+func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[oracletypes.Nft]ctypes.HexAddressString, until uint64) {
+	store := ctx.KVStore(k.storeKey)
+	utxrStore := prefix.NewStore(store, types.UTXRPrefix)
+	iterator := utxrStore.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var utxr types.UTXR
+		k.cdc.MustUnmarshal(iterator.Value(), &utxr)
+		if len(utxr.Recipients) == 0 && until >= utxr.CreatedAt {
+			owner, ok := nfts[*utxr.Nft]
+			if !ok {
+				continue
+			}
+			utxr.Recipients = []*types.Recipient{{
+				Address: owner,
+			}}
+			bz := k.cdc.MustMarshal(&utxr)
+			key := iterator.Key()
+			utxrStore.Set(key, bz)
+
+			err := ctx.EventManager().EmitTypedEvents(&types.EventSetRecipients{
+				Tenant:     sdk.BigEndianToUint64(key[0:8]),
+				UtxrId:     sdk.BigEndianToUint64(key[8:]),
+				Recipients: utxr.Recipients,
+			})
+			if err != nil {
+				k.Logger(ctx).Error("failed to emit EventSetRecipients", "error", err)
+			}
+		}
+	}
 }

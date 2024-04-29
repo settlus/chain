@@ -7,7 +7,10 @@ import (
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
+
+type VoteDataArr []*oracletypes.VoteData
 
 func PadBytes(pad int, b []byte) []byte {
 	if len(b) == pad {

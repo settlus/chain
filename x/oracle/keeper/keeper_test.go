@@ -241,9 +241,8 @@ func (suite *OracleTestSuite) TestKeeper_GetRewardPool() {
 func (suite *OracleTestSuite) TestKeeper_GetSetDeletePrevote() {
 	validator := s.validators[0]
 	prevote := types.AggregatePrevote{
-		Hash:        "foobar",
-		Voter:       validator.GetOperator().String(),
-		SubmitBlock: uint64(100),
+		Hash:  "foobar",
+		Voter: validator.GetOperator().String(),
 	}
 	s.app.OracleKeeper.SetAggregatePrevote(s.ctx, prevote)
 
@@ -262,11 +261,10 @@ func (suite *OracleTestSuite) TestKeeper_GetSetDeletePrevote() {
 func (suite *OracleTestSuite) TestKeeper_GetSetDeleteVote() {
 	validator := s.validators[0]
 	vote := types.AggregateVote{
-		BlockData: []*types.BlockData{
+		VoteData: []*types.VoteData{
 			{
-				ChainId:     "1",
-				BlockNumber: 100,
-				BlockHash:   "foobar",
+				Topic: types.OralceTopic_BLOCK,
+				Data:  []string{"1:100:foobar"},
 			},
 		},
 		Voter: validator.GetOperator().String(),
@@ -305,28 +303,24 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 			name: "all validators with same weight get reward",
 			vcm: map[string]types.Claim{
 				s.validators[0].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[0].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[1].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[1].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[2].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[2].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[3].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[3].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 			},
 			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 4000000)),
@@ -341,28 +335,24 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 			name: "all validators with different weights get reward",
 			vcm: map[string]types.Claim{
 				s.validators[0].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[0].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[1].GetOperator().String(): {
-					Weight:    200,
-					MissCount: 0,
-					Recipient: s.validators[1].GetOperator(),
-					Abstain:   false,
+					Weight:  200,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[2].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[2].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[3].GetOperator().String(): {
-					Weight:    200,
-					MissCount: 0,
-					Recipient: s.validators[3].GetOperator(),
-					Abstain:   false,
+					Weight:  200,
+					Miss:    false,
+					Abstain: false,
 				},
 			},
 			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 4000000)),
@@ -377,28 +367,24 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 			name: "2 validators get reward, 2 validators do not",
 			vcm: map[string]types.Claim{
 				s.validators[0].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 0,
-					Recipient: s.validators[0].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[1].GetOperator().String(): {
-					Weight:    200,
-					MissCount: 0,
-					Recipient: s.validators[1].GetOperator(),
-					Abstain:   false,
+					Weight:  200,
+					Miss:    false,
+					Abstain: false,
 				},
 				s.validators[2].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 1,
-					Recipient: s.validators[2].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    true,
+					Abstain: false,
 				},
 				s.validators[3].GetOperator().String(): {
-					Weight:    200,
-					MissCount: 0,
-					Recipient: s.validators[3].GetOperator(),
-					Abstain:   true,
+					Weight:  200,
+					Miss:    false,
+					Abstain: true,
 				},
 			},
 			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 3000000)),
@@ -413,28 +399,24 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 			name: "no validators get reward",
 			vcm: map[string]types.Claim{
 				s.validators[0].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 1,
-					Recipient: s.validators[0].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    true,
+					Abstain: false,
 				},
 				s.validators[1].GetOperator().String(): {
-					Weight:    200,
-					MissCount: 1,
-					Recipient: s.validators[1].GetOperator(),
-					Abstain:   false,
+					Weight:  200,
+					Miss:    true,
+					Abstain: false,
 				},
 				s.validators[2].GetOperator().String(): {
-					Weight:    100,
-					MissCount: 1,
-					Recipient: s.validators[2].GetOperator(),
-					Abstain:   false,
+					Weight:  100,
+					Miss:    true,
+					Abstain: false,
 				},
 				s.validators[3].GetOperator().String(): {
-					Weight:    200,
-					MissCount: 1,
-					Recipient: s.validators[3].GetOperator(),
-					Abstain:   false,
+					Weight:  200,
+					Miss:    true,
+					Abstain: false,
 				},
 			},
 			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 1000000)),
@@ -455,7 +437,7 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 			err = s.app.BankKeeper.SendCoinsFromAccountToModule(s.ctx, s.address, types.ModuleName, tt.totalCoin)
 			s.NoError(err)
 
-			err = s.app.OracleKeeper.RewardBallotWinners(s.ctx, &tt.vcm)
+			err = s.app.OracleKeeper.RewardBallotWinners(s.ctx, tt.vcm)
 			s.NoError(err)
 
 			for _, validator := range s.validators {
@@ -481,65 +463,23 @@ func (suite *OracleTestSuite) TestKeeper_ClearBallots() {
 			name: "all prevotes and votes need to be cleared",
 			setupPrevotesAndVotes: func() {
 				s.app.OracleKeeper.SetAggregatePrevote(s.ctx, types.AggregatePrevote{
-					Hash:        "foobar",
-					Voter:       s.validators[0].GetOperator().String(),
-					SubmitBlock: uint64(1),
+					Hash:  "foobar",
+					Voter: s.validators[0].GetOperator().String(),
 				})
 				s.app.OracleKeeper.SetAggregatePrevote(s.ctx, types.AggregatePrevote{
-					Hash:        "foobar",
-					Voter:       s.validators[1].GetOperator().String(),
-					SubmitBlock: uint64(1),
+					Hash:  "foobar",
+					Voter: s.validators[1].GetOperator().String(),
 				})
 				s.app.OracleKeeper.SetAggregateVote(s.ctx, types.AggregateVote{
-					BlockData: []*types.BlockData{
+					VoteData: []*types.VoteData{
 						{
-							ChainId:     "1",
-							BlockNumber: 100,
-							BlockHash:   "foobar",
-						},
-						{
-							ChainId:     "2",
-							BlockNumber: 200,
-							BlockHash:   "foobar",
+							Topic: types.OralceTopic_BLOCK,
+							Data:  []string{"1:100:foobar"},
 						},
 					},
 				})
 			},
 			wantLength: 0,
-		}, {
-			name: "only some prevotes need to be cleared",
-			setupPrevotesAndVotes: func() {
-				s.app.OracleKeeper.SetAggregatePrevote(s.ctx, types.AggregatePrevote{
-					Hash:        "foobar",
-					Voter:       s.validators[0].GetOperator().String(),
-					SubmitBlock: uint64(1),
-				})
-				s.app.OracleKeeper.SetAggregatePrevote(s.ctx, types.AggregatePrevote{
-					Hash:        "foobar",
-					Voter:       s.validators[1].GetOperator().String(),
-					SubmitBlock: uint64(1),
-				})
-				s.app.OracleKeeper.SetAggregatePrevote(s.ctx, types.AggregatePrevote{
-					Hash:        "foobar",
-					Voter:       s.validators[2].GetOperator().String(),
-					SubmitBlock: uint64(4),
-				})
-				s.app.OracleKeeper.SetAggregateVote(s.ctx.WithBlockHeight(2), types.AggregateVote{
-					BlockData: []*types.BlockData{
-						{
-							ChainId:     "1",
-							BlockNumber: 100,
-							BlockHash:   "foobar",
-						},
-						{
-							ChainId:     "2",
-							BlockNumber: 200,
-							BlockHash:   "foobar",
-						},
-					},
-				})
-			},
-			wantLength: 1,
 		},
 	}
 

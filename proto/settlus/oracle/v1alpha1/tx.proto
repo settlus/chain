@@ -3,6 +3,7 @@ syntax = "proto3";
 package settlus.oracle.v1alpha1;
 
 import "cosmos/msg/v1/msg.proto";
+import "settlus/oracle/v1alpha1/oracle.proto";
 
 option go_package = "github.com/settlus/chain/x/oracle/types";
 
@@ -35,7 +36,7 @@ message MsgVote {
 
   string feeder = 1;
   string validator = 2;
-  string block_data_string = 3;
+  repeated VoteData vote_data = 3;
   string salt = 4;
   uint64 round_id = 5;
 }
