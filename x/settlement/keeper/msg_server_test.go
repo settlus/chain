@@ -166,7 +166,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_IDInOrder() {
 
 	utxrs := suite.keeper.GetAllUTXRWithTenantAndID(suite.ctx)
 	for i, utxr := range utxrs {
-		suite.EqualValues(utxr.Id, i+1)
+		suite.EqualValues(utxr.Id, i)
 	}
 }
 

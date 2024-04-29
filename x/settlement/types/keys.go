@@ -31,6 +31,7 @@ var (
 	UTXRPrefix          = []byte{0x00}
 	UTXRRequestIdPrefix = []byte{0x01}
 	TenantPrefix        = []byte{0x02}
+	LastUtxrIdPrefix    = []byte{0x03}
 )
 
 func KeyPrefix(p string) []byte {
@@ -52,4 +53,8 @@ func UTXRStoreByRequestIdKey(tenantId uint64, requestId string) []byte {
 
 func TenantStoreKey(tenantId uint64) []byte {
 	return append(TenantPrefix, sdk.Uint64ToBigEndian(tenantId)...)
+}
+
+func LastUtxrIdStoreKey(tenantId uint64) []byte {
+	return append(LastUtxrIdPrefix, sdk.Uint64ToBigEndian(tenantId)...)
 }

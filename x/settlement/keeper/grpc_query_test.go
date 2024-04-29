@@ -18,7 +18,7 @@ func (suite *SettlementTestSuite) TestKeeper_Params() {
 
 func (suite *SettlementTestSuite) TestKeeper_UTXR() {
 	// Create UTXRs
-	for i := 1; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		utxrId, err := s.keeper.CreateUTXR(s.ctx, uint64(1), &types.UTXR{
 			RequestId:  fmt.Sprintf("request-%d", i),
 			Recipients: types.SingleRecipients(s.creator),
@@ -40,7 +40,7 @@ func (suite *SettlementTestSuite) TestKeeper_UTXR() {
 	suite.Commit()
 
 	// Get UTXRs
-	for i := 1; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		res, err := s.queryClient.UTXR(s.ctx, &types.QueryUTXRRRequest{
 			TenantId:  uint64(1),
 			RequestId: fmt.Sprintf("request-%d", i),
@@ -59,7 +59,7 @@ func (suite *SettlementTestSuite) TestKeeper_UTXR() {
 
 func (suite *SettlementTestSuite) TestKeeper_UTXRs() {
 	// Create UTXRs
-	for i := 1; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		utxrId, err := s.keeper.CreateUTXR(s.ctx, 1, &types.UTXR{
 			RequestId:  fmt.Sprintf("request-%d", i),
 			Recipients: types.SingleRecipients(s.creator),

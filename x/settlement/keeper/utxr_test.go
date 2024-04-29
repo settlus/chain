@@ -15,7 +15,7 @@ func (suite *SettlementTestSuite) TestKeeper_HasUTXRByRequestId() {
 		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
-	suite.Equal(uint64(1), utxrId)
+	suite.Equal(uint64(0), utxrId)
 
 	has := suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.True(has)
@@ -24,8 +24,8 @@ func (suite *SettlementTestSuite) TestKeeper_HasUTXRByRequestId() {
 	suite.False(has)
 }
 
-func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR() {
-	id := suite.keeper.GetLargestUTXRId(suite.ctx, 0)
+func (suite *SettlementTestSuite) TestKeeper_GenerateUtxrId() {
+	id := suite.keeper.GenerateUtxrId(suite.ctx, 0)
 	suite.Equal(uint64(0), id)
 
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
@@ -40,8 +40,8 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR() {
 	has := suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.True(has)
 
-	id = suite.keeper.GetLargestUTXRId(suite.ctx, 0)
-	suite.Equal(uint64(1), id)
+	id = suite.keeper.GenerateUtxrId(suite.ctx, 0)
+	suite.Equal(uint64(2), id)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
 		RequestId:  "request-2",
@@ -50,30 +50,30 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR() {
 		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
-	suite.Equal(uint64(2), utxrId)
+	suite.Equal(uint64(3), utxrId)
 
 	has = suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-2")
 	suite.True(has)
 
-	id = suite.keeper.GetLargestUTXRId(suite.ctx, 0)
-	suite.Equal(uint64(2), id)
+	id = suite.keeper.GenerateUtxrId(suite.ctx, 0)
+	suite.Equal(uint64(4), id)
 
 	deletedUtxrId, err := suite.keeper.DeleteUTXRByRequestId(suite.ctx, 0, "request-2")
 	suite.NoError(err)
-	suite.Equal(uint64(2), deletedUtxrId)
+	suite.Equal(uint64(3), deletedUtxrId)
 
 	has = suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-2")
 	suite.False(has)
 
-	id = suite.keeper.GetLargestUTXRId(suite.ctx, 0)
-	suite.Equal(uint64(1), id)
+	id = suite.keeper.GenerateUtxrId(suite.ctx, 0)
+	suite.Equal(uint64(5), id)
 }
 
-func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
-	t0Id := suite.keeper.GetLargestUTXRId(suite.ctx, 0)
+func (suite *SettlementTestSuite) TestKeeper_GenerateUtxrId_MultipleTenants() {
+	t0Id := suite.keeper.GenerateUtxrId(suite.ctx, 0)
 	suite.Equal(uint64(0), t0Id)
 
-	t1Id := suite.keeper.GetLargestUTXRId(suite.ctx, 1)
+	t1Id := suite.keeper.GenerateUtxrId(suite.ctx, 1)
 	suite.Equal(uint64(0), t1Id)
 
 	utxrId, err := suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
@@ -88,8 +88,8 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 	has := suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.True(has)
 
-	t0Id = suite.keeper.GetLargestUTXRId(suite.ctx, 0)
-	suite.Equal(uint64(1), t0Id)
+	t0Id = suite.keeper.GenerateUtxrId(suite.ctx, 0)
+	suite.Equal(uint64(2), t0Id)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 1, &types.UTXR{
 		RequestId:  "request-1",
@@ -103,8 +103,8 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 	has = suite.keeper.HasUTXRByRequestId(suite.ctx, 1, "request-1")
 	suite.True(has)
 
-	t1Id = suite.keeper.GetLargestUTXRId(suite.ctx, 1)
-	suite.Equal(uint64(1), t1Id)
+	t1Id = suite.keeper.GenerateUtxrId(suite.ctx, 1)
+	suite.Equal(uint64(2), t1Id)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
 		RequestId:  "request-2",
@@ -113,16 +113,16 @@ func (suite *SettlementTestSuite) TestKeeper_GetLatestUTXR_MultipleTenants() {
 		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
-	suite.Equal(uint64(2), utxrId)
+	suite.Equal(uint64(3), utxrId)
 
 	has = suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-2")
 	suite.True(has)
 
-	t0Id = suite.keeper.GetLargestUTXRId(suite.ctx, 0)
-	suite.Equal(uint64(2), t0Id)
+	t0Id = suite.keeper.GenerateUtxrId(suite.ctx, 0)
+	suite.Equal(uint64(4), t0Id)
 
-	t1Id = suite.keeper.GetLargestUTXRId(suite.ctx, 1)
-	suite.Equal(uint64(1), t1Id)
+	t1Id = suite.keeper.GenerateUtxrId(suite.ctx, 1)
+	suite.Equal(uint64(3), t1Id)
 }
 
 func (suite *SettlementTestSuite) TestKeeper_CreateUTXR() {
@@ -133,7 +133,7 @@ func (suite *SettlementTestSuite) TestKeeper_CreateUTXR() {
 		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
-	suite.Equal(uint64(1), utxrId)
+	suite.Equal(uint64(0), utxrId)
 
 	has := suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.True(has)
@@ -172,7 +172,7 @@ func (suite *SettlementTestSuite) TestKeeper_DeleteUTXRByRequestId() {
 
 	utxrId, err := suite.keeper.DeleteUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.NoError(err)
-	suite.Equal(uint64(1), utxrId)
+	suite.Equal(uint64(0), utxrId)
 
 	has := suite.keeper.HasUTXRByRequestId(suite.ctx, 0, "request-1")
 	suite.False(has)
@@ -186,7 +186,7 @@ func (suite *SettlementTestSuite) TestKeeper_GetAllUTXRWithTenantAndID() {
 		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
-	suite.Equal(uint64(1), utxrId)
+	suite.Equal(uint64(0), utxrId)
 
 	utxrId, err = suite.keeper.CreateUTXR(suite.ctx, 0, &types.UTXR{
 		RequestId:  "request-2",
@@ -195,12 +195,12 @@ func (suite *SettlementTestSuite) TestKeeper_GetAllUTXRWithTenantAndID() {
 		CreatedAt:  uint64(100),
 	})
 	suite.NoError(err)
-	suite.Equal(uint64(2), utxrId)
+	suite.Equal(uint64(1), utxrId)
 
 	utxrs := suite.keeper.GetAllUTXRWithTenantAndID(suite.ctx)
 	suite.Equal(2, len(utxrs))
 	suite.Equal("request-1", utxrs[0].Utxr.RequestId)
-	suite.Equal(uint64(1), utxrs[0].Id)
+	suite.Equal(uint64(0), utxrs[0].Id)
 	suite.Equal("request-2", utxrs[1].Utxr.RequestId)
-	suite.Equal(uint64(2), utxrs[1].Id)
+	suite.Equal(uint64(1), utxrs[1].Id)
 }

@@ -25,18 +25,17 @@ func (k SettlementKeeper) HasUTXRByRequestId(ctx sdk.Context, tenantId uint64, r
 }
 
 // GetLargestUTXRId returns the latest UTXR from the store by its tenantId
-func (k SettlementKeeper) GetLargestUTXRId(ctx sdk.Context, tenantId uint64) uint64 {
+func (k SettlementKeeper) GenerateUtxrId(ctx sdk.Context, tenantId uint64) uint64 {
+	var utxrId uint64
 	store := ctx.KVStore(k.storeKey)
-	utxrTenantStore := prefix.NewStore(store, types.UTXRStoreByTenantKey(tenantId))
-	iterator := utxrTenantStore.ReverseIterator(nil, nil)
-	defer iterator.Close()
-
-	if !iterator.Valid() {
-		// if there is no UTXR, return 0
-		return 0
+	bz := store.Get(types.LastUtxrIdStoreKey(tenantId))
+	if bz != nil {
+		utxrId = sdk.BigEndianToUint64(bz)
+		utxrId++
 	}
 
-	return sdk.BigEndianToUint64(iterator.Key())
+	store.Set(types.LastUtxrIdStoreKey(tenantId), sdk.Uint64ToBigEndian(utxrId))
+	return utxrId
 }
 
 // CreateUTXR creates a new UTXR in the store
@@ -56,7 +55,7 @@ func (k SettlementKeeper) CreateUTXR(ctx sdk.Context, tenantId uint64, utxr *typ
 		}
 	}
 
-	utxrId := k.GetLargestUTXRId(ctx, tenantId) + 1
+	utxrId := k.GenerateUtxrId(ctx, tenantId)
 
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(utxr)
@@ -78,7 +77,6 @@ func (k SettlementKeeper) deleteUTXR(ctx sdk.Context, tenantId, utxrId uint64) e
 	k.cdc.MustUnmarshal(bz, &utxr)
 
 	store.Delete(types.UTXRStoreKey(tenantId, utxrId))
-	store.Delete(types.UTXRStoreByRequestIdKey(tenantId, utxr.RequestId))
 	return nil
 }
 
