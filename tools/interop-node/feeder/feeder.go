@@ -239,7 +239,7 @@ func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64
 			return nil, err
 		}
 
-		s[i] = fmt.Sprintf("%s:%s", nftId, owner)
+		s[i] = fmt.Sprintf("%s:%s", nftId, types.TrimHexZeroes(owner))
 	}
 
 	return s, nil
