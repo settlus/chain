@@ -46,3 +46,14 @@ func GetAddressFromPubKey(pubKey cryptotypes.PubKey) (string, error) {
 
 	return acc.GetAddress().String(), nil
 }
+
+func TrimHexZeroes(s string) string {
+	trimmed := strings.TrimPrefix(s, "0x")
+	trimmed = strings.TrimLeft(trimmed, "0")
+
+	if trimmed == "" {
+		return "0x0"
+	}
+
+	return "0x" + trimmed
+}
