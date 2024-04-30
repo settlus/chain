@@ -24,7 +24,7 @@ func (k SettlementKeeper) HasUTXRByRequestId(ctx sdk.Context, tenantId uint64, r
 	return store.Has(types.UTXRStoreByRequestIdKey(tenantId, requestId))
 }
 
-// GetLargestUTXRId returns the latest UTXR from the store by its tenantId
+// GenerateUtxrId returns new UTXR ID for each tenant
 func (k SettlementKeeper) GenerateUtxrId(ctx sdk.Context, tenantId uint64) uint64 {
 	var utxrId uint64
 	store := ctx.KVStore(k.storeKey)
