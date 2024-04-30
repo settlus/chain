@@ -87,15 +87,15 @@ func (suite *GenesisTestSuite) TestGenesis_ExportGenesis() {
 				},
 				Tenants: []types.Tenant{
 					{
-						Id:           1,
+						Id:           0,
 						Admins:       []string{sample.AccAddress()},
 						PayoutPeriod: 100,
 					},
 				},
 				Utxrs: []types.UTXRWithTenantAndId{
 					{
-						Id:       1,
-						TenantId: 1,
+						Id:       0,
+						TenantId: 0,
 						Utxr: types.UTXR{
 							RequestId:  "request-0",
 							Recipients: types.SingleRecipients(sdk.MustAccAddressFromBech32(suite.creator)),
