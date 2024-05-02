@@ -11,7 +11,7 @@ import (
 
 const (
 	SettlementBasicGasCost        uint64 = 10000
-	SettlementCreateTenantGasCost uint64 = 1000000
+	SettlementCreateTenantGasCost uint64 = 100000000
 )
 
 func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
@@ -39,7 +39,7 @@ func calculateGasCost(tx sdk.Tx) (gas uint64) {
 	for _, msg := range tx.GetMsgs() {
 		gas += SettlementBasicGasCost
 		url := sdk.MsgTypeURL(msg)
-		if strings.HasPrefix(url, "/settlus.settlement") && strings.HasSuffix(url, "MsgCreateTenant") {
+		if strings.HasSuffix(url, "MsgCreateTenant") || strings.HasSuffix(url, "MsgCreateTenantWithMintableContract") {
 			gas += SettlementCreateTenantGasCost
 		}
 	}
