@@ -39,7 +39,7 @@ func calculateGasCost(tx sdk.Tx) (gas uint64) {
 	for _, msg := range tx.GetMsgs() {
 		gas += SettlementBasicGasCost
 		url := sdk.MsgTypeURL(msg)
-		if strings.HasPrefix(url, "/settlus.settlement") && strings.HasSuffix(url, "MsgCreateTenant") {
+		if strings.HasSuffix(url, "MsgCreateTenant") || strings.HasSuffix(url, "MsgCreateTenantWithMintableContract") {
 			gas += SettlementCreateTenantGasCost
 		}
 	}

@@ -93,6 +93,21 @@ func Test_SettlementFeeChecker(t *testing.T) {
 			"",
 			false,
 		},
+		{
+			"fail, insufficient fees for create tenant-mc",
+			txCtx,
+			func() sdk.FeeTx {
+				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
+				msg := &settlementtypes.MsgCreateTenantWithMintableContract{}
+				err := txBuilder.SetMsgs(msg)
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("uusdc", sdk.NewInt(1000000))))
+				require.NoError(t, err)
+
+				return txBuilder.GetTx()
+			},
+			"",
+			false,
+		},
 	}
 
 	for _, tc := range testCases {
