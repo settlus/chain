@@ -11,7 +11,7 @@ import (
 
 const (
 	SettlementBasicGasCost        uint64 = 10000
-	SettlementCreateTenantGasCost uint64 = 100000000
+	SettlementCreateTenantGasCost uint64 = 1000000
 )
 
 func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
