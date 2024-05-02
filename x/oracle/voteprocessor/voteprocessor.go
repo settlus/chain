@@ -38,7 +38,7 @@ func (vp *VoteProcessor[Source, Data]) TallyVotes(ctx sdk.Context, validatorClai
 			voteResults[source] = picked
 		} else {
 			telemetry.IncrCounterWithLabels(
-				[]string{types.ModuleName, "voting"},
+				[]string{types.ModuleName, "consensus_failed"},
 				1,
 				[]metrics.Label{
 					telemetry.NewLabel("topic", vp.topic.String()),
