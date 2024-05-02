@@ -148,7 +148,9 @@ func (k Keeper) GetAllBlockData(ctx sdk.Context) []types.BlockData {
 	for ; iterator.Valid(); iterator.Next() {
 		var bd types.BlockData
 		k.cdc.MustUnmarshal(iterator.Value(), &bd)
-		blockData = append(blockData, bd)
+		if bd.ChainId != "" {
+			blockData = append(blockData, bd)
+		}
 	}
 	return blockData
 }

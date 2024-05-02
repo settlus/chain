@@ -10,7 +10,11 @@ import (
 
 func NewSettlusVoteProcessors(keeper keeper.Keeper, aggregateVotes []types.AggregateVote, thresholdVotes math.Int) []IVoteProcessor {
 	blockConsensus := func(ctx sdk.Context, voteData map[string]types.BlockData) {
-		for _, block := range voteData {
+		for chainId, block := range voteData {
+			if block.ChainId == "" { // for debug
+				ctx.Logger().Error("block data is empty", "chainId", chainId, "height", ctx.BlockHeight())
+				continue
+			}
 			keeper.SetBlockData(ctx, block)
 		}
 	}
@@ -31,6 +35,7 @@ func NewBlockVoteProcessor(
 	thresholdVotes math.Int) *VoteProcessor[string, types.BlockData] {
 
 	return &VoteProcessor[string, types.BlockData]{
+		topic:          types.OralceTopic_BLOCK,
 		aggregateVotes: aggregateVotes,
 		thresholdVotes: thresholdVotes,
 		dataConverter:  types.StringToBlockData,
@@ -44,6 +49,7 @@ func NewOwnershipVoteProcessor(
 	thresholdVotes math.Int) *VoteProcessor[types.Nft, ctypes.HexAddressString] {
 
 	return &VoteProcessor[types.Nft, ctypes.HexAddressString]{
+		topic:          types.OralceTopic_OWNERSHIP,
 		aggregateVotes: aggregateVotes,
 		thresholdVotes: thresholdVotes,
 		dataConverter:  types.StringToOwnershipData,

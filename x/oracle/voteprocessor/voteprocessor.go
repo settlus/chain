@@ -2,6 +2,8 @@ package voteprocessor
 
 import (
 	"cosmossdk.io/math"
+	"github.com/armon/go-metrics"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/settlus/chain/x/oracle/types"
 )
@@ -11,6 +13,7 @@ type IVoteProcessor interface {
 }
 
 type VoteProcessor[Source comparable, Data comparable] struct {
+	topic          types.OralceTopic
 	aggregateVotes []types.AggregateVote
 	thresholdVotes math.Int
 	dataConverter  DataConverter[Source, Data]
@@ -30,7 +33,18 @@ func (vp *VoteProcessor[Source, Data]) TallyVotes(ctx sdk.Context, validatorClai
 			})
 		}
 
-		voteResults[source] = vp.pickMostVoted(dwwList)
+		picked, ok := vp.pickMostVoted(dwwList)
+		if ok {
+			voteResults[source] = picked
+		} else {
+			telemetry.IncrCounterWithLabels(
+				[]string{types.ModuleName, "voting"},
+				1,
+				[]metrics.Label{
+					telemetry.NewLabel("topic", vp.topic.String()),
+				},
+			)
+		}
 	}
 
 	vp.onConsensus(ctx, voteResults)
@@ -86,7 +100,7 @@ func (vp *VoteProcessor[Source, Data]) groupVotes(aggregateVotes []types.Aggrega
 }
 
 // pickMostVotedData picks the most voted data from the given slice of data
-func (vp *VoteProcessor[Source, Data]) pickMostVoted(dwwList []DataWithWeight[Data]) (ret Data) {
+func (vp *VoteProcessor[Source, Data]) pickMostVoted(dwwList []DataWithWeight[Data]) (ret Data, ok bool) {
 	// Count votes
 	voteCount := make(map[Data]int64)
 	for _, dww := range dwwList {
@@ -103,14 +117,14 @@ func (vp *VoteProcessor[Source, Data]) pickMostVoted(dwwList []DataWithWeight[Da
 
 	// Assuming the threshold is at least 50%, if there are more than one votes above the threshold, return nil
 	if len(voteCountAboveThreshold) > 1 {
-		return ret
+		return ret, false
 	}
 
 	// If there is only one vote above the threshold, return it
 	for data := range voteCountAboveThreshold {
-		return data
+		return data, true
 	}
 
 	// If there are no votes above the threshold, return nil
-	return ret
+	return ret, false
 }
