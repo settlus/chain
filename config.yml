@@ -70,9 +70,11 @@ genesis:
         max_validators: 40
     settlement:
       params:
-        gas_price:
-          amount: "1"
-          denom: uusdc
+        gas_prices:
+          - amount: "1"
+            denom: uusdc
+          - amount: "0.0001"
+            denom: setl
         oracle_fee_percentage: "1"
       tenants:
         - id: "0"

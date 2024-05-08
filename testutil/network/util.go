@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/node"
@@ -227,7 +229,7 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	var settlementGenState settlementmoduletypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[settlementmoduletypes.ModuleName], &settlementGenState)
 
-	settlementGenState.Params.GasPrice.Denom = cfg.BondDenom
+	settlementGenState.Params.GasPrices = sdk.NewDecCoins(sdk.NewDecCoin(cfg.BondDenom, sdk.NewInt(1)))
 	cfg.GenesisState[settlementmoduletypes.ModuleName] = cfg.Codec.MustMarshalJSON(&settlementGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")

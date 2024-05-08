@@ -82,7 +82,10 @@ func (suite *GenesisTestSuite) TestGenesis_ExportGenesis() {
 			name: "genesis with utxrs and tenants",
 			genesis: types.GenesisState{
 				Params: types.Params{
-					GasPrice:            sdk.NewCoin("uusdc", sdk.NewInt(100)),
+					GasPrices: sdk.NewDecCoins(sdk.DecCoin{
+						Denom:  "uusdc",
+						Amount: sdk.NewDec(100),
+					}),
 					OracleFeePercentage: sdk.NewDecWithPrec(1, 2),
 				},
 				Tenants: []types.Tenant{
