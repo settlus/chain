@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	KeyFee                 = []byte("Fee")
+	KeyGasPrices           = []byte("GasPrices")
 	KeyOracleFeePercentage = []byte("OracleFeePercentage")
 )
 
@@ -23,7 +23,14 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		GasPrice:            sdk.NewCoin("uusdc", sdk.OneInt()),
+		GasPrices: sdk.NewDecCoins(
+			sdk.DecCoin{
+				Denom:  "uusdc",
+				Amount: sdk.NewDec(1)},
+			sdk.DecCoin{
+				Denom:  "setl",
+				Amount: sdk.NewDecWithPrec(1, 4),
+			}),
 		OracleFeePercentage: sdk.NewDec(1),
 	}
 }
@@ -31,13 +38,13 @@ func DefaultParams() Params {
 // ParamSetPairs get the params.ParamSet
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyFee, &p.GasPrice, validateFee),
+		paramtypes.NewParamSetPair(KeyGasPrices, &p.GasPrices, validateGasPrices),
 		paramtypes.NewParamSetPair(KeyOracleFeePercentage, &p.OracleFeePercentage, validateOracleFeePercentage),
 	}
 }
 
-func validateFee(i interface{}) error {
-	_, ok := i.(sdk.Coin)
+func validateGasPrices(i interface{}) error {
+	_, ok := i.(sdk.DecCoins)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

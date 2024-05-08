@@ -34,7 +34,7 @@ func Test_SettlementFeeChecker(t *testing.T) {
 		expSuccess bool
 	}{
 		{
-			"success, record tx",
+			"success, record tx - with uusdc",
 			txCtx,
 			func() sdk.FeeTx {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
@@ -46,6 +46,21 @@ func Test_SettlementFeeChecker(t *testing.T) {
 				return txBuilder.GetTx()
 			},
 			"10000uusdc",
+			true,
+		},
+		{
+			"success, record tx - with setl",
+			txCtx,
+			func() sdk.FeeTx {
+				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
+				msg := &settlementtypes.MsgRecord{}
+				err := txBuilder.SetMsgs(msg)
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("setl", sdk.NewInt(1))))
+				require.NoError(t, err)
+
+				return txBuilder.GetTx()
+			},
+			"1setl",
 			true,
 		},
 		{
@@ -70,12 +85,12 @@ func Test_SettlementFeeChecker(t *testing.T) {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 				msg := &settlementtypes.MsgCreateTenant{}
 				err := txBuilder.SetMsgs(msg)
-				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("uusdc", sdk.NewInt(1010000))))
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("uusdc", sdk.NewInt(1000000010000))))
 				require.NoError(t, err)
 
 				return txBuilder.GetTx()
 			},
-			"1010000uusdc",
+			"1000000010000uusdc",
 			true,
 		},
 		{

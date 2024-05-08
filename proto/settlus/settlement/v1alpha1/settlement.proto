@@ -11,8 +11,11 @@ option go_package = "github.com/settlus/chain/x/settlement/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
-  cosmos.base.v1beta1.Coin gas_price = 1 [ (gogoproto.nullable) = false ];
-  string oracle_fee_percentage = 3 [
+  repeated cosmos.base.v1beta1.DecCoin gas_prices = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false
+  ];
+  string oracle_fee_percentage = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];

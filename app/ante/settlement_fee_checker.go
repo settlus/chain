@@ -11,7 +11,7 @@ import (
 
 const (
 	SettlementBasicGasCost        uint64 = 10000
-	SettlementCreateTenantGasCost uint64 = 1000000
+	SettlementCreateTenantGasCost uint64 = 1000000000000
 )
 
 func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
@@ -23,15 +23,18 @@ func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
 
 		feeCoins := feeTx.GetFee()
 		params := k.GetParams(ctx)
-		gasPrice := params.GetGasPrice()
+		gasPrices := params.GetGasPrices()
 		gasRequired := calculateGasCost(tx)
-		requiredFees := gasPrice.Amount.Mul(sdk.NewInt(int64(gasRequired)))
+		for _, gasPrice := range gasPrices {
+			gasPrice := sdk.NormalizeDecCoin(gasPrice)
+			requiredFees := gasPrice.Amount.Mul(sdk.NewDec(int64(gasRequired))).TruncateInt()
 
-		if feeCoins.AmountOf(gasPrice.Denom).LT(requiredFees) {
-			return nil, 0, errorsmod.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s, required: %s", feeCoins, requiredFees.String())
+			if feeCoins.AmountOf(gasPrice.Denom).GTE(requiredFees) {
+				return sdk.NewCoins(sdk.NewCoin(gasPrice.Denom, requiredFees)), 0, nil
+			}
 		}
 
-		return sdk.NewCoins(sdk.NewCoin(gasPrice.Denom, requiredFees)), 0, nil
+		return nil, 0, errorsmod.Wrapf(sdkerrors.ErrInsufficientFee, "insufficient fees; got: %s", feeCoins)
 	}
 }
 
