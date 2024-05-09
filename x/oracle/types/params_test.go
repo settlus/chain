@@ -31,82 +31,45 @@ func TestParams(t *testing.T) {
 	err = p4.Validate()
 	require.Error(t, err)
 
-	// empty ChainId
-	p10 := types.DefaultParams()
-	p10.Whitelist[0].ChainId = ""
-	err = p10.Validate()
-	require.Error(t, err)
-
-	// empty ChainName
-	p11 := types.DefaultParams()
-	p11.Whitelist[0].ChainName = ""
-	err = p11.Validate()
-	require.Error(t, err)
-
-	// empty ChainUrl
-	p12 := types.DefaultParams()
-	p12.Whitelist[0].ChainUrl = ""
-	err = p12.Validate()
-	require.Error(t, err)
-
-	// duplicate ChainId
-	p13 := types.DefaultParams()
-	p13.Whitelist = append(p13.Whitelist, &types.Chain{
-		ChainId:   "1",
-		ChainName: "Foo",
-		ChainUrl:  "http://localhost:8545",
-	})
-	err = p13.Validate()
-	require.Error(t, err)
-
-	// duplicate ChainName
-	p14 := types.DefaultParams()
-	p14.Whitelist = append(p13.Whitelist, &types.Chain{
-		ChainId:   "2",
-		ChainName: "Ethereum",
-		ChainUrl:  "http://localhost:8545",
-	})
-	err = p14.Validate()
-	require.Error(t, err)
-
 	// max miss count per slash window is greater than slash window
-	p15 := types.DefaultParams()
-	p15.MaxMissCountPerSlashWindow = 100
-	p15.SlashWindow = 10
-	err = p15.Validate()
+	p5 := types.DefaultParams()
+	p5.MaxMissCountPerSlashWindow = 100
+	p5.SlashWindow = 10
+	err = p5.Validate()
 	require.Error(t, err)
 
 	// max miss count per slash window is less than or equal to 0
-	p16 := types.DefaultParams()
-	p16.MaxMissCountPerSlashWindow = 0
-	err = p16.Validate()
+	p6 := types.DefaultParams()
+	p6.MaxMissCountPerSlashWindow = 0
+	err = p6.Validate()
 	require.Error(t, err)
 
 	// slash window is less than or equal to 0
-	p17 := types.DefaultParams()
-	p17.SlashWindow = 0
-	err = p17.Validate()
+	p7 := types.DefaultParams()
+	p7.SlashWindow = 0
+	err = p7.Validate()
 	require.Error(t, err)
 
 	// slash window is less than vote period
-	p18 := types.DefaultParams()
-	p18.SlashWindow = 10
-	p18.VotePeriod = 20
-	err = p18.Validate()
+	p8 := types.DefaultParams()
+	p8.SlashWindow = 10
+	p8.VotePeriod = 20
+	err = p8.Validate()
 	require.Error(t, err)
 
 	// slash window is not divisible by vote period
-	p19 := types.DefaultParams()
-	p19.SlashWindow = 10
-	p19.VotePeriod = 3
-	err = p19.Validate()
+	p9 := types.DefaultParams()
+	p9.SlashWindow = 10
+	p9.VotePeriod = 3
+	err = p9.Validate()
 	require.Error(t, err)
 
 	// default params
-	p20 := types.DefaultParams()
-	require.NotNil(t, p20.ParamSetPairs())
-	require.NotNil(t, p20.String())
+	p10 := types.DefaultParams()
+	require.NotNil(t, p10.ParamSetPairs())
+	require.NotNil(t, p10.String())
 }
+
 func TestCalculateVotePeriod(t *testing.T) {
 	tests := []struct {
 		votePeriod  uint64

@@ -148,7 +148,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 	}
 
 	result := make(map[string]ctypes.HexAddressString)
-	onConsensus := func(ctx sdk.Context, voteData map[types.Nft]ctypes.HexAddressString) {
+	onConsensus := func(ctx sdk.Context, voteData map[ctypes.Nft]ctypes.HexAddressString) {
 		for nft, owner := range voteData {
 			result[nft.FormatString()] = owner
 		}

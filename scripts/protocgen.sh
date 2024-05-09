@@ -24,4 +24,5 @@ done
 
 cp -r github.com/settlus/chain/evmos/* ./evmos
 cp -r github.com/settlus/chain/x/* ./x
+cp -r github.com/settlus/chain/types/* ./types
 rm -rf github.com

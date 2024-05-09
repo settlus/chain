@@ -1,8 +1,6 @@
 package types
 
 import (
-	"strings"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -29,16 +27,9 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 var (
-	DefaultVotePeriod         = config.BlocksPerMinute    // 60 seconds
-	DefaultVoteThreshold      = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultToleratedErrorBand = uint64(2)
-	DefaultWithlist           = []*Chain{
-		{
-			ChainId:   "1",
-			ChainName: "Ethereum",
-			ChainUrl:  "https://ethereum.org",
-		},
-	}
+	DefaultVotePeriod                 = config.BlocksPerMinute    // 60 seconds
+	DefaultVoteThreshold              = sdk.NewDecWithPrec(50, 2) // 50%
+	DefaultToleratedErrorBand         = uint64(2)
 	DefaultSlashFraction              = sdk.NewDecWithPrec(1, 2) // 1%
 	DefaultSlashWindow                = config.BlocksPerWeek     // a week
 	DefaultMaxMissCountPerSlashWindow = uint64(60)               // 60 times
@@ -49,7 +40,6 @@ func DefaultParams() Params {
 	return Params{
 		VotePeriod:                 DefaultVotePeriod,
 		VoteThreshold:              DefaultVoteThreshold,
-		Whitelist:                  DefaultWithlist,
 		SlashFraction:              DefaultSlashFraction,
 		SlashWindow:                DefaultSlashWindow,
 		MaxMissCountPerSlashWindow: DefaultMaxMissCountPerSlashWindow,
@@ -61,7 +51,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(KeyVotePeriod, &p.VotePeriod, validateVotePeriod),
 		paramtypes.NewParamSetPair(KeyVoteThreshold, &p.VoteThreshold, validateVoteThreshold),
-		paramtypes.NewParamSetPair(KeyWhitelist, &p.Whitelist, validateWhitelist),
 		paramtypes.NewParamSetPair(KeySlashFraction, &p.SlashFraction, validateSlashFraction),
 		paramtypes.NewParamSetPair(KeySlashWindow, &p.SlashWindow, validateSlashWindow),
 		paramtypes.NewParamSetPair(KeyMaxMissCountPerSlashWindow, &p.MaxMissCountPerSlashWindow, validateMaxMissCountPerSlashWindow),
@@ -118,33 +107,6 @@ func (p Params) Validate() error {
 
 	if p.MaxMissCountPerSlashWindow >= p.SlashWindow {
 		return errorsmod.Wrapf(ErrInvalidParams, "max miss count per slash slashWindow %d is greater than slash slashWindow %d", p.MaxMissCountPerSlashWindow, p.SlashWindow)
-	}
-
-	chainIds := make(map[string]bool)
-	chainNames := make(map[string]bool)
-	for _, chain := range p.Whitelist {
-		if strings.TrimSpace(chain.ChainId) == "" {
-			return errorsmod.Wrapf(ErrInvalidParams, "empty chain id")
-		}
-
-		if strings.TrimSpace(chain.ChainName) == "" {
-			return errorsmod.Wrapf(ErrInvalidParams, "empty chain name")
-		}
-
-		if strings.TrimSpace(chain.ChainUrl) == "" {
-			return errorsmod.Wrapf(ErrInvalidParams, "empty chain url")
-		}
-
-		if _, ok := chainIds[chain.ChainId]; ok {
-			return errorsmod.Wrapf(ErrInvalidParams, "duplicate chain id %s", chain.ChainId)
-		}
-
-		if _, ok := chainNames[chain.ChainName]; ok {
-			return errorsmod.Wrapf(ErrInvalidParams, "duplicate chain name %s", chain.ChainName)
-		}
-
-		chainIds[chain.ChainId] = true
-		chainNames[chain.ChainName] = true
 	}
 
 	return nil
@@ -221,51 +183,6 @@ func validateMaxMissCountPerSlashWindow(i interface{}) error {
 	}
 
 	return nil
-}
-
-func validateWhitelist(i interface{}) error {
-	v, ok := i.([]*Chain)
-	if !ok {
-		return errorsmod.Wrapf(ErrInvalidParams, "invalid parameter type: %T", i)
-	}
-
-	ChainIds := make(map[string]bool)
-	ChainNames := make(map[string]bool)
-	for _, chain := range v {
-		if strings.TrimSpace(chain.ChainId) == "" {
-			return errorsmod.Wrapf(ErrInvalidParams, "empty chain id")
-		}
-
-		if strings.TrimSpace(chain.ChainName) == "" {
-			return errorsmod.Wrapf(ErrInvalidParams, "empty chain name")
-		}
-
-		if strings.TrimSpace(chain.ChainUrl) == "" {
-			return errorsmod.Wrapf(ErrInvalidParams, "empty chain url")
-		}
-
-		if _, ok := ChainIds[chain.ChainId]; ok {
-			return errorsmod.Wrapf(ErrInvalidParams, "duplicate chain id %s", chain.ChainId)
-		}
-
-		if _, ok := ChainNames[chain.ChainName]; ok {
-			return errorsmod.Wrapf(ErrInvalidParams, "duplicate chain name %s", chain.ChainName)
-		}
-
-		ChainIds[chain.ChainId] = true
-		ChainNames[chain.ChainName] = true
-	}
-
-	return nil
-}
-
-func (p Params) GetWhitelistChainIds() []string {
-	chainIds := make([]string, len(p.Whitelist))
-	for i, chain := range p.Whitelist {
-		chainIds[i] = chain.ChainId
-	}
-
-	return chainIds
 }
 
 func CalculateRoundId(blockHeight int64, votePeriod uint64) uint64 {

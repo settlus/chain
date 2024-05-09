@@ -1,0 +1,24 @@
+syntax = "proto3";
+package settlus.common;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/settlus/chain/types";
+
+message Nft {
+  string chain_id = 1;
+  string contract_addr = 2 [
+    (gogoproto.customtype) = "HexAddressString",
+    (gogoproto.nullable) = false
+  ];
+  string token_id = 3 [
+    (gogoproto.customtype) = "HexAddressString",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message Chain {
+  string chain_id = 1;
+  string chain_name = 2;
+  string chain_url = 3;
+}

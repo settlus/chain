@@ -40,3 +40,7 @@ type EvmKeeper interface {
 	CallEVM(ctx sdk.Context, abi abi.ABI, from, contract common.Address, commit bool, method string, args ...interface{}) (*evmtypes.MsgEthereumTxResponse, error)
 	CallEVMWithData(ctx sdk.Context, from common.Address, contract *common.Address, data []byte, commit bool) (*evmtypes.MsgEthereumTxResponse, error)
 }
+
+type OracleKeeper interface {
+	GetSupportedChainIds(ctx sdk.Context) []string
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	ctypes "github.com/settlus/chain/types"
 	settlustypes "github.com/settlus/chain/types"
 	"github.com/settlus/chain/x/settlement/types"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 type msgServer struct {
@@ -62,7 +62,7 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 			RequestId:  msg.RequestId,
 			Recipients: recipients,
 			Amount:     msg.Amount,
-			Nft: &oracletypes.Nft{
+			Nft: &ctypes.Nft{
 				ChainId:      msg.ChainId,
 				ContractAddr: settlustypes.HexAddressString(msg.ContractAddress),
 				TokenId:      settlustypes.HexAddressString(msg.TokenIdHex),
@@ -80,7 +80,7 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 		UtxrId:    utxrId,
 		RequestId: msg.RequestId,
 		Amount:    msg.Amount,
-		Nft: &oracletypes.Nft{
+		Nft: &ctypes.Nft{
 			ChainId:      msg.ChainId,
 			ContractAddr: settlustypes.HexAddressString(msg.ContractAddress),
 			TokenId:      settlustypes.HexAddressString(msg.TokenIdHex),

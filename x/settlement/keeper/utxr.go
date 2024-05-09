@@ -9,7 +9,6 @@ import (
 	sdkerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ctypes "github.com/settlus/chain/types"
-	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
 // GetUTXRStore returns the UTXR store for the given tenantId
@@ -140,8 +139,8 @@ func (k SettlementKeeper) GetAllUTXRWithTenantAndID(ctx sdk.Context) (list []typ
 	return list
 }
 
-func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, until uint64) (list []oracletypes.Nft) {
-	nfts := make(map[oracletypes.Nft]struct{})
+func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, until uint64) (list []ctypes.Nft) {
+	nfts := make(map[ctypes.Nft]struct{})
 
 	store := ctx.KVStore(k.storeKey)
 	utxrStore := prefix.NewStore(store, types.UTXRPrefix)
@@ -163,7 +162,7 @@ func (k SettlementKeeper) GetAllUniqueNftToVerify(ctx sdk.Context, until uint64)
 	return list
 }
 
-func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[oracletypes.Nft]ctypes.HexAddressString, until uint64) {
+func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[ctypes.Nft]ctypes.HexAddressString, until uint64) {
 	store := ctx.KVStore(k.storeKey)
 	utxrStore := prefix.NewStore(store, types.UTXRPrefix)
 	iterator := utxrStore.Iterator(nil, nil)

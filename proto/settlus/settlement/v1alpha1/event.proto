@@ -2,7 +2,7 @@ syntax = "proto3";
 package settlus.settlement.v1alpha1;
 
 import "cosmos/base/v1beta1/coin.proto";
-import "settlus/oracle/v1alpha1/oracle.proto";
+import "settlus/common/types.proto";
 import "settlus/settlement/v1alpha1/settlement.proto";
 
 import "gogoproto/gogo.proto";
@@ -26,7 +26,7 @@ message EventRecord {
   uint64 utxr_id = 3;
   string request_id = 4;
   cosmos.base.v1beta1.Coin amount = 5 [ (gogoproto.nullable) = false ];
-  settlus.oracle.v1alpha1.Nft nft = 6;
+  settlus.common.Nft nft = 6;
   repeated Recipient recipients = 7;
   string metadata = 8;
   uint64 created_at = 9;

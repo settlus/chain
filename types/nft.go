@@ -3,8 +3,6 @@ package types
 import (
 	fmt "fmt"
 	"strings"
-
-	settlustypes "github.com/settlus/chain/types"
 )
 
 func ParseNftId(nftId string) (Nft, error) {
@@ -16,8 +14,8 @@ func ParseNftId(nftId string) (Nft, error) {
 
 	return Nft{
 		ChainId:      data[0],
-		ContractAddr: settlustypes.HexAddressString(data[1]),
-		TokenId:      settlustypes.HexAddressString(data[2]),
+		ContractAddr: HexAddressString(data[1]),
+		TokenId:      HexAddressString(data[2]),
 	}, nil
 }
 
