@@ -14,15 +14,12 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // DEPRECATED: tolerated_error_band have been deprecated
-  uint64 tolerated_error_band = 3;
-
-  string slash_fraction = 5 [
+  string slash_fraction = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  uint64 slash_window = 6;
-  uint64 max_miss_count_per_slash_window = 7;
+  uint64 slash_window = 4;
+  uint64 max_miss_count_per_slash_window = 5;
 }
 
 enum OralceTopic {
