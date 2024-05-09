@@ -17,7 +17,7 @@ const deployNFT = async (contractName: string) => {
 }
 
 const mintNFT = async (contractName: string, contractAddress: string, receiverAddress: string) => {
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 5; i++) {
         try {
             const sampleContract = (await hre.ethers.getContractAt(
                 contractName,

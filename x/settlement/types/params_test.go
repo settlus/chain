@@ -27,7 +27,7 @@ func TestParams(t *testing.T) {
 
 	// empty ChainUrl
 	p4 := DefaultParams()
-	p3.SupportedChains[0].ChainUrl = ""
+	p4.SupportedChains[0].ChainUrl = ""
 	err = p4.Validate()
 	require.Error(t, err)
 

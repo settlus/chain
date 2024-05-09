@@ -5,8 +5,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
-
-	"github.com/settlus/chain/cmd/settlusd/config"
 )
 
 var (
@@ -27,12 +25,11 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 var (
-	DefaultVotePeriod                 = config.BlocksPerMinute    // 60 seconds
+	DefaultVotePeriod                 = uint64(10)
 	DefaultVoteThreshold              = sdk.NewDecWithPrec(50, 2) // 50%
-	DefaultToleratedErrorBand         = uint64(2)
-	DefaultSlashFraction              = sdk.NewDecWithPrec(1, 2) // 1%
-	DefaultSlashWindow                = config.BlocksPerWeek     // a week
-	DefaultMaxMissCountPerSlashWindow = uint64(60)               // 60 times
+	DefaultSlashFraction              = sdk.NewDecWithPrec(1, 2)  // 1%
+	DefaultSlashWindow                = uint64(100000)
+	DefaultMaxMissCountPerSlashWindow = uint64(60)
 )
 
 // DefaultParams returns a default set of parameters
