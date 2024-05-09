@@ -711,8 +711,8 @@ func New(
 		erc20types.ModuleName,
 
 		// Settlus modules
-		settlementmoduletypes.ModuleName,
 		oraclemoduletypes.ModuleName,
+		settlementmoduletypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
