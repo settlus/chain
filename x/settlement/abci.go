@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func BeginBlocker(ctx sdk.Context, k *keeper.SettlementKeeper) {
+func EndBlock(ctx sdk.Context, k *keeper.SettlementKeeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), "begin_blocker")
 
 	for _, tenant := range k.GetAllTenants(ctx) {
