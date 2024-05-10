@@ -19,7 +19,7 @@ func NewSettlusVoteProcessors(keeper keeper.Keeper, aggregateVotes []types.Aggre
 		}
 	}
 
-	ownershipConsensus := func(ctx sdk.Context, voteData map[types.Nft]ctypes.HexAddressString) {
+	ownershipConsensus := func(ctx sdk.Context, voteData map[ctypes.Nft]ctypes.HexAddressString) {
 		keeper.FillSettlementRecipients(ctx, voteData)
 	}
 
@@ -44,11 +44,11 @@ func NewBlockVoteProcessor(
 }
 
 func NewOwnershipVoteProcessor(
-	onConsensus func(ctx sdk.Context, voteData map[types.Nft]ctypes.HexAddressString),
+	onConsensus func(ctx sdk.Context, voteData map[ctypes.Nft]ctypes.HexAddressString),
 	aggregateVotes []types.AggregateVote,
-	thresholdVotes math.Int) *VoteProcessor[types.Nft, ctypes.HexAddressString] {
+	thresholdVotes math.Int) *VoteProcessor[ctypes.Nft, ctypes.HexAddressString] {
 
-	return &VoteProcessor[types.Nft, ctypes.HexAddressString]{
+	return &VoteProcessor[ctypes.Nft, ctypes.HexAddressString]{
 		topic:          types.OralceTopic_OWNERSHIP,
 		aggregateVotes: aggregateVotes,
 		thresholdVotes: thresholdVotes,

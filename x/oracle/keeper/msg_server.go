@@ -68,7 +68,7 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "vote period is over")
 	}
 
-	if !types.ValidateVoteData(vote.VoteData, m.GetParams(ctx).GetWhitelistChainIds()) {
+	if !types.ValidateVoteData(vote.VoteData, m.SettlementKeeper.GetSupportedChainIds(ctx)) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "invalid vote data")
 	}
 

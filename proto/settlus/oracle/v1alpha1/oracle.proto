@@ -14,21 +14,12 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // DEPRECATED: tolerated_error_band have been deprecated
-  uint64 tolerated_error_band = 3;
-  repeated Chain whitelist = 4;
-  string slash_fraction = 5 [
+  string slash_fraction = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  uint64 slash_window = 6;
-  uint64 max_miss_count_per_slash_window = 7;
-}
-
-message Chain {
-  string chain_id = 1;
-  string chain_name = 2;
-  string chain_url = 3;
+  uint64 slash_window = 4;
+  uint64 max_miss_count_per_slash_window = 5;
 }
 
 enum OralceTopic {
@@ -79,16 +70,4 @@ message RoundInfo {
   repeated OracleData oracle_data = 4;
   // UNIX time in milliseconds
   int64 timestamp = 5;
-}
-
-message Nft {
-  string chain_id = 1;
-  string contract_addr = 2 [
-    (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
-    (gogoproto.nullable) = false
-  ];
-  string token_id = 3 [
-    (gogoproto.customtype) = "github.com/settlus/chain/types.HexAddressString",
-    (gogoproto.nullable) = false
-  ];
 }

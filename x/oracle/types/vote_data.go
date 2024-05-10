@@ -78,14 +78,14 @@ func StringToBlockData(voteString string) (string, BlockData, error) {
 	return chainId, blockData, err
 }
 
-func StringToOwnershipData(voteString string) (Nft, ctypes.HexAddressString, error) {
+func StringToOwnershipData(voteString string) (ctypes.Nft, ctypes.HexAddressString, error) {
 	// voteString = chainId/contractAddr/tokenId:owner
 
 	data := strings.Split(voteString, ":")
-	nft, err := ParseNftId(data[0])
+	nft, err := ctypes.ParseNftId(data[0])
 
 	if !isValidHex(nft.ContractAddr.String()) || !isValidHex(nft.TokenId.String()) {
-		return Nft{}, "", fmt.Errorf("invalid nftId: %s", data[0])
+		return ctypes.Nft{}, "", fmt.Errorf("invalid nftId: %s", data[0])
 	}
 
 	owner := ctypes.HexAddressString(data[1])

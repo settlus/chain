@@ -58,7 +58,7 @@ func TestParseBlockDataString(t *testing.T) {
 
 func TestStringToOwnershipData(t *testing.T) {
 	type Result struct {
-		nft   Nft
+		nft   ctypes.Nft
 		owner ctypes.HexAddressString
 		err   bool
 	}
@@ -67,7 +67,7 @@ func TestStringToOwnershipData(t *testing.T) {
 		name       string
 		voteString string
 		expected   struct {
-			nft   Nft
+			nft   ctypes.Nft
 			owner ctypes.HexAddressString
 			err   bool
 		}
@@ -76,7 +76,7 @@ func TestStringToOwnershipData(t *testing.T) {
 			name:       "Valid vote string",
 			voteString: "1/0x123/0x0:0x777",
 			expected: Result{
-				nft: Nft{
+				nft: ctypes.Nft{
 					ChainId:      "1",
 					ContractAddr: "0x123",
 					TokenId:      "0x0",
@@ -89,7 +89,7 @@ func TestStringToOwnershipData(t *testing.T) {
 			name:       "Valid vote string",
 			voteString: "1/123/0a:777",
 			expected: Result{
-				nft: Nft{
+				nft: ctypes.Nft{
 					ChainId:      "1",
 					ContractAddr: "123",
 					TokenId:      "0a",
@@ -102,7 +102,7 @@ func TestStringToOwnershipData(t *testing.T) {
 			name:       "Invalid nftId - no colone",
 			voteString: "1/0x123/0x0/0x777",
 			expected: Result{
-				nft:   Nft{},
+				nft:   ctypes.Nft{},
 				owner: ctypes.HexAddressString(""),
 				err:   true,
 			},
@@ -111,7 +111,7 @@ func TestStringToOwnershipData(t *testing.T) {
 			name:       "Invalid nftId - no slash",
 			voteString: "10x123/0x0:0x777",
 			expected: Result{
-				nft:   Nft{},
+				nft:   ctypes.Nft{},
 				owner: ctypes.HexAddressString(""),
 				err:   true,
 			},

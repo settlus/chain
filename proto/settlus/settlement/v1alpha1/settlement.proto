@@ -2,7 +2,7 @@ syntax = "proto3";
 package settlus.settlement.v1alpha1;
 
 import "cosmos/base/v1beta1/coin.proto";
-import "settlus/oracle/v1alpha1/oracle.proto";
+import "settlus/common/types.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/settlus/chain/x/settlement/types";
@@ -19,6 +19,7 @@ message Params {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  repeated settlus.common.Chain supported_chains = 3;
 }
 
 // Tenant defines the tenant parameters.
@@ -40,7 +41,7 @@ message UTXR {
   repeated Recipient recipients = 2;
   cosmos.base.v1beta1.Coin amount = 3 [ (gogoproto.nullable) = false ];
   uint64 created_at = 4; // block number of the utxr creation
-  settlus.oracle.v1alpha1.Nft nft = 5;
+  settlus.common.Nft nft = 5;
 }
 
 message Recipient {

@@ -80,7 +80,7 @@ func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
 
 	oracleData := []*types.OracleData{}
-	oracleData = appendIfValid(oracleData, k.blockOracleData(params.Whitelist))
+	oracleData = appendIfValid(oracleData, k.blockOracleData(k.SettlementKeeper.GetSupportedChainIds(ctx)))
 	oracleData = appendIfValid(oracleData, k.ownershipOracleData(ctx, params.VotePeriod))
 
 	roundInfo := types.RoundInfo{
@@ -94,15 +94,10 @@ func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	return &roundInfo
 }
 
-func (k Keeper) blockOracleData(whitelist []*types.Chain) *types.OracleData {
-	source := make([]string, len(whitelist))
-	for idx, chain := range whitelist {
-		source[idx] = chain.ChainId
-	}
-
+func (k Keeper) blockOracleData(whitelist []string) *types.OracleData {
 	return &types.OracleData{
 		Topic:   types.OralceTopic_BLOCK,
-		Sources: source,
+		Sources: whitelist,
 	}
 }
 
@@ -125,12 +120,8 @@ func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) *types.O
 // GetBlockData returns block data of a chain
 func (k Keeper) GetBlockData(ctx sdk.Context, chainId string) (*types.BlockData, error) {
 	store := ctx.KVStore(k.storeKey)
-	chain, err := k.GetChain(ctx, chainId)
-	if err != nil {
-		return nil, fmt.Errorf("chain not found: %w", err)
-	}
 
-	bd := store.Get(types.BlockDataKey(chain.ChainId))
+	bd := store.Get(types.BlockDataKey(chainId))
 	if bd == nil {
 		return nil, types.ErrBlockDataNotFound
 	}
@@ -162,7 +153,7 @@ func (k Keeper) SetBlockData(ctx sdk.Context, blockData types.BlockData) {
 	store.Set(types.BlockDataKey(blockData.ChainId), bd)
 }
 
-func (k Keeper) FillSettlementRecipients(ctx sdk.Context, nftOwnership map[types.Nft]ctypes.HexAddressString) {
+func (k Keeper) FillSettlementRecipients(ctx sdk.Context, nftOwnership map[ctypes.Nft]ctypes.HexAddressString) {
 	startHeight := types.CalculateRoundStartHeight(ctx.BlockHeight(), k.GetParams(ctx).VotePeriod)
 	k.SettlementKeeper.SetRecipients(ctx, nftOwnership, startHeight-1)
 }

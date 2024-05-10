@@ -76,6 +76,10 @@ genesis:
           - amount: "0.0001"
             denom: setl
         oracle_fee_percentage: "1"
+        supported_chains:
+          - chain_id: "1"
+            chain_name: "ethereum"
+            chain_url: "https://ethereum.org"
       tenants:
         - id: "0"
           denom: eBLUC
@@ -83,7 +87,6 @@ genesis:
             - settlus12g8w5dr5jyncct8jwdxwsy2g9ktdrjjlcs5f0a
           payout_period: 10
           payout_method: mintable_contract
-          contract_address: "0x722A69fcd47184dDC228E9Eb6E5178f6e1Cb9A1E"
     nftownership:
       params:
         allowedChainIds:
@@ -94,10 +97,6 @@ genesis:
         vote_period: 2
         vote_threshold: "0.5"
         tolerated_error_band: 2
-        whitelist:
-          - chain_id: "1"
-            chain_name: "ethereum"
-            chain_url: "https://ethereum.org"
         slash_fraction: "0.01"
         slash_window: 604800
         max_miss_count_per_slash_window: 302400

@@ -11,6 +11,7 @@ import (
 	"github.com/settlus/chain/tools/interop-node/subscriber"
 	"github.com/settlus/chain/tools/interop-node/types"
 
+	ctypes "github.com/settlus/chain/types"
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
@@ -219,7 +220,7 @@ func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (oraclety
 func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64) ([]string, error) {
 	s := make([]string, len(nftIds))
 	for i, nftId := range nftIds {
-		nft, err := oracletypes.ParseNftId(nftId)
+		nft, err := ctypes.ParseNftId(nftId)
 		if err != nil {
 			return nil, err
 		}

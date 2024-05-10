@@ -35,15 +35,6 @@ const (
 	BaseDenomUnit = 18 // 1 setl 1x10^{BaseDenomUnit} asetl
 )
 
-const (
-	BlocksPerMinute = uint64(10)
-	BlocksPerHour   = BlocksPerMinute * 60
-	BlocksPerDay    = BlocksPerHour * 24
-	BlocksPerWeek   = BlocksPerDay * 7
-	BlocksPerMonth  = BlocksPerDay * 30
-	BlocksPerYear   = BlocksPerDay * 365
-)
-
 var PowerReduction = sdk.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(BaseDenomUnit), nil))
 
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.

@@ -70,9 +70,13 @@ func (k SettlementKeeper) Logger(ctx sdk.Context) log.Logger {
 // GetRecipient returns the owner of the given NFT from x/nftownership module
 func (k SettlementKeeper) GetRecipients(ctx sdk.Context, chainId string, contractAddr string, tokenIdHex string) ([]*types.Recipient, error) {
 	recipients := make([]*types.Recipient, 0)
-	if ctx.ChainID() != chainId {
+	if k.IsSupportedChain(ctx, chainId) && ctx.ChainID() != chainId {
 		// length 0 recipients means that owner of NFT will be determined by voting
 		return recipients, nil
+	}
+
+	if ctx.ChainID() != chainId {
+		return nil, errorsmod.Wrapf(types.ErrInvalidChainId, "chain '%s' is not supported", chainId)
 	}
 
 	address, err := k.FindInternalOwner(ctx, contractAddr, tokenIdHex)
