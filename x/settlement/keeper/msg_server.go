@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	ctypes "github.com/settlus/chain/types"
-	settlustypes "github.com/settlus/chain/types"
 	"github.com/settlus/chain/x/settlement/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -54,7 +53,8 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 	}
 
 	payoutBlock := uint64(ctx.BlockHeight())
-
+	contractAddr := ctypes.NoramlizeHexAddress(msg.ContractAddress)
+	tokenId := ctypes.NoramlizeHexAddress(msg.TokenIdHex)
 	utxrId, err := k.CreateUTXR(
 		ctx,
 		msg.TenantId,
@@ -64,8 +64,8 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 			Amount:     msg.Amount,
 			Nft: &ctypes.Nft{
 				ChainId:      msg.ChainId,
-				ContractAddr: settlustypes.HexAddressString(msg.ContractAddress),
-				TokenId:      settlustypes.HexAddressString(msg.TokenIdHex),
+				ContractAddr: contractAddr,
+				TokenId:      tokenId,
 			},
 			CreatedAt: payoutBlock,
 		},
@@ -82,8 +82,8 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 		Amount:    msg.Amount,
 		Nft: &ctypes.Nft{
 			ChainId:      msg.ChainId,
-			ContractAddr: settlustypes.HexAddressString(msg.ContractAddress),
-			TokenId:      settlustypes.HexAddressString(msg.TokenIdHex),
+			ContractAddr: contractAddr,
+			TokenId:      tokenId,
 		},
 		Recipients: recipients,
 		Metadata:   msg.Metadata,

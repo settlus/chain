@@ -14,8 +14,8 @@ func ParseNftId(nftId string) (Nft, error) {
 
 	return Nft{
 		ChainId:      data[0],
-		ContractAddr: HexAddressString(data[1]),
-		TokenId:      HexAddressString(data[2]),
+		ContractAddr: NoramlizeHexAddress(data[1]),
+		TokenId:      NoramlizeHexAddress(data[2]),
 	}, nil
 }
 

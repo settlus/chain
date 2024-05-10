@@ -59,10 +59,6 @@ func (sub *EthereumSubscriber) Stop() {
 
 // OwnerOf returns the owner of the given NFT
 func (sub *EthereumSubscriber) OwnerOf(_ context.Context, nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
-	return sub.findOwnerFromNetwork(nftAddressHex, tokenIdHex, blockHash)
-}
-
-func (sub *EthereumSubscriber) findOwnerFromNetwork(nftAddressHex string, tokenIdHex string, blockHash string) (string, error) {
 	if !strings.HasPrefix(nftAddressHex, "0x") {
 		nftAddressHex = "0x" + nftAddressHex
 	}

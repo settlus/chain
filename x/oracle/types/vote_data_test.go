@@ -78,10 +78,10 @@ func TestStringToOwnershipData(t *testing.T) {
 			expected: Result{
 				nft: ctypes.Nft{
 					ChainId:      "1",
-					ContractAddr: "0x123",
-					TokenId:      "0x0",
+					ContractAddr: ctypes.NoramlizeHexAddress("0x123"),
+					TokenId:      ctypes.NoramlizeHexAddress("0x0"),
 				},
-				owner: ctypes.HexAddressString("0x777"),
+				owner: ctypes.NoramlizeHexAddress("0x777"),
 				err:   false,
 			},
 		},
@@ -91,10 +91,10 @@ func TestStringToOwnershipData(t *testing.T) {
 			expected: Result{
 				nft: ctypes.Nft{
 					ChainId:      "1",
-					ContractAddr: "123",
-					TokenId:      "0a",
+					ContractAddr: ctypes.NoramlizeHexAddress("0x123"),
+					TokenId:      ctypes.NoramlizeHexAddress("0xa"),
 				},
-				owner: ctypes.HexAddressString("777"),
+				owner: ctypes.NoramlizeHexAddress("777"),
 				err:   false,
 			},
 		},
