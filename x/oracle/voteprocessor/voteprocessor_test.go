@@ -158,7 +158,8 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 
 	vp.TallyVotes(ctx, validatorClaimMap)
 
-	require.Equal(t, ctypes.HexAddressString("0x777"), result["1/0x123/0x0"])
+	require.Equal(t, ctypes.HexAddressString("0x0000000000000000000000000000000000000777"),
+		result["1/0x0000000000000000000000000000000000000123/0x0000000000000000000000000000000000000000"])
 
 	require.False(t, validatorClaimMap[addrs[0].String()].Miss)
 	require.False(t, validatorClaimMap[addrs[1].String()].Miss)

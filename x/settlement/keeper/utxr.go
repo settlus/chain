@@ -178,6 +178,7 @@ func (k SettlementKeeper) SetRecipients(ctx sdk.Context, nfts map[ctypes.Nft]cty
 			}
 			utxr.Recipients = []*types.Recipient{{
 				Address: owner,
+				Weight:  1,
 			}}
 			bz := k.cdc.MustMarshal(&utxr)
 			key := iterator.Key()

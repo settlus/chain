@@ -8,7 +8,8 @@ import (
 func SingleRecipients(creator sdk.AccAddress) []*Recipient {
 	return []*Recipient{
 		{
-			Address: ctypes.NewHexAddrFromAccAddr(creator),
+			Address: ctypes.NewHexAddrFromBytes(creator),
+			Weight:  1,
 		},
 	}
 }

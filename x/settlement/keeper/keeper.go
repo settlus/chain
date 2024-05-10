@@ -89,9 +89,10 @@ func (k SettlementKeeper) GetRecipients(ctx sdk.Context, chainId string, contrac
 		return nil, errorsmod.Wrapf(types.ErrEVMCallFailed, "failed to get the owner of the given NFT")
 	}
 
-	// TODO: suupport multi-owner
+	// TODO: support multi-owner
 	recipient := &types.Recipient{
-		Address: ctypes.HexAddressString(address.Hex()),
+		Address: ctypes.NewHexAddrFromBytes(address.Bytes()),
+		Weight:  1,
 	}
 
 	return append(recipients, recipient), nil

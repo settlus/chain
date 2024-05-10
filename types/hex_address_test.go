@@ -26,7 +26,7 @@ func Test_NewHexAddressString(t *testing.T) {
 	for _, testCase := range testCases {
 		_, bytes, err := bech32.DecodeAndConvert(testCase.Bech32)
 		require.NoError(t, err)
-		address := types.NewHexAddrFromAccAddr(bytes)
+		address := types.NewHexAddrFromBytes(bytes)
 		require.Equal(t, testCase.Hex, address.String())
 	}
 }
