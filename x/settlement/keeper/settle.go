@@ -45,20 +45,26 @@ func (k SettlementKeeper) settleUTXRs(ctx sdk.Context, tenantId uint64) error {
 			break
 		}
 
-		if len(utxr.Recipients) == 0 {
-			continue
-		}
-
-		if err := k.tryPayout(ctx, tenantId, &utxr); err != nil {
+		valid, err := k.tryPayout(ctx, tenantId, &utxr)
+		if err != nil {
 			logger.Error("failed to payout", "tenant", tenantId, "recipient", utxr.Recipients, "amount", utxr.Amount.String(), "error", err)
 			break
 		}
 
-		if err := ctx.EventManager().EmitTypedEvents(&types.EventSettled{
-			Tenant: tenantId,
-			UtxrId: utxrId,
-		}); err != nil {
-			logger.Error("failed to emit EventSettled event", "tenant", tenantId, "error", err)
+		if valid {
+			if err := ctx.EventManager().EmitTypedEvents(&types.EventSettled{
+				Tenant: tenantId,
+				UtxrId: utxrId,
+			}); err != nil {
+				logger.Error("failed to emit EventSettled event", "tenant", tenantId, "error", err)
+			}
+		} else {
+			if err := ctx.EventManager().EmitTypedEvents(&types.EventCancel{
+				Tenant: tenantId,
+				UtxrId: utxrId,
+			}); err != nil {
+				logger.Error("failed to emit EventCancel event", "tenant", tenantId, "utxr", utxrId, "error", err)
+			}
 		}
 
 		if err := k.deleteUTXR(ctx, tenantId, utxrId); err != nil {
@@ -71,19 +77,27 @@ func (k SettlementKeeper) settleUTXRs(ctx sdk.Context, tenantId uint64) error {
 	return nil
 }
 
-func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *types.UTXR) error {
+func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *types.UTXR) (bool, error) {
 	treasuryAddr := types.GetTenantTreasuryAccount(tenantId)
 	tenant := k.GetTenant(ctx, tenantId)
 	if tenant == nil {
-		return fmt.Errorf("tenant [%d] not found", tenantId)
+		return false, fmt.Errorf("tenant [%d] not found", tenantId)
 	}
 
+	var validRecipients []*types.Recipient = make([]*types.Recipient, 0)
 	var totalWeight uint32 = 0
 	for _, recipient := range utxr.Recipients {
-		totalWeight += recipient.Weight
+		if !recipient.Address.IsNull() {
+			totalWeight += recipient.Weight
+			validRecipients = append(validRecipients, recipient)
+		}
 	}
 
-	for _, recipient := range utxr.Recipients {
+	if len(validRecipients) == 0 {
+		return false, nil
+	}
+
+	for _, recipient := range validRecipients {
 		recipientCosmosAddr := sdk.AccAddress(common.FromHex(recipient.Address.String()))
 
 		// if total weight is 0, payout should be distributed equally
@@ -94,7 +108,7 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 		}
 
 		if totalWeight == 0 {
-			amount.Amount = utxr.Amount.Amount.Quo(sdk.NewInt(int64(len(utxr.Recipients))))
+			amount.Amount = utxr.Amount.Amount.Quo(sdk.NewInt(int64(len(validRecipients))))
 		} else {
 			amount.Amount = utxr.Amount.Amount.Mul(sdk.NewInt(int64(recipient.Weight))).Quo(sdk.NewInt(int64(totalWeight)))
 		}
@@ -112,12 +126,12 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 			_, err = k.evmk.CallEVM(ctx, contracts.SBTContract.ABI, common.BytesToAddress(treasuryAddr), common.HexToAddress(contractAddr),
 				true, "mint", common.BytesToAddress(recipientCosmosAddr), amount.Amount.BigInt())
 		default:
-			return fmt.Errorf("invalid payout method: %s", payoutMethod)
+			return true, fmt.Errorf("invalid payout method: %s", payoutMethod)
 		}
 		if err != nil {
-			return err
+			return true, err
 		}
 	}
 
-	return nil
+	return true, nil
 }

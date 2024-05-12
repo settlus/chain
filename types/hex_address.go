@@ -45,6 +45,16 @@ func (a HexAddressString) String() string {
 	return string(a)
 }
 
+func (a HexAddressString) IsNull() bool {
+	for _, b := range a.Bytes() {
+		if b != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (a HexAddressString) Bytes() []byte {
 	aStr := strings.TrimPrefix(string(a), "0x")
 	if len(aStr)%2 == 1 {

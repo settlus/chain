@@ -93,3 +93,27 @@ func TestHexAddressString_Normalize(t *testing.T) {
 		require.Equal(t, tc.after, normHexAddr.String())
 	}
 }
+
+func TestHexAddressString_IsNull(t *testing.T) {
+	cases := []struct {
+		address types.HexAddressString
+		isNull  bool
+	}{
+		{
+			address: types.HexAddressString("0x0"),
+			isNull:  true,
+		},
+		{
+			address: types.HexAddressString("0x000"),
+			isNull:  true,
+		},
+		{
+			address: types.HexAddressString("0x001"),
+			isNull:  false,
+		},
+	}
+
+	for _, tc := range cases {
+		require.Equal(t, tc.isNull, tc.address.IsNull())
+	}
+}
