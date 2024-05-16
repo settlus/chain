@@ -1,20 +1,19 @@
 # Abstract
 
-The `x/oracle` module equips the Settlus blockchain with real-time, accurate block height and block hash information for
-external blockchains.
-This enables the [`x/nftownership`](../nftownership/README.md) module to maintain precise NFT ownership data
-from external chains without using a bridge.
+The `x/oracle` module equips the Settlus blockchain with real-time, accurate block information and NFT ownerships from external blockchains.
+This enables the [`x/settlement`](../settlement/README.md) module to utilize NFTs from external chains without using a bridge.
+The module has a generic structure designed to support various kinds of information from outside blockchains in the future.
 
-Since block information is external to the Settlus blockchain, it relies on validators to periodically submit votes on
-the most recent block data.
-The protocol tallies these votes at the end of each `VotePeriod` to update the on-chain block data based on the weighted
-majority.
+Since this information is external to the Settlus blockchain, it relies on validators to periodically submit votes on the most recent block data.
+The protocol tallies these votes at the end of each `VotePeriod` to update the on-chain block data based on the weighted majority.
+
 
 ## Contents
 
 1. **[Concepts](#Concepts)**
    - [Voting Procedure](#voting-procedure)
-   - [Reward Band](#reward)
+   - [Topics](#topics)
+   - [Reward](#reward)
    - [Slashing](#slashing)
    - [Abstaining from Voting](#abstaining-from-voting)
 2. **[State](#State)**
@@ -29,132 +28,111 @@ majority.
    - [MsgPrevote](#msgprevote)
    - [MsgVote](#msgvote)
    - [MsgFeederDelegationConsent](#msgfeederdelegationconsent)
-5. **[Events](#events)**
-   - TODO
-6. **[Parameters](#parameters)**
+5. **[Parameters](#parameters)**
 
 
 # Concepts
 
-## Chain Whitelist
-
-Governance can modify the `Whitelist` parameter within the `x/oracle` module to manage the list of chains for which
-block height and hash information—collectively known as `BlockData`, are provided.
-The `Whitelist` consists of a list of `Chain` objects, each containing attributes like the chain ID, chain name, and
-chain URL.
-
 ## Voting Procedure
 
-Validators are required to submit two types of messages during each `VotePeriod`: `Vote` and `Prevote`.
-Both messages should contain the current `BlockData`.
-Validators must initially pre-commit to `BlockData` with a `Prevote` message.
-Before the current `VotePeriod` ends, they must reveal their pre-committed `BlockData` alongside proof of the pre-commit
-with a `Vote` message
-This process ensures that validators commit to their choices before seeing other votes, thereby reducing centralization
-and free-rider risks.
+Settlus provides `RoundInfo`, which includes details about the voting period, voting topics, criteria, and more. Currently, there are two types of topics: Block and Ownership.
+
+During each `VotePeriod`, validators are required to submit two types of messages: `Prevote` and `Vote`. Validators must initially pre-commit to `Data` for every topic with a `Prevote` message. Before the current `VotePeriod` ends, they must reveal their pre-committed `Data` alongside proof of the pre-commitment with a `Vote` message.
+
+This process ensures that validators commit to their choices before seeing other votes, thereby reducing centralization and free-rider risks.
 
 ### Prevote and Vote
 
-Let $`P_t`$ represent the current vote period in block, defined by `VotePeriod` in `oracle.proto` (currently set to 10 blocks. [1 minute]).
+- A `MsgPrevote` contains the SHA-256 hash of the combined `Data` for each topic.
+- `MsgPrevote` can only be submitted before `PrevoteEnd`.
 
-![vote period](./docs/oracle_vote_period.png)
-
-- A `MsgPrevote`, contains the SHA256 hash of the `BlockData` for whitelisted chains. Validators must submit a prevote
-  for each chain on the whitelist.
-- `MsgPrevote` can only be submitted during $`P_1, P_2, ..., P_{t-1}`$.
-
-Prevote contains sha256 hash of block data in the following string format:
+The `Prevote` contains the SHA-256 hash of the block data in the following string format:
 
 ```
-sha256(<salt><chain-id>:<block-number>:<block-hash>,<chain-id>:<block-number>:<block-hash>,...)
+sha256(<salt><data for topic1><data for topic2>...)
 ```
 
-- A `MsgVote`, includes the salt used to generate the hash for the prevote submitted in the prevote stage.
-- `MsgVote` can only be submitted during $`P_t`$.
+- A `MsgVote` includes the salt used to generate the hash for the `Prevote` submitted in the prevote stage.
+- `MsgVote` can only be submitted between `PrevoteEnd` and `VoteEnd`.
 
-Vote contains block data in the following string format:
+
+The `Vote` contains an array of data for each topic:
 
 ```
-<chain-id>:<block-number>:<block-hash>,<chain-id>:<block-number>:<block-hash>,...
+[
+    {
+        "Topic": "Block",
+        "Data": ["data1", "data2", "data3", ...]
+    },
+    {
+        "Topic": "Ownership",
+        "Data": ["data1", "data2", "data3", ...]
+    },
+    ...
+]
 ```
+
 
 ### Vote Tally
 
-At each $`P_t`$, the protocol tallies the votes to calculate the weighted majority $`M`$ at the `EndBlock` stage.
+At each round, the protocol tallies the votes to calculate the weighted majority at the `EndBlock` stage.
 
-The submitted salt of each vote is used to verify consistency with the prevote submitted by the validator during the prevote stage.
-If the validator has not submitted a prevote, or the SHA256 resulting from the salt does not match the hash from the
-prevote, the vote is dropped.
+The submitted salt of each vote is used to verify consistency with the `Prevote` submitted by the validator during the prevote stage. If the validator has not submitted a `Prevote`, or if the SHA-256 hash resulting from the salt does not match the hash from the `Prevote`, the vote is dropped.
 
-For each chain, the most voted `BlockData` which has more than `VoteThreshold` total voting power is recorded on-chain
-as the effective block number and block hash for the following voting period.
-Chains receiving fewer than `VoteThreshold` total voting power keep the previous `BlockData` from the previous voting period.
+For each topic, the most voted `Data` that has more than the `VoteThreshold` total voting power is accepted for the following voting period.
 
 ### Ballot Rewards
 
 After tallying, the `tally()` function identifies the winning ballots.
-Voters who manage to stay within the error band $`\Delta`$ around the weighted majority $`M`$ are not slashed.
-The $`\Delta`$ is governance-controlled parameter `toleratedErrorBand` in `oracle.proto`.
 
 ### Block Reorganization Handling
 
-Block reorganization, or reorg, happens when an existing block at a specific height is replaced.
-This can happen when an external chain forks.
+Block reorganization, or reorg, occurs when an existing block at a specific height is replaced. This can happen when an external chain forks.
 
-In the event of a reorg, the current block number and hash are updated to reflect the new longest chain following
-standard voting procedures.
+In the event of a reorg, the list of information is updated to reflect the new longest chain following standard voting procedures.
+
+## Topics
+
+### Block
+
+The Block topic is for determining the current block height of an external chain corresponding to the Settlus block. The list of external chains is from the `SupportedChains` of the Settlement Module. Feeders should submit the number and hash of the block which has the smallest timestamp exceeding the `Timestamp` given in `RoundInfo`. The data format of the Block topic is:
+
+```
+<chain-id>:<block-number>/<block-hash>
+```
+
+Note that the block data itself doesn't currently have any role in the Settlus chain, but it represents the point-of-view criteria of NFT ownership.
+
+### Ownership
+
+The Ownership topic is for determining the current owner of NFTs from external chains. The list of NFTs that need to be verified comes from `UTXR`s of the Settlement Module. Feeders should submit the NFT owner at the block that will be submitted with the Block topic in the same round (the block having the smallest timestamp exceeding the `timestamp` given in `RoundInfo`). The data format of the Ownership topic is:
+
+```
+<chain-id>/<contract-addr>/<token-id>:<owner-addr>/<weight>,<owner-addr>/<weight>,...
+```
 
 ## Reward
 
-Reward for oracles are pooled from the fees collected from the [x/settlement](../settlement/README.md) module.
-
-Let $`\Delta`$ be the tolerated error band, and $`M`$ be the weighted majority of the votes.
-Votes within the range $`[ M - \Delta, M + \Delta ]`$ qualify for rewards.
-Validators failing to vote within this band are subject to slashing penalties.
+Rewards for oracles are pooled from the fees collected from the [x/settlement](../settlement/README.md) module.
 
 ## Slashing
+
 The following events are considered a "miss":
 
-- The validator fails to submit a vote for the current `BlockData` against **each and every** chain specified
-  in `Whitelist`.
-- The validator fails to vote within the `reward band` around the weighted majority for one or more chains.
+- The validator fails to submit a vote for the current `Data` for each topic in every round.
+- The validator fails to vote within the weighted majority for any topic.
 
-During every `SlashWindow`, participating validators must maintain a valid vote rate of at
-least `MinValidPercentPerSlashWindow` (currently set to 50%).
-If the validator fails to maintain a valid vote rate, the validator is slashed by `SlashFraction` (currently set to 1%).
-The slashed validator is automatically temporarily "jailed" by the protocol (to protect the funds of delegators), and
-the operator is expected to fix the discrepancy promptly to resume validator participation.
+During every `SlashWindow`, participating validators must maintain a valid vote rate of at least `MinValidPercentPerSlashWindow` (currently set to 50%). If a validator fails to maintain a valid vote rate, the validator is slashed by `SlashFraction` (currently set to 1%). The slashed validator is automatically temporarily "jailed" by the protocol (to protect the funds of delegators), and the operator is expected to fix the discrepancy promptly to resume validator participation.
 
 ## Abstaining from Voting
 
-A validator may abstain from voting by submitting a non-positive integer for the `BlockData` field in `MsgVote`.
-Doing so will absolve them of any penalties for missing `VotePeriod`s, but also disqualify them from receiving Oracle
-rewards for faithful reporting.
+A validator may abstain from voting by submitting empty data in `MsgVote`. Doing so will absolve them of any penalties for missing `VotePeriod`s, but also disqualify them from receiving Oracle rewards for faithful reporting.
 
 # State
-
-## BlockData
-
-`BlockData` contains whitelisted chains' block number and hash for the current `VotePeriod`.
-
-- `BlockData`: `chainId -> BlockData`
-
-```go
-type BlockData struct {
-    ChainId string
-    BlockNumber uint64
-    BlockHash string
-}
-```
 
 ## AggregatePrevote
 
 `AggregatePrevote` contains validator's aggregated prevotes.
-Hash is a sha256 hash of salt + `BlockData` in the following string format:
-
-```
-<salt><chain-id>:<block-number>:<block-hash>,<chain-id>:<block-number>:<block-hash>,...
-```
 
 - `AggregatePrevote`: `valAddress -> AggregatePrevote`
 
@@ -162,7 +140,6 @@ Hash is a sha256 hash of salt + `BlockData` in the following string format:
 type AggregatePrevote struct {
     Hash        string
     Voter       string    // Voter validator address 
-    SubmitBlock int64
 }
 ```
 
@@ -174,7 +151,7 @@ type AggregatePrevote struct {
 
 ```go
 type AggregateVote struct {
-    repeated BlockData BlockData
+    repeated VoteData VoteData
     Voter    string // voter val address of validator
 }
 ```
@@ -212,30 +189,21 @@ type MissCount struct {
 At the end of every block, the `x/oracle` module checks whether it's the last block of the `VotePeriod`.
 If it is, it runs the [Voting Procedure](#voting-procedure):
 
-1. Received votes are organized into ballots by chain IDs. Abstained votes, as well as votes by inactive or jailed
-   validators are ignored.
+1. Received votes are organized into ballots. Abstained votes, as well as votes by inactive or jailed validators are ignored.
 
-2. Chain IDs not meeting the following requirements will be dropped:
-
-    - Must appear in the permitted chain ID in `Whitelist` parameter.
-    - Ballot for chain ID must have at least `VoteThreshold` total vote power.
-
-3. For each remaining `ChainId` with a passing ballot:
-
-    - Tally up votes and find the weighted majority `BlockData` and winners with `tally()`.
+2. Run `VoteProcessor` for each Topic. A `VoteProcessor`
+    - Tally up votes and find the weighted majority Data and winners with `TallyVotes()`.
     - Iterate through winners of the ballot and add their weight to their running total.
-    - Store the updated `BlockData` on the blockchain for that `ChainId` with keeper `k.SetBlockData()`.
-    - Emit a `BlockDataUpdate` event.
+    - Store the specific actions for each topic. For example, store the updated `BlockData` on the blockchain for the `Block` topic
 
-4. Count up the validators who [missed](#misscount) the Oracle vote and increase the appropriate miss
-   counters.
+3. Count up the validators who [missed](#misscount) the Oracle vote and increase the appropriate miss counters.
 
-5. If at the end of a `SlashWindow`, penalize validators who have missed more than the penalty threshold (submitted
+4. If at the end of a `SlashWindow`, penalize validators who have missed more than the penalty threshold (submitted
    fewer valid votes than `MinValidPercentPerSlashWindow`)
 
-6. Distribute rewards to ballot winners with `k.RewardBallotWinners()`
+5. Distribute rewards to ballot winners with `k.RewardBallotWinners()`
 
-7. Clear all prevotes (except ones for the next `VotePeriod`) and votes from the store
+6. Clear all prevotes (except ones for the next `VotePeriod`) and votes from the store
 
 # Messages
 
@@ -243,9 +211,6 @@ If it is, it runs the [Voting Procedure](#voting-procedure):
 
 `Hash` is a hex string generated the SHA256 hash (hex string) of a string with the following format:
 
-```
-<salt><chain-id>:<block-number>:<block-hash>,<chain-id>:<block-number>:<block-hash>,...
-```
 
 Note that in the subsequent `MsgVote`, the salt will have to be revealed.
 The salt used must be regenerated for each prevote submission.
@@ -290,22 +255,6 @@ type MsgDelegateFeedConsent struct {
 }
 ```
 
-# Events
-
-TODO
-
-The oracle module emits the following events:
-
-## EndBlocker
-
-## Handlers
-
-### MsgPrevote
-
-### MsgVote
-
-### MsgFeederDelegationConsent
-
 # Parameters
 
 The oracle module contains the following parameters:
@@ -314,8 +263,6 @@ The oracle module contains the following parameters:
 |----------------------------|---------|----------------------------------------------------------------------------------|
 | votePeriod                 | int     | 3                                                                                |
 | voteThreshold              | dec     | "0.500000000000000000"                                                           |
-| toleratedErrorBand         | int     | 2                                                                                |
-| whitelist                  | []Chain | [{"chainId": "1", "chainName": "ethereum", "chainUrl": "https://ethereum.org/"}] |
 | slashFraction              | dec     | "0.001000000000000000"                                                           |
 | slashWindow                | int     | 100                                                                              |
 | maxMissCountPerSlashWindow | int     | 10                                                                               |
@@ -323,8 +270,6 @@ The oracle module contains the following parameters:
 ## Validations
 - `votePeriod` must be larger than 0.
 - `voteThreshold` must be larger than 0.5.
-- `toleratedErrorBand` must be less than 10. However, 10 is an arbitrary number and can be changed in the future.
-- Chains in `whitelist` must have unique chain ids.
 - `slashFraction` must be larger than 0 and less than 0.1.
 - `slashWindow` must be larger than 0 and divisible by the `votePeriod`.
 - `maxMissCountPerSlashWindow` must be less than the `slashWindow`.
