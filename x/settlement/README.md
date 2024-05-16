@@ -86,6 +86,9 @@ If the tenant has enough funds in the treasury to settle the UTXR, the UTXR is r
 If the tenant does not have enough funds in the treasury to settle the UTXR, the settlement will be deferred until the tenant has enough funds.
 The UTXR will remain in the `unspent_records` state until the tenant has enough funds to settle the UTXR.
 
+### Fixed Fee
+It is common for the price of a coin to fluctuate significantly due to external factors, regardless of the supply and demand related to its actual use. Such fluctuations are more frequent before the blockchain stabilizes. If such events occur, the cost required to record a transaction could fluctuate significantly, which could be unfavorable for the creators and platform services using Settlus. To avoid this, transactions handled by the Settlement Module are paid with a fixed gas amount and gas price, such as 0.001 USDC
+
 ## State
 
 ### Unspent Transaction Record
