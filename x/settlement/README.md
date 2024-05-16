@@ -13,6 +13,8 @@ The `x/settlement` module, designed for Cosmos-SDK based blockchains, revolution
 * [Concepts](#concepts)
     * [Tenant](#tenant)
     * [Unspent Transaction Record](#unspent-transaction-record-utxr)
+    * [Recipients](#recipients)
+    * [Payout Period](#payout-period)
     * [Settlement](#settlement)
 * [State](#state)
     * [Unspent Transaction Record](#unspent-transaction-record)
@@ -47,6 +49,12 @@ The list of Tenant Admins is configured and maintained in the `admins` parameter
 The Unspent Transaction Record (UTXR) is a fundamental element of the Settlus blockchain, created whenever a payment is made from a tenant to a recipient.
 These records are crucial in tracking the flow of funds and ensuring the accuracy of settlements.
 Each UTXR contains details such as the NFT address, recipient's address, the amount of the transaction in the `unspent_records` state, these records are the backbone of the settlement process.
+
+### Recipients
+The `Recipients` field contains a list of recipient addresses and their corresponding weights, representing the owners of an NFT. When a record is settled, the amount is split by weight and sent to the recipients. 
+
+- If the NFT is stored in Settlus, we directly determine the recipients of the NFT during the execution of a record transaction.
+- If the NFT is stored on an external chain, we postpone determining the owners. The oracle module will later fill in these details through voting from feeders.
 
 ### Payout Period
 The "Payout Period" in the Settlus blockchain is a critical concept pertaining to the lifecycle of an Unspent Transaction Record (UTXR).
@@ -104,8 +112,6 @@ struct {
 ```
 The UTXR ID is incremented by 1 for each UTXR. Because the UTXRs are created in order, the UTXRs are trivially sorted by `UtxrId`.
 
-### Recipient
-
 
 ### Unspent Transaction Record by Request ID
 There is another store that contains UTXR IDs by request ID.
@@ -142,8 +148,8 @@ In the case of a cancel, the UTXR is simply removed from the `unspent_records` s
 - Get the UTXR ID by Request ID.
 - Delete the UTXR from the `unspent_records` state by the UTXR ID.
 
-## Begin Block
-At each `BeginBlock`, the `x/settlement` module iterates through the `unspent_records` state and checks if the UTXR's payout period has passed.
+## End Block
+At each `EndBlock`, the `x/settlement` module iterates through the `unspent_records` state and checks if the UTXR's payout period has passed.
 
 ## Messages
 
@@ -198,11 +204,18 @@ type EventRecord struct {
     TenantId uint64
 	UtxrId uint64
 	RequestId string
-	ChainId string
     Recipients []*Receipinet
 	Nft Nft
-	Ammount sdk.Coins
+	Amount sdk.Coins
 	Metdata string
+}
+```
+
+### EventSettled
+```go
+type EventSettled struct {
+	Tenant uint64
+	UtxrId uint64
 }
 ```
 
@@ -211,6 +224,15 @@ type EventRecord struct {
 type EventCancel struct {
     TenantId string
 	RequestId string
+}
+```
+
+### EventSetRecipients
+```go
+type EventSetRecipients struct {
+    Tenant uint64
+	UtxrId uint64 
+	Recipients []*Recipient
 }
 ```
 
@@ -223,14 +245,6 @@ The `x/settlement` module contains the following parameters:
 | oracle_fee_percentage      | dec       | "0.500000000000000000"       |
 | supported_chains           | []Chain   | [{chain_id:1, chain_name: ethereum, chain_url: https://ethereum.org}]|
 
-```go
-type Tenant struct {
-    Id uint64
-	Name string
-    Admins []sdk.AccAddress
-    PayoutPeriod uint64
-}
-```
 
 ## Client
 
@@ -246,7 +260,7 @@ settlusd query settlement --help
 ##### UTXRs
 The `utxrs` command allows users to query the UTXRs of a tenant.
 ```shell
-settlusd query settlement utxrs [tenant-id] [id] [flags]
+settlusd query settlement utxrs [tenant-id] [flags]
 ```
 
 Example:
@@ -259,13 +273,18 @@ Example Output:
 {
   "id": "1",
   "tenant_id": "1",
-  "payout_block": "100800",
-  "recipients": "cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5",
+  "created_at": "550",
+  "recipients": [
+    {
+        "addr": "cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5", 
+        "weight": 1
+    }
+  ]
   "amount": [
-      {
-      "denom": "usdc",
-      "amount": "1000000"
-      }
+    {
+        "denom": "uusdc",
+        "amount": "1000000"
+    }
   ],
 }
 ```
@@ -287,13 +306,13 @@ settlusd tx settlement record [tenant-id] [request-id] [amount] [chain-id] [cont
 
 Example:
 ```shell
-settlusd tx settlement record-revenue \
+settlusd tx settlement record \
     1 # tenant id \
     request-1 # request id \
     1000000usdc # amount
-    ethereum # chain id \
+    1 # chain id \
     0x0000000000000000000000000000000000000001 # contract address \
-    1 # token id \
+    0x1 # token id \
     "metadata" # metadata
 ```
 
