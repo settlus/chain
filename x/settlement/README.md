@@ -13,6 +13,8 @@ The `x/settlement` module, designed for Cosmos-SDK based blockchains, revolution
 * [Concepts](#concepts)
     * [Tenant](#tenant)
     * [Unspent Transaction Record](#unspent-transaction-record-utxr)
+    * [Recipients](#recipients)
+    * [Payout Period](#payout-period)
     * [Settlement](#settlement)
 * [State](#state)
     * [Unspent Transaction Record](#unspent-transaction-record)
@@ -46,8 +48,13 @@ The list of Tenant Admins is configured and maintained in the `admins` parameter
 ### Unspent Transaction Record (UTXR)
 The Unspent Transaction Record (UTXR) is a fundamental element of the Settlus blockchain, created whenever a payment is made from a tenant to a recipient.
 These records are crucial in tracking the flow of funds and ensuring the accuracy of settlements.
-Each UTXR contains details such as the recipient's address, the amount of the transaction, and the end of the payout period
-Stored in the `unspent_records` state, these records are the backbone of the settlement process.
+Each UTXR contains details such as the NFT address, recipient's address, the amount of the transaction in the `unspent_records` state, these records are the backbone of the settlement process.
+
+### Recipients
+The `Recipients` field contains a list of recipient addresses and their corresponding weights, representing the owners of an NFT. When a record is settled, the amount is split by weight and sent to the recipients. 
+
+- If the NFT is stored in Settlus, we directly determine the recipients of the NFT during the execution of a record transaction.
+- If the NFT is stored on an external chain, we postpone determining the owners. The oracle module will later fill in these details through voting from feeders.
 
 ### Payout Period
 The "Payout Period" in the Settlus blockchain is a critical concept pertaining to the lifecycle of an Unspent Transaction Record (UTXR).
@@ -65,10 +72,9 @@ This process ensures a clear and structured settlement timeline, providing certa
 #### Payout Period Example
 `payout_period` is measured in blocks.
 
-> `payout_period` is set to 100800.
-> Assume average block period is 6 seconds.
-> Then a `payout_period` of 100800 (60 * 60 * 24 * 7 / 6) which is about a week, means that the UTXR can be canceled for 100800 blocks after the UTXR is created.
-> After 100800 blocks, the UTXR is considered settled and cannot be canceled.
+> Suppose `payout_period` is set to 201600 and average block period is 3 seconds.
+> A `payout_period` of 201600 (60 * 60 * 24 * 7 / 3) which is about a week, means that the UTXR can be canceled for 201600 blocks after the UTXR is created.
+> After 201600 blocks, the UTXR is considered settled and cannot be canceled.
 
 ### Settlement
 Once the payout period of a UTXR has concluded, the UTXR is eligible for settlement.
@@ -79,6 +85,9 @@ The UTXRs that have passed the payout period are considered eligible for settlem
 If the tenant has enough funds in the treasury to settle the UTXR, the UTXR is removed from the `unspent_records` state and the amount is transferred from the tenant's treasury to the recipient's wallet.
 If the tenant does not have enough funds in the treasury to settle the UTXR, the settlement will be deferred until the tenant has enough funds.
 The UTXR will remain in the `unspent_records` state until the tenant has enough funds to settle the UTXR.
+
+### Fixed Fee
+It is common for the price of a coin to fluctuate significantly due to external factors, regardless of the supply and demand related to its actual use. Such fluctuations are more frequent before the blockchain stabilizes. If such events occur, the cost required to record a transaction could fluctuate significantly, which could be unfavorable for the creators and platform services using Settlus. To avoid this, transactions handled by the Settlement Module are paid with a fixed gas amount and gas price, such as 0.001 USDC
 
 ## State
 
@@ -96,13 +105,16 @@ To meet the requirements above, we use two stores: `unspent_records` and `utxr_b
 - `UTXR`: `((TenantID)-(UTXRID)) -> UTXR`
 ```go
 struct {
+  UtxrId uint64
   RequestId string
-  Recipient sdk.AccAddress
+  Recipients []*Recipient
+  Nft    Nft
   Amount sdk.Coins
-  PayoutBlock uint64
+  CreatedAt uint64
 }
 ```
-The UTXR ID is incremented by 1 for each UTXR. Because the UTXRs are created in order, the UTXRs are trivially sorted by `PayoutBlock`.
+The UTXR ID is incremented by 1 for each UTXR. Because the UTXRs are created in order, the UTXRs are trivially sorted by `UtxrId`.
+
 
 ### Unspent Transaction Record by Request ID
 There is another store that contains UTXR IDs by request ID.
@@ -119,18 +131,17 @@ struct {
 
 #### Example Scenarios
 **Insertion**
-- A tenant creates a UTXR with payout period of `100800` blocks.
 - A new UTXR is created with the following values.
-    - `Recipient`: `RecipientAddress`
+    - `Recipients`: `List of recipients with weight`
     - `Amount`: `Amount`
-    - `PayoutBlock`: `CurrentBlockHeight + 100800 (PayoutPeriod)`
+    - `CreatedAt`: `CurrentBlockHeight`
 - Add the new UTXR to the store with the following key: `((TenantID)-(UTXRID))`.
 
 **Settlement**
 - Iterate from the lowest key to the highest key in the `unspent_records` store.
 - For each UTXR, do the following:
-  - Check if the current UTXR's `PayoutBlock` is less than or equal to the current block height.  
-    - If no, since every UTXR is sorted by `PayoutBlock`, we can stop checking the rest of the UTXRs.
+  - Check if the current UTXR's `CreatedAt + PayoutPeriod` is less than or equal to the current block height.  
+    - If no, since every UTXR is sorted by `CreatedAt + PayoutPeriod`, we can stop checking the rest of the UTXRs.
     - If yes, check if the tenant has enough funds to settle the UTXR.
       - If the tenant has enough funds, remove the UTXR from the `unspent_records` state and transfer the amount from the tenant's treasury to the recipient's wallet.
       - If the tenant does not have enough funds, stop the iteration and emit a `NotEnoughTreasuryBalance` event.
@@ -140,8 +151,8 @@ In the case of a cancel, the UTXR is simply removed from the `unspent_records` s
 - Get the UTXR ID by Request ID.
 - Delete the UTXR from the `unspent_records` state by the UTXR ID.
 
-## Begin Block
-At each `BeginBlock`, the `x/settlement` module iterates through the `unspent_records` state and checks if the UTXR's payout period has passed.
+## End Block
+At each `EndBlock`, the `x/settlement` module iterates through the `unspent_records` state and checks if the UTXR's payout period has passed.
 
 ## Messages
 
@@ -164,10 +175,10 @@ type MsgRecord struct {
 `metadata` is not stored in the `unspent_records` state, but it is emitted in the `EventUTXRCreated` event.
 An indexer can parse the emitted `metadata` and store it in a separate database.
 
-### MstCancel
-The `MstCancel` message allows tenant admins to cancel a UTXR.
+### MsgCancel
+The `MsgCancel` message allows tenant admins to cancel a UTXR.
 ```go
-type MstCancel struct {
+type MsgCancel struct {
 	Sender string
     TenantId string
 	RequestId string
@@ -196,12 +207,18 @@ type EventRecord struct {
     TenantId uint64
 	UtxrId uint64
 	RequestId string
-	ChainId string
-    Recipient string
-	NftAddress string
-	NftTokenId string
-	Ammount sdk.Coins
+    Recipients []*Receipinet
+	Nft Nft
+	Amount sdk.Coins
 	Metdata string
+}
+```
+
+### EventSettled
+```go
+type EventSettled struct {
+	Tenant uint64
+	UtxrId uint64
 }
 ```
 
@@ -213,23 +230,24 @@ type EventCancel struct {
 }
 ```
 
+### EventSetRecipients
+```go
+type EventSetRecipients struct {
+    Tenant uint64
+	UtxrId uint64 
+	Recipients []*Recipient
+}
+```
+
 ## Parameters
 The `x/settlement` module contains the following parameters:
 
-| Key                        | Type     | Example                |
-|----------------------------|----------|------------------------|
-| fee                        | Coin     | {denom: usdc}          |
-| oracle_fee_percentage      | dec      | "0.500000000000000000" |
-| tenants                    | []Tenant | {}                     |
+| Key                        | Type      | Example                      |
+|----------------------------|-----------|------------------------------|
+| gas_prices                 | []DecCoin | [{denom: setl, amount: 0.1}] |
+| oracle_fee_percentage      | dec       | "0.500000000000000000"       |
+| supported_chains           | []Chain   | [{chain_id:1, chain_name: ethereum, chain_url: https://ethereum.org}]|
 
-```go
-type Tenant struct {
-    Id uint64
-	Name string
-    Admins []sdk.AccAddress
-    PayoutPeriod uint64
-}
-```
 
 ## Client
 
@@ -245,7 +263,7 @@ settlusd query settlement --help
 ##### UTXRs
 The `utxrs` command allows users to query the UTXRs of a tenant.
 ```shell
-settlusd query settlement utxrs [tenant-id] [id] [flags]
+settlusd query settlement utxrs [tenant-id] [flags]
 ```
 
 Example:
@@ -258,13 +276,18 @@ Example Output:
 {
   "id": "1",
   "tenant_id": "1",
-  "payout_block": "100800",
-  "recipient": "cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5",
+  "created_at": "550",
+  "recipients": [
+    {
+        "addr": "cosmos1xv9tklw7d82sezh9haa573wufgy59vmwe6xxe5", 
+        "weight": 1
+    }
+  ]
   "amount": [
-      {
-      "denom": "usdc",
-      "amount": "1000000"
-      }
+    {
+        "denom": "uusdc",
+        "amount": "1000000"
+    }
   ],
 }
 ```
@@ -286,13 +309,13 @@ settlusd tx settlement record [tenant-id] [request-id] [amount] [chain-id] [cont
 
 Example:
 ```shell
-settlusd tx settlement record-revenue \
+settlusd tx settlement record \
     1 # tenant id \
     request-1 # request id \
     1000000usdc # amount
-    ethereum # chain id \
+    1 # chain id \
     0x0000000000000000000000000000000000000001 # contract address \
-    1 # token id \
+    0x1 # token id \
     "metadata" # metadata
 ```
 
