@@ -191,7 +191,7 @@ If it is, it runs the [Voting Procedure](#voting-procedure):
 
 1. Received votes are organized into ballots. Abstained votes, as well as votes by inactive or jailed validators are ignored.
 
-2. Run VoteProcessor for each Topic. A voteProcessor
+2. Run `VoteProcessor` for each Topic. A `VoteProcessor`
     - Tally up votes and find the weighted majority Data and winners with `TallyVotes()`.
     - Iterate through winners of the ballot and add their weight to their running total.
     - Store the specific actions for each topic. For example, store the updated `BlockData` on the blockchain for the `Block` topic
