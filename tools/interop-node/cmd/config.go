@@ -57,7 +57,7 @@ for oracle feeder.
 					GasLimit: 200000,
 					Fees: cfg.Fee{
 						Denom:  "asetl",
-						Amount: "10000000000000",
+						Amount: "210000000000000",
 					},
 				},
 				Feeder: cfg.FeederConfig{
