@@ -43,9 +43,9 @@ genesis:
     feemarket:
       block_gas: 1000000000000
       params:
-        base_fee: "1"
-        base_fee_change_denominator: 1
-        min_gas_price: "1"
+        base_fee: "1000000000"
+        base_fee_change_denominator: 4
+        min_gas_price: "1000000000"
     gov:
       deposit_params:
         max_deposit_period: "600s" # 10 minutes
@@ -96,7 +96,6 @@ genesis:
       params:
         vote_period: 2
         vote_threshold: "0.5"
-        tolerated_error_band: 2
         slash_fraction: "0.01"
         slash_window: 604800
         max_miss_count_per_slash_window: 302400
@@ -119,7 +118,7 @@ validators:
         api: "eth,net,web3,txpool,debug,personal"
       minimum-gas-prices: 1
     config:
-      fees: 200000asetl
+      fees: 210000000000000asetl
       moniker: treasury-node
       p2p:
         seeds: ""
