@@ -34,6 +34,10 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	}
 
 	k.cdc.MustUnmarshal(bz, &params)
+	if params.ElasticityMultiplier == 0 {
+		params.ElasticityMultiplier = types.DefaultParams().ElasticityMultiplier
+	}
+
 	return params
 }
 
