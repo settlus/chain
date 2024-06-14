@@ -308,7 +308,7 @@ func (ctd CanTransferDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 				return ctx, errorsmod.Wrapf(
 					errortypes.ErrInsufficientFee,
 					"max fee per gas less than block base fee (%s < %s)",
-					coreMsg.GasFeeCap, baseFee,
+					coreMsg.GasFeeCap(), baseFee,
 				)
 			}
 		}
@@ -330,8 +330,8 @@ func (ctd CanTransferDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 			return ctx, errorsmod.Wrapf(
 				errortypes.ErrInsufficientFunds,
 				"failed to transfer %s from address %s using the EVM block context transfer function",
-				coreMsg.Value,
-				coreMsg.From,
+				coreMsg.Value(),
+				coreMsg.From(),
 			)
 		}
 	}
