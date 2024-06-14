@@ -270,7 +270,7 @@ func (k *Keeper) PostTxProcessing(ctx sdk.Context, msg core.Message, receipt *et
 
 // Tracer return a default vm.Tracer based on current keeper state
 func (k Keeper) Tracer(ctx sdk.Context, msg core.Message, ethCfg *params.ChainConfig) vm.EVMLogger {
-	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight(), uint64(ctx.BlockTime().Unix()))
+	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
 }
 
 // GetAccountWithoutBalance load nonce and codehash without balance,
@@ -453,19 +453,19 @@ func (k Keeper) CallEVMWithData(
 		gasCap = gasRes.Gas
 	}
 
-	msg := core.Message{
-		From:              from,
-		To:                contract,
-		Nonce:             nonce,
-		Value:             big.NewInt(0),
-		GasLimit:          gasCap,
-		GasPrice:          big.NewInt(0),
-		GasFeeCap:         big.NewInt(0),
-		GasTipCap:         big.NewInt(0),
-		Data:              data,
-		AccessList:        ethtypes.AccessList{},
-		SkipAccountChecks: !commit,
-	}
+	msg := ethtypes.NewMessage(
+		from,
+		contract,
+		nonce,
+		big.NewInt(0), // amount
+		gasCap,        // gasLimit
+		big.NewInt(0), // gasFeeCap
+		big.NewInt(0), // gasTipCap
+		big.NewInt(0), // gasPrice
+		data,
+		ethtypes.AccessList{}, // AccessList
+		!commit,               // isFake
+	)
 
 	res, err := k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), commit)
 	if err != nil {

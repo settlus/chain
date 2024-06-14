@@ -9,10 +9,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/settlus/chain/evmos/x/evm/statedb"
+	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -441,8 +439,7 @@ func (suite *StateDBTestSuite) TestAccessList() {
 				Address:     address3,
 				StorageKeys: []common.Hash{value1},
 			}}
-
-			db.Prepare(params.Rules{}, address, common.Address{}, &address2, vm.PrecompiledAddressesBerlin, al)
+			db.PrepareAccessList(address, &address2, vm.PrecompiledAddressesBerlin, al)
 
 			// check sender and dst
 			suite.Require().True(db.AddressInAccessList(address))
@@ -569,7 +566,7 @@ func (suite *StateDBTestSuite) TestIterateStorage() {
 	suite.Require().Equal(1, len(storage))
 }
 
-func CollectContractStorage(db *statedb.StateDB) statedb.Storage {
+func CollectContractStorage(db vm.StateDB) statedb.Storage {
 	storage := make(statedb.Storage)
 	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
 		storage[k] = v
