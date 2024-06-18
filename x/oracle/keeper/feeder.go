@@ -311,6 +311,12 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 		}
 
 		if !rewardCoins.IsZero() {
+			if(receiverVal.IsProbono()) {
+				feePool := k.DistributionKeeper.GetFeePool(ctx)
+				feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(rewardCoins...)...)
+				k.DistributionKeeper.SetFeePool(ctx, feePool)
+				continue
+			}
 			k.DistributionKeeper.AllocateTokensToValidator(ctx, receiverVal, sdk.NewDecCoinsFromCoins(rewardCoins...))
 			distributedReward = distributedReward.Add(rewardCoins...)
 		} else {
