@@ -309,7 +309,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 		receiverVal, ok := k.StakingKeeper.GetValidator(ctx, valAddr)
 		if !ok {
 			return fmt.Errorf("validator not found: %s", valAddr)
-		}	
+		}
 
 		if !rewardCoins.IsZero() {
 			if receiverVal.Probono {

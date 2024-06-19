@@ -18,10 +18,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -50,9 +50,7 @@ type OracleTestSuite struct {
 	signer      keyring.Signer
 }
 
-var (
-	s *OracleTestSuite
-)
+var s *OracleTestSuite
 
 const (
 	DefaultBondAmount = 100000000000
@@ -452,10 +450,10 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 
 func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 	tests := []struct {
-		name      string
-		vcm       map[string]types.Claim
-		totalCoin sdk.Coins
-		rewardMap map[string]sdk.DecCoins
+		name         string
+		vcm          map[string]types.Claim
+		totalCoin    sdk.Coins
+		rewardMap    map[string]sdk.DecCoins
 		probonoIndex []int
 	}{
 		{
@@ -503,7 +501,7 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 
 			s.app.DistrKeeper.SetFeePool(s.ctx, disttypes.InitialFeePool())
 			s.Equal(s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl"), sdk.ZeroDec())
-			
+
 			for _, idx := range tt.probonoIndex {
 				s.validators[idx].Probono = true
 				s.validators[idx] = stakingkeeper.TestingUpdateValidator(s.app.StakingKeeper, s.ctx, s.validators[idx], true)
@@ -525,7 +523,7 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 				s.app.DistrKeeper.DeleteValidatorCurrentRewards(s.ctx, validator.GetOperator())
 			}
 
-			//check community pool
+			// check community pool
 			actualCommunityAmount := s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl")
 			s.Equal(probonoRewards, actualCommunityAmount)
 			s.app.DistrKeeper.SetFeePool(s.ctx, disttypes.InitialFeePool())
