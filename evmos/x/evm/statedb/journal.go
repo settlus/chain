@@ -204,14 +204,6 @@ func (ch storageChange) Dirtied() *common.Address {
 	return ch.account
 }
 
-func (ch transientStorageChange) Revert(s *StateDB) {
-	s.setTransientState(*ch.account, ch.key, ch.prevalue)
-}
-
-func (ch transientStorageChange) Dirtied() *common.Address {
-	return nil
-}
-
 func (ch refundChange) Revert(s *StateDB) {
 	s.refund = ch.prev
 }
