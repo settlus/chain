@@ -327,17 +327,12 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 		}
 	}
 
-	// Send probono reward to community pool
-	if err := k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionName, probonoReward); err != nil {
-		return fmt.Errorf("failed to move probono reward to distribution module: %w", err)
-	}
-
 	feePool := k.DistributionKeeper.GetFeePool(ctx)
 	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(probonoReward...)...)
 	k.DistributionKeeper.SetFeePool(ctx, feePool)
 
-	// Move distributed reward to distribution module
-	if err := k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionName, distributedReward); err != nil {
+	// Move both distributed reward and probono reward to distribution module
+	if err := k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionName, distributedReward.Add(probonoReward...)); err != nil {
 		return fmt.Errorf("failed to move distributed reward to distribution module: %w", err)
 	}
 
