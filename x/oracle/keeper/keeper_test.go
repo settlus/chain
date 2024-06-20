@@ -489,6 +489,39 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 			},
 			probonoIndex: []int{0, 1},
 		},
+		{
+			name: "All probono validator, there's no normal validator",
+			vcm: map[string]types.Claim{
+				s.validators[0].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[1].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[2].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[3].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+			},
+			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 4000000)),
+			rewardMap: map[string]sdk.DecCoins{
+				s.validators[0].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[1].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[2].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[3].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+			},
+			probonoIndex: []int{0, 1, 2, 3},
+		},
 	}
 
 	err := testutil.FundAccount(s.ctx, s.app.BankKeeper, s.address, sdk.NewCoins(sdk.NewInt64Coin("asetl", 10000000000)))
