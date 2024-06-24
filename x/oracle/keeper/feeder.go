@@ -286,6 +286,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 	logger.Debug("RewardBallotWinner", "rewards", rewards)
 
 	var distributedReward sdk.Coins
+	var probonoReward sdk.Coins
 
 	for addr, voter := range validatorClaimMap {
 		// skip if the validator abstained or missed the vote
@@ -311,6 +312,10 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 		}
 
 		if !rewardCoins.IsZero() {
+			if receiverVal.Probono {
+				probonoReward = probonoReward.Add(rewardCoins...)
+				continue
+			}
 			k.DistributionKeeper.AllocateTokensToValidator(ctx, receiverVal, sdk.NewDecCoinsFromCoins(rewardCoins...))
 			distributedReward = distributedReward.Add(rewardCoins...)
 		} else {
@@ -322,8 +327,12 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 		}
 	}
 
-	// Move distributed reward to distribution module
-	if err := k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionName, distributedReward); err != nil {
+	feePool := k.DistributionKeeper.GetFeePool(ctx)
+	feePool.CommunityPool = feePool.CommunityPool.Add(sdk.NewDecCoinsFromCoins(probonoReward...)...)
+	k.DistributionKeeper.SetFeePool(ctx, feePool)
+
+	// Move both distributed reward and probono reward to distribution module
+	if err := k.BankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.distributionName, distributedReward.Add(probonoReward...)); err != nil {
 		return fmt.Errorf("failed to move distributed reward to distribution module: %w", err)
 	}
 

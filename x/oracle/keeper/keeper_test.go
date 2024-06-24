@@ -18,6 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -49,9 +50,7 @@ type OracleTestSuite struct {
 	signer      keyring.Signer
 }
 
-var (
-	s *OracleTestSuite
-)
+var s *OracleTestSuite
 
 const (
 	DefaultBondAmount = 100000000000
@@ -445,6 +444,122 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 				s.Equal(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"), rewards.Rewards.AmountOf("asetl"))
 				s.app.DistrKeeper.DeleteValidatorCurrentRewards(s.ctx, validator.GetOperator())
 			}
+		})
+	}
+}
+
+func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
+	tests := []struct {
+		name         string
+		vcm          map[string]types.Claim
+		totalCoin    sdk.Coins
+		rewardMap    map[string]sdk.DecCoins
+		probonoIndex []int
+	}{
+		{
+			name: "Probono validators send rewards to community pool, normal validators get rewards as usual",
+			vcm: map[string]types.Claim{
+				s.validators[0].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[1].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[2].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[3].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+			},
+			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 4000000)),
+			rewardMap: map[string]sdk.DecCoins{
+				s.validators[0].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[1].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[2].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[3].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+			},
+			probonoIndex: []int{0, 1},
+		},
+		{
+			name: "All probono validator, there's no normal validator",
+			vcm: map[string]types.Claim{
+				s.validators[0].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[1].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[2].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+				s.validators[3].GetOperator().String(): {
+					Weight:  100,
+					Miss:    false,
+					Abstain: false,
+				},
+			},
+			totalCoin: sdk.NewCoins(sdk.NewInt64Coin("asetl", 4000000)),
+			rewardMap: map[string]sdk.DecCoins{
+				s.validators[0].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[1].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[2].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+				s.validators[3].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
+			},
+			probonoIndex: []int{0, 1, 2, 3},
+		},
+	}
+
+	err := testutil.FundAccount(s.ctx, s.app.BankKeeper, s.address, sdk.NewCoins(sdk.NewInt64Coin("asetl", 10000000000)))
+	s.NoError(err)
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			err = s.app.BankKeeper.SendCoinsFromAccountToModule(s.ctx, s.address, types.ModuleName, tt.totalCoin)
+			s.NoError(err)
+
+			s.app.DistrKeeper.SetFeePool(s.ctx, disttypes.InitialFeePool())
+			s.Equal(s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl"), sdk.ZeroDec())
+
+			for _, idx := range tt.probonoIndex {
+				s.validators[idx].Probono = true
+				s.validators[idx] = stakingkeeper.TestingUpdateValidator(s.app.StakingKeeper, s.ctx, s.validators[idx], true)
+			}
+
+			probonoRewards := sdk.ZeroDec()
+
+			err = s.app.OracleKeeper.RewardBallotWinners(s.ctx, tt.vcm)
+			s.NoError(err)
+
+			for _, validator := range s.validators {
+				if validator.Probono {
+					probonoRewards = probonoRewards.Add(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"))
+					validator.Probono = false
+					continue
+				}
+				rewards := s.app.DistrKeeper.GetValidatorCurrentRewards(s.ctx, validator.GetOperator())
+				s.Equal(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"), rewards.Rewards.AmountOf("asetl"))
+				s.app.DistrKeeper.DeleteValidatorCurrentRewards(s.ctx, validator.GetOperator())
+			}
+
+			// check community pool
+			actualCommunityAmount := s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl")
+			s.Equal(probonoRewards, actualCommunityAmount)
+			s.app.DistrKeeper.SetFeePool(s.ctx, disttypes.InitialFeePool())
 		})
 	}
 }
