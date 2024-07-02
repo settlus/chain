@@ -18,9 +18,10 @@ const BlockTimestampMargin = 15 * time.Second
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		paramstore paramtypes.Subspace
+		cdc          codec.BinaryCodec
+		storeKey     storetypes.StoreKey
+		transientKey storetypes.StoreKey
+		paramstore   paramtypes.Subspace
 
 		AccountKeeper      types.AccountKeeper
 		BankKeeper         types.BankKeeper
@@ -34,7 +35,7 @@ type (
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
+	storeKey, transientKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 
 	accountKeeper types.AccountKeeper,
@@ -56,9 +57,10 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		paramstore: ps,
+		cdc:          cdc,
+		storeKey:     storeKey,
+		transientKey: transientKey,
+		paramstore:   ps,
 
 		AccountKeeper:      accountKeeper,
 		BankKeeper:         bankKeeper,
@@ -75,6 +77,24 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
+	store := ctx.TransientStore(k.transientKey)
+	bz := store.Get(types.CurrentRoundBytesTransientKeyPrefix)
+	if len(bz) == 0 {
+		return nil
+	}
+
+	var roundInfo types.RoundInfo
+	k.cdc.MustUnmarshal(bz, &roundInfo)
+	return &roundInfo
+}
+
+func (k Keeper) SetCurrentRoundInfo(ctx sdk.Context, roundInfo *types.RoundInfo) {
+	store := ctx.TransientStore(k.transientKey)
+	bz := k.cdc.MustMarshal(roundInfo)
+	store.Set(types.CurrentRoundBytesTransientKeyPrefix, bz)
+}
+
+func (k Keeper) CalculateCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	params := k.GetParams(ctx)
 	blockHeight := ctx.BlockHeight()
 	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
