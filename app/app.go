@@ -326,7 +326,9 @@ func New(
 		settlementmoduletypes.StoreKey,
 		oraclemoduletypes.StoreKey,
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
+	tkeys := sdk.NewTransientStoreKeys(
+		paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, oraclemoduletypes.TransientKey,
+	)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	app := &App{
@@ -534,6 +536,7 @@ func New(
 	app.OracleKeeper = oraclemodulekeeper.NewKeeper(
 		appCodec,
 		keys[oraclemoduletypes.StoreKey],
+		tkeys[oraclemoduletypes.TransientKey],
 		app.GetSubspace(oraclemoduletypes.ModuleName),
 		app.AccountKeeper,
 		app.BankKeeper,
