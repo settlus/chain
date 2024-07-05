@@ -5,10 +5,12 @@ import (
 
 	"github.com/settlus/chain/x/oracle/keeper"
 	"github.com/settlus/chain/x/oracle/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func (suite *OracleTestSuite) TestMsgServer_Prevote() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
+	suite.app.BeginBlocker(suite.ctx, abci.RequestBeginBlock{})
 	hash := "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"
 	response, err := msgSvr.Prevote(s.ctx.WithBlockHeight(1), &types.MsgPrevote{
 		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
@@ -64,6 +66,7 @@ func (suite *OracleTestSuite) TestMsgServer_Vote() {
 		},
 	}
 
+	suite.app.BeginBlocker(suite.ctx, abci.RequestBeginBlock{})
 	suite.doPrevote(msgSvr, voteData, salt, 1)
 	_, err := msgSvr.Vote(s.ctx.WithBlockHeight(10), &types.MsgVote{
 		Feeder:    sdk.AccAddress(s.validators[0].GetOperator().Bytes()).String(),
