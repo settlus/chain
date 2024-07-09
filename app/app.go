@@ -780,6 +780,7 @@ func New(
 		SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 		MaxTxGasWanted:         cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted)),
 		SettlementKeeper:       app.SettlementKeeper,
+		OracleKeeper: 			app.OracleKeeper,
 		TxFeeChecker:           ethante.NewDynamicFeeChecker(app.EvmKeeper),
 	})
 

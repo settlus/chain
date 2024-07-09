@@ -10,8 +10,6 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
-
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
@@ -232,12 +230,12 @@ func (OracleSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 }
 
 type OracleValidatorCheckDecorator struct {
-	sk anteutils.StakingKeeper
+	ork OracleKeeper
 }
 
-func NewOracleValidatorCheckDecorator(stakingKeeper anteutils.StakingKeeper) OracleValidatorCheckDecorator {
+func NewOracleValidatorCheckDecorator(oracleKeeper OracleKeeper) OracleValidatorCheckDecorator {
 	return OracleValidatorCheckDecorator{
-		sk: stakingKeeper,
+		ork: oracleKeeper,
 	}
 }
 
@@ -246,16 +244,42 @@ func (ovcd OracleValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx,
 	if !ok {
 		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
 	}
+
 	feePayer := feeTx.FeePayer()
 
-	validator := ovcd.sk.Validator(ctx, sdk.ValAddress(feePayer))
-	if validator == nil {
-		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator for oracle transaction")
+	msgs := tx.GetMsgs() 
+	if(len(msgs) > 1) {
+		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Oracle tx should contain one msg per tx")
 	}
 
-	if !validator.IsBonded() {
-		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "This validator is not bonded")
+	valAddr, err := getValidatorFromOracleMsg(msgs[0])
+	if err != nil {
+		return ctx, err
+	}
+
+	ok, err = ovcd.ork.ValidateFeeder(ctx, feePayer.String(), valAddr.String())
+	if err != nil && !ok {
+		return ctx, err
 	}
 
 	return next(ctx, tx, simulate)
+}
+
+func getValidatorFromOracleMsg(msg sdk.Msg) (sdk.ValAddress, error) {
+	switch msg := msg.(type) {
+	case *oracletypes.MsgVote:
+		val, err := sdk.ValAddressFromBech32(msg.Validator)
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	case *oracletypes.MsgPrevote:
+		val, err := sdk.ValAddressFromBech32(msg.Validator)
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	default:
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid oracle msg type")
+	}
 }

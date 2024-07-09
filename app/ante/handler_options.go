@@ -33,6 +33,7 @@ type HandlerOptions struct {
 	EvmKeeper              evmante.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
 	SettlementKeeper       SettlementKeeper
+	OracleKeeper           OracleKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	SignModeHandler        authsigning.SignModeHandler
 	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
@@ -59,6 +60,10 @@ func (options HandlerOptions) Validate() error {
 
 	if options.SettlementKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "settlement keeper is required for AnteHandler")
+	}
+
+	if options.OracleKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "oracle keeper is required for AnteHandler")
 	}
 
 	if options.TxFeeChecker == nil {
@@ -140,7 +145,7 @@ func newOracleAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		cosmosante.RejectMessagesDecorator{}, // reject MsgEthereumTxs
 		NewOracleSetUpContextDecorator(),
-		NewOracleValidatorCheckDecorator(options.StakingKeeper),
+		NewOracleValidatorCheckDecorator(options.OracleKeeper),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
