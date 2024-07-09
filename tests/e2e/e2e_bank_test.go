@@ -9,7 +9,7 @@ import (
 func (s *IntegrationTestSuite) TestBankTokenTransfer() {
 	s.Run("send_setl_between_accounts", func() {
 		var err error
-		sender := "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
+		sender := treasuryAddr
 		recipient := "settlus10z74aw2m660tuezej4w5zr35zye6684t5ejjmk"
 
 		var (

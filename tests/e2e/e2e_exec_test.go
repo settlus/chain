@@ -46,7 +46,7 @@ func applyOptions(chainID string, options []flagOption) map[string]interface{} {
 		flagKeyringBackend: "test",
 		flagOutput:         "json",
 		flagGas:            "auto",
-		flagBroadcastMode:  "sync",
+		flagBroadcastMode:  "block",
 		flagGasAdjustment:  "1.5",
 		flagChainID:        chainID,
 		flagFees:           standardFees.String(),
@@ -125,7 +125,7 @@ func (s *IntegrationTestSuite) execCreateTenant(
 	opt ...flagOption,
 ) {
 	gas := settlementGas + createTenantGas
-	opt = append(opt, withKeyValue(flagFees, fmt.Sprintf("%duusdc", gas)))
+	opt = append(opt, withKeyValue(flagFees, fmt.Sprintf("%d%s", gas, uusdcDenom)))
 	opt = append(opt, withKeyValue(flagFrom, from))
 	opts := applyOptions(chainId, opt)
 	opts[flagGas] = gas
@@ -260,10 +260,10 @@ func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, sett
 
 	err := cmd.Run()
 
-	/*
+	if err != nil {
 		s.T().Log("CMD:", cmd.String())
 		s.T().Log("STDOUT:", out.String())
 		s.T().Log("STDERR:", stderr.String())
-	*/
+	}
 	s.Require().NoError(err)
 }
