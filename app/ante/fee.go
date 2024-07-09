@@ -10,6 +10,8 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
+	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
+
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 )
 
@@ -214,7 +216,8 @@ type OracleSetUpContextDecorator struct {
 }
 
 func NewOracleSetUpContextDecorator() OracleSetUpContextDecorator {
-	return OracleSetUpContextDecorator{}
+	return OracleSetUpContextDecorator{
+	}
 }
 
 func (OracleSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
@@ -226,4 +229,33 @@ func (OracleSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 	newCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasTx.GetGas())).WithKVGasConfig(storetypes.GasConfig{}).WithTransientKVGasConfig(storetypes.GasConfig{})
 
 	return next(newCtx, tx, simulate)
+}
+
+type OracleValidatorCheckDecorator struct {
+	sk anteutils.StakingKeeper
+}
+
+func NewOracleValidatorCheckDecorator(stakingKeeper anteutils.StakingKeeper) OracleValidatorCheckDecorator {
+	return OracleValidatorCheckDecorator{
+		sk: stakingKeeper,
+	}
+}
+
+func (ovcd OracleValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	}
+	feePayer := feeTx.FeePayer()
+
+	validator := ovcd.sk.Validator(ctx, sdk.ValAddress(feePayer))
+	if validator == nil {
+		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid validator for oracle transaction")
+	}
+
+	if !validator.IsBonded() {
+		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "This validator is not bonded")
+	}
+
+	return next(ctx, tx, simulate)
 }
