@@ -178,19 +178,6 @@ func (SettlementGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	return next(ctx, tx, simulate)
 }
 
-type OracleGasConsumeDecorator struct {
-}
-
-func NewOracleGasConsumeDecorator() OracleGasConsumeDecorator {
-	return OracleGasConsumeDecorator{}
-}
-
-func (OracleGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset the gas count")
-
-	return next(ctx, tx, simulate)
-}
-
 type SettlementSetUpContextDecorator struct {
 }
 

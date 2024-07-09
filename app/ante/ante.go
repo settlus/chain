@@ -94,11 +94,11 @@ func NewPostHandler(options HandlerOptions) sdk.AnteHandler {
 			)(ctx, tx, sim)
 		}
 
-		if isOracleTx(tx) {
-			return sdk.ChainAnteDecorators(
-				NewOracleGasConsumeDecorator(),
-			)(ctx, tx, sim)
-		}
+		// if isOracleTx(tx) {
+		// 	return sdk.ChainAnteDecorators(
+		// 		NewOracleGasConsumeDecorator(),
+		// 	)(ctx, tx, sim)
+		// }
 
 		return ctx, nil
 	}
