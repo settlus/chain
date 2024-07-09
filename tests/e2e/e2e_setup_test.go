@@ -27,8 +27,7 @@ type IntegrationTestSuite struct {
 	suite.Suite
 	ethClient       *ethclient.Client
 	internalNftAddr string
-	adminAddr       string
-	adminName       string
+	admin           string
 }
 
 func TestIntegrationTestSuite(t *testing.T) {

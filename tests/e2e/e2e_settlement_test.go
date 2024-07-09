@@ -26,12 +26,10 @@ const (
 func (s *IntegrationTestSuite) SetupSettlementTestSuite() {
 	s.T().Log("adding new key...")
 	admin := "admin" + strconv.Itoa(rand.Intn(10000000000))
-	addr := s.execKeyAdd(admin)
-	s.adminName = admin
-	s.adminAddr = addr
+	s.admin = s.execKeyAdd(admin)
 
 	initialAmount := fmt.Sprintf("%d%s,%d%s", 10000000000000, asetlDenom, 10000000000000, uusdcDenom)
-	s.execBankSend(treasuryAddr, s.adminAddr, initialAmount, standardFees.String())
+	s.execBankSend(treasuryAddr, s.admin, initialAmount, standardFees.String())
 
 	s.T().Log("connecting to Ethereum JSON-RPC...")
 	ethClient, err := ethclient.Dial(ethAPIEndpoint)
@@ -54,11 +52,11 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 	var tenantId uint64 = 0
 
 	pass := s.Run("create_new_tenant", func() {
-		period := 6
+		period := 8
 		beforeTenants, err := queryTenants(chainAPIEndpoint)
 		s.Require().NoError(err)
 
-		s.execCreateTenant(s.adminName, denom, strconv.FormatInt(int64(period), 10))
+		s.execCreateTenant(s.admin, denom, strconv.FormatInt(int64(period), 10))
 
 		afterTenants, err := queryTenants(chainAPIEndpoint)
 		s.Require().NoError(err)
@@ -75,7 +73,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 
 	pass = s.Run("record_internal_nft_revenue", func() {
 		requestId := NewReqId()
-		s.execRecord(s.adminName, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
+		s.execRecord(s.admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
 
 		utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
 		s.Require().NoError(err)
@@ -87,7 +85,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 
 	pass = s.Run("record_external_nft_revenue", func() {
 		requestId := NewReqId()
-		s.execRecord(s.adminName, tenantId, requestId, revenue.String(), extChainId, extNftAddress, extNftId)
+		s.execRecord(s.admin, tenantId, requestId, revenue.String(), extChainId, extNftAddress, extNftId)
 		utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
 		s.Require().NoError(err)
 		s.Require().Equal(revenue, utxr.Amount)
@@ -96,8 +94,8 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 				utxr, err = queryUtxr(chainAPIEndpoint, tenantId, requestId)
 				return err == nil && len(utxr.Recipients) > 0 && bytes.Equal(utxr.Recipients[0].Address.Bytes(), common.FromHex(extNftOwner))
 			},
-			2*time.Minute,
-			2*time.Second,
+			time.Minute,
+			time.Second,
 		)
 		s.Require().Equal(revenue, utxr.Amount)
 	})
@@ -109,12 +107,12 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 
 		firstDeposit := revenue.SubAmount(sdk.NewInt(1))
 		secondDeposit := sdk.NewCoin(denom, sdk.NewInt(1))
-		s.execDepositToTreasury(s.adminName, tenantId, firstDeposit.String())
+		s.execDepositToTreasury(s.admin, tenantId, firstDeposit.String())
 		tenant, err := queryTenant(chainAPIEndpoint, tenantId)
 		s.Require().NoError(err)
 		s.Require().Equal(tenant.Treasury.Balance.Amount.Int64(), firstDeposit.Amount.Int64())
 
-		s.execDepositToTreasury(s.adminName, tenantId, secondDeposit.String())
+		s.execDepositToTreasury(s.admin, tenantId, secondDeposit.String())
 		s.Require().Eventually(
 			func() bool {
 				tenant, err := queryTenant(chainAPIEndpoint, tenantId)
@@ -128,7 +126,7 @@ func (s *IntegrationTestSuite) TestNativeTenant() {
 			2*time.Second,
 		)
 
-		s.execDepositToTreasury(s.adminName, tenantId, revenue.String())
+		s.execDepositToTreasury(s.admin, tenantId, revenue.String())
 		s.Require().Eventually(
 			func() bool {
 				tenant, err := queryTenant(chainAPIEndpoint, tenantId)
@@ -153,11 +151,11 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 	var tenantId uint64 = 0
 
 	pass := s.Run("create_new_tenant", func() {
-		period := 6
+		period := 8
 		beforeTenants, err := queryTenants(chainAPIEndpoint)
 		s.Require().NoError(err)
 
-		s.execCreateMcTenant(s.adminName, denom, strconv.FormatInt(int64(period), 10))
+		s.execCreateMcTenant(s.admin, denom, strconv.FormatInt(int64(period), 10))
 		afterTenants, err := queryTenants(chainAPIEndpoint)
 		s.Require().NoError(err)
 		s.Require().Equal(len(beforeTenants)+1, len(afterTenants))
@@ -175,7 +173,7 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 
 	pass = s.Run("record_internal_nft_revenue", func() {
 		requestId := NewReqId()
-		s.execRecord(s.adminName, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
+		s.execRecord(s.admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
 
 		utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
 		s.Require().NoError(err)
@@ -198,8 +196,11 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 	s.Require().True(pass)
 
 	pass = s.Run("record_external_nft_revenue", func() {
+		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)
+		s.Require().NoError(err)
+
 		requestId := NewReqId()
-		s.execRecord(s.adminName, tenantId, requestId, revenue.String(), extChainId, extNftAddress, extNftId)
+		s.execRecord(s.admin, tenantId, requestId, revenue.String(), extChainId, extNftAddress, extNftId)
 		utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
 		s.Require().NoError(err)
 		s.Require().Equal(revenue, utxr.Amount)
@@ -208,12 +209,9 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 				utxr, err = queryUtxr(chainAPIEndpoint, tenantId, requestId)
 				return err == nil && len(utxr.Recipients) > 0 && bytes.Equal(utxr.Recipients[0].Address.Bytes(), common.FromHex(extNftOwner))
 			},
-			2*time.Minute,
-			2*time.Second,
+			time.Minute,
+			time.Second,
 		)
-
-		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)
-		s.Require().NoError(err)
 
 		s.Require().Eventually(
 			func() bool {
