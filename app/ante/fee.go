@@ -178,6 +178,19 @@ func (SettlementGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	return next(ctx, tx, simulate)
 }
 
+type OracleGasConsumeDecorator struct {
+}
+
+func NewOracleGasConsumeDecorator() OracleGasConsumeDecorator {
+	return OracleGasConsumeDecorator{}
+}
+
+func (OracleGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset the gas count")
+
+	return next(ctx, tx, simulate)
+}
+
 type SettlementSetUpContextDecorator struct {
 }
 
@@ -192,6 +205,24 @@ func (SettlementSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 	}
 
 	// To ignore gas costs from the KV Store
+	newCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasTx.GetGas())).WithKVGasConfig(storetypes.GasConfig{}).WithTransientKVGasConfig(storetypes.GasConfig{})
+
+	return next(newCtx, tx, simulate)
+}
+
+type OracleSetUpContextDecorator struct {
+}
+
+func NewOracleSetUpContextDecorator() OracleSetUpContextDecorator {
+	return OracleSetUpContextDecorator{}
+}
+
+func (OracleSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	gasTx, ok := tx.(authante.GasTx)
+	if !ok {
+		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "invalid transaction type %T, expected GasTx", tx)
+	}
+
 	newCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasTx.GetGas())).WithKVGasConfig(storetypes.GasConfig{}).WithTransientKVGasConfig(storetypes.GasConfig{})
 
 	return next(newCtx, tx, simulate)

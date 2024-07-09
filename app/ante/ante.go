@@ -23,6 +23,10 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 			return newSettlementAnteHandler(options)(ctx, tx, sim)
 		}
 
+		if isOracleTx(tx) {
+			return newOracleAnteHandler(options)(ctx, tx, sim)
+		}
+
 		if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
 			opts := txWithExtensions.GetExtensionOptions()
 			if len(opts) > 0 {
@@ -68,11 +72,31 @@ func isSettlementTx(tx sdk.Tx) bool {
 	return true
 }
 
+func isOracleTx(tx sdk.Tx) bool {
+	if len(tx.GetMsgs()) == 0 {
+		return false
+	}
+
+	for _, msg := range tx.GetMsgs() {
+		if !strings.HasPrefix(sdk.MsgTypeURL(msg), "/settlus.oracle") {
+			return false
+		}
+	}
+
+	return true
+}
+
 func NewPostHandler(options HandlerOptions) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, sim bool) (sdk.Context, error) {
 		if isSettlementTx(tx) {
 			return sdk.ChainAnteDecorators(
 				NewSettlementGasConsumeDecorator(),
+			)(ctx, tx, sim)
+		}
+
+		if isOracleTx(tx) {
+			return sdk.ChainAnteDecorators(
+				NewOracleGasConsumeDecorator(),
 			)(ctx, tx, sim)
 		}
 
