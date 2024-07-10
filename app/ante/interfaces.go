@@ -11,5 +11,5 @@ type SettlementKeeper interface {
 }
 
 type OracleKeeper interface {
-	ValidateFeeder(ctx sdk.Context, feederAddr string, validatorAddr string) (bool, error) 
+	ValidateFeeder(ctx sdk.Context, feederAddr string, validatorAddr string) (bool, error)
 }

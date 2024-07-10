@@ -164,8 +164,7 @@ func CalculateFees(ofp sdk.Dec, fees sdk.Coins) (gasFees, oracleFees sdk.Coins) 
 
 // SettlementGasConsumeDecorator is used as a post-handler for settlement tx,
 // designed to allocate a constant amount of gas regardless of the gas consumed during execution.
-type SettlementGasConsumeDecorator struct {
-}
+type SettlementGasConsumeDecorator struct{}
 
 func NewSettlementGasConsumeDecorator() SettlementGasConsumeDecorator {
 	return SettlementGasConsumeDecorator{}
@@ -178,8 +177,7 @@ func (SettlementGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	return next(ctx, tx, simulate)
 }
 
-type SettlementSetUpContextDecorator struct {
-}
+type SettlementSetUpContextDecorator struct{}
 
 func NewSettlementSetUpContextDecorator() SettlementSetUpContextDecorator {
 	return SettlementSetUpContextDecorator{}
@@ -197,12 +195,10 @@ func (SettlementSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 	return next(newCtx, tx, simulate)
 }
 
-type OracleSetUpContextDecorator struct {
-}
+type OracleSetUpContextDecorator struct{}
 
 func NewOracleSetUpContextDecorator() OracleSetUpContextDecorator {
-	return OracleSetUpContextDecorator{
-	}
+	return OracleSetUpContextDecorator{}
 }
 
 func (OracleSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
@@ -234,8 +230,8 @@ func (ovcd OracleValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx,
 
 	feePayer := feeTx.FeePayer()
 
-	msgs := tx.GetMsgs() 
-	if(len(msgs) > 1) {
+	msgs := tx.GetMsgs()
+	if len(msgs) > 1 {
 		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Oracle tx should contain one msg per tx")
 	}
 
