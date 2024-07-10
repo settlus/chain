@@ -123,33 +123,15 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	)
 }
 
-// newSettlementAnteHandler creates the default ante handler for Settlement transactions
-func newSettlementAnteHandler(options HandlerOptions) sdk.AnteHandler {
+func newSettlusAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		cosmosante.RejectMessagesDecorator{}, // reject MsgEthereumTxs
-		NewSettlementSetUpContextDecorator(),
+		NewSettlusSetUpContextDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.SettlementKeeper),
-		// SetPubKeyDecorator must be called before all signature verification decorators
-		ante.NewSetPubKeyDecorator(options.AccountKeeper),
-		ante.NewValidateSigCountDecorator(options.AccountKeeper),
-		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
-		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
-	)
-}
-
-// newOracleAnteHandler creates the default ante handler for oracle transactions
-func newOracleAnteHandler(options HandlerOptions) sdk.AnteHandler {
-	return sdk.ChainAnteDecorators(
-		cosmosante.RejectMessagesDecorator{}, // reject MsgEthereumTxs
-		NewOracleSetUpContextDecorator(),
-		NewOracleValidatorCheckDecorator(options.OracleKeeper),
-		ante.NewValidateBasicDecorator(),
-		ante.NewTxTimeoutHeightDecorator(),
-		ante.NewValidateMemoDecorator(options.AccountKeeper),
-		// SetPubKeyDecorator must be called before all signature verification decorators
+		NewSettlusValidatorCheckDecorator(options.OracleKeeper),
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),

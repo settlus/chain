@@ -19,12 +19,8 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	) (newCtx sdk.Context, err error) {
 		var anteHandler sdk.AnteHandler
 
-		if isSettlementTx(tx) {
-			return newSettlementAnteHandler(options)(ctx, tx, sim)
-		}
-
-		if isOracleTx(tx) {
-			return newOracleAnteHandler(options)(ctx, tx, sim)
+		if isSettlusTx(tx) {
+			return newSettlusAnteHandler(options)(ctx, tx, sim)
 		}
 
 		if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
@@ -86,6 +82,13 @@ func isOracleTx(tx sdk.Tx) bool {
 	return true
 }
 
+func isSettlusTx(tx sdk.Tx) bool {
+	if isOracleTx(tx) || isSettlementTx(tx) {
+		return true
+	}
+	return false
+}
+
 func NewPostHandler(options HandlerOptions) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, sim bool) (sdk.Context, error) {
 		if isSettlementTx(tx) {
@@ -93,12 +96,6 @@ func NewPostHandler(options HandlerOptions) sdk.AnteHandler {
 				NewSettlementGasConsumeDecorator(),
 			)(ctx, tx, sim)
 		}
-
-		// if isOracleTx(tx) {
-		// 	return sdk.ChainAnteDecorators(
-		// 		NewOracleGasConsumeDecorator(),
-		// 	)(ctx, tx, sim)
-		// }
 
 		return ctx, nil
 	}

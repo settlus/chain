@@ -38,6 +38,10 @@ func NewDeductFeeDecorator(ak authante.AccountKeeper, bk authtypes.BankKeeper, f
 }
 
 func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if isOracleTx(tx) {
+		return next(ctx, tx, simulate)
+	}
+
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
@@ -177,13 +181,13 @@ func (SettlementGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	return next(ctx, tx, simulate)
 }
 
-type SettlementSetUpContextDecorator struct{}
+type SettlusSetUpContextDecorator struct{}
 
-func NewSettlementSetUpContextDecorator() SettlementSetUpContextDecorator {
-	return SettlementSetUpContextDecorator{}
+func NewSettlusSetUpContextDecorator() SettlusSetUpContextDecorator {
+	return SettlusSetUpContextDecorator{}
 }
 
-func (SettlementSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (SettlusSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	gasTx, ok := tx.(authante.GasTx)
 	if !ok {
 		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "invalid transaction type %T, expected GasTx", tx)
@@ -195,34 +199,21 @@ func (SettlementSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 	return next(newCtx, tx, simulate)
 }
 
-type OracleSetUpContextDecorator struct{}
-
-func NewOracleSetUpContextDecorator() OracleSetUpContextDecorator {
-	return OracleSetUpContextDecorator{}
-}
-
-func (OracleSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	gasTx, ok := tx.(authante.GasTx)
-	if !ok {
-		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "invalid transaction type %T, expected GasTx", tx)
-	}
-
-	newCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasTx.GetGas())).WithKVGasConfig(storetypes.GasConfig{}).WithTransientKVGasConfig(storetypes.GasConfig{})
-
-	return next(newCtx, tx, simulate)
-}
-
-type OracleValidatorCheckDecorator struct {
+type SettlusValidatorCheckDecorator struct {
 	ork OracleKeeper
 }
 
-func NewOracleValidatorCheckDecorator(oracleKeeper OracleKeeper) OracleValidatorCheckDecorator {
-	return OracleValidatorCheckDecorator{
+func NewSettlusValidatorCheckDecorator(oracleKeeper OracleKeeper) SettlusValidatorCheckDecorator {
+	return SettlusValidatorCheckDecorator{
 		ork: oracleKeeper,
 	}
 }
 
-func (ovcd OracleValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (ovcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if isSettlementTx(tx) {
+		return next(ctx, tx, simulate)
+	}
+
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
