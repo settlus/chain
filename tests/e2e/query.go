@@ -48,7 +48,7 @@ func getEthBalance(endpoint, addr string) (uint64, error) {
 }
 
 func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error) {
-	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/tenants", endpoint))
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/v1alpha1/tenants", endpoint))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -62,7 +62,7 @@ func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error)
 }
 
 func queryTenant(endpoint string, tenantId uint64) (*settlementtypes.TenantWithTreasury, error) {
-	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/tenant/%d", endpoint, tenantId))
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/v1alpha1/tenant/%d", endpoint, tenantId))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
@@ -76,7 +76,7 @@ func queryTenant(endpoint string, tenantId uint64) (*settlementtypes.TenantWithT
 }
 
 func queryUtxr(endpoint string, tenantId uint64, requestId string) (*settlementtypes.UTXR, error) {
-	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/utxr/%d/%s", endpoint, tenantId, requestId))
+	body, err := httpGet(fmt.Sprintf("%s/settlus/settlement/v1alpha1/utxr/%d/%s", endpoint, tenantId, requestId))
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}

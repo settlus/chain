@@ -15,16 +15,19 @@ const (
 	keysCommand    = "keys"
 	setlDenom      = "setl"
 	asetlDenom     = "asetl"
+	uusdcDenom     = "uusdc"
 )
 
 var (
-	standardFees = sdk.NewCoin(asetlDenom, sdk.NewInt(330000))
+	standardFees = sdk.NewCoin(asetlDenom, sdk.NewInt(300000000000000))
+	treasuryAddr = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
 )
 
 type IntegrationTestSuite struct {
 	suite.Suite
 	ethClient       *ethclient.Client
 	internalNftAddr string
+	admin           string
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
