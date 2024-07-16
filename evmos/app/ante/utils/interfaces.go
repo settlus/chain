@@ -38,4 +38,5 @@ type DistributionKeeper interface {
 type StakingKeeper interface {
 	BondDenom(ctx sdk.Context) string
 	IterateDelegations(ctx sdk.Context, delegator sdk.AccAddress, fn func(index int64, delegation stakingtypes.DelegationI) (stop bool))
+	Validator(ctx sdk.Context, address sdk.ValAddress) stakingtypes.ValidatorI
 }

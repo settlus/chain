@@ -34,11 +34,6 @@ func (m msgServer) Prevote(goCtx context.Context, prevote *types.MsgPrevote) (*t
 		return nil, errorsmod.Wrapf(types.ErrPrevotesNotAccepted, "prevote period is over")
 	}
 
-	// validator and feeder addresses are validated in the ValidateBasic()
-	if v, err := m.ValidateFeeder(ctx, prevote.Feeder, prevote.Validator); err != nil && v {
-		return nil, err
-	}
-
 	aggregatePrevote := types.AggregatePrevote{
 		Hash:  prevote.Hash,
 		Voter: prevote.Validator,
@@ -70,11 +65,6 @@ func (m msgServer) Vote(goCtx context.Context, vote *types.MsgVote) (*types.MsgV
 
 	if !types.ValidateVoteData(vote.VoteData, m.SettlementKeeper.GetSupportedChainIds(ctx)) {
 		return nil, errorsmod.Wrapf(types.ErrInvalidVote, "invalid vote data")
-	}
-
-	// validator and feeder addresses are validated in the ValidateBasic()
-	if v, err := m.ValidateFeeder(ctx, vote.Feeder, vote.Validator); err != nil && v {
-		return nil, err
 	}
 
 	// Check if the prevote exists

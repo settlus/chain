@@ -19,8 +19,8 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	) (newCtx sdk.Context, err error) {
 		var anteHandler sdk.AnteHandler
 
-		if isSettlementTx(tx) {
-			return newSettlementAnteHandler(options)(ctx, tx, sim)
+		if isSettlusTx(tx) {
+			return newSettlusAnteHandler(options)(ctx, tx, sim)
 		}
 
 		if txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx); ok {
@@ -66,6 +66,27 @@ func isSettlementTx(tx sdk.Tx) bool {
 	}
 
 	return true
+}
+
+func isOracleTx(tx sdk.Tx) bool {
+	if len(tx.GetMsgs()) == 0 {
+		return false
+	}
+
+	for _, msg := range tx.GetMsgs() {
+		if !strings.HasPrefix(sdk.MsgTypeURL(msg), "/settlus.oracle") {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isSettlusTx(tx sdk.Tx) bool {
+	if isOracleTx(tx) || isSettlementTx(tx) {
+		return true
+	}
+	return false
 }
 
 func NewPostHandler(options HandlerOptions) sdk.AnteHandler {

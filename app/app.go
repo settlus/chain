@@ -783,6 +783,7 @@ func New(
 		SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 		MaxTxGasWanted:         cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted)),
 		SettlementKeeper:       app.SettlementKeeper,
+		OracleKeeper:           app.OracleKeeper,
 		TxFeeChecker:           ethante.NewDynamicFeeChecker(app.EvmKeeper),
 	})
 
@@ -888,7 +889,7 @@ func (app *App) BlockedAddrs() map[string]bool {
 
 	for _, acc := range accs {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
-		//blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc] 안씀
+		// blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc] 안씀
 	}
 
 	return blockedAddrs

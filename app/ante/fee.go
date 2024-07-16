@@ -38,6 +38,10 @@ func NewDeductFeeDecorator(ak authante.AccountKeeper, bk authtypes.BankKeeper, f
 }
 
 func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if isOracleTx(tx) {
+		return next(ctx, tx, simulate)
+	}
+
 	feeTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
@@ -164,8 +168,7 @@ func CalculateFees(ofp sdk.Dec, fees sdk.Coins) (gasFees, oracleFees sdk.Coins) 
 
 // SettlementGasConsumeDecorator is used as a post-handler for settlement tx,
 // designed to allocate a constant amount of gas regardless of the gas consumed during execution.
-type SettlementGasConsumeDecorator struct {
-}
+type SettlementGasConsumeDecorator struct{}
 
 func NewSettlementGasConsumeDecorator() SettlementGasConsumeDecorator {
 	return SettlementGasConsumeDecorator{}
@@ -178,14 +181,13 @@ func (SettlementGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	return next(ctx, tx, simulate)
 }
 
-type SettlementSetUpContextDecorator struct {
+type SettlusSetUpContextDecorator struct{}
+
+func NewSettlusSetUpContextDecorator() SettlusSetUpContextDecorator {
+	return SettlusSetUpContextDecorator{}
 }
 
-func NewSettlementSetUpContextDecorator() SettlementSetUpContextDecorator {
-	return SettlementSetUpContextDecorator{}
-}
-
-func (SettlementSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (SettlusSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	gasTx, ok := tx.(authante.GasTx)
 	if !ok {
 		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "invalid transaction type %T, expected GasTx", tx)
@@ -195,4 +197,63 @@ func (SettlementSetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, si
 	newCtx := ctx.WithGasMeter(sdk.NewGasMeter(gasTx.GetGas())).WithKVGasConfig(storetypes.GasConfig{}).WithTransientKVGasConfig(storetypes.GasConfig{})
 
 	return next(newCtx, tx, simulate)
+}
+
+type SettlusValidatorCheckDecorator struct {
+	ork OracleKeeper
+}
+
+func NewSettlusValidatorCheckDecorator(oracleKeeper OracleKeeper) SettlusValidatorCheckDecorator {
+	return SettlusValidatorCheckDecorator{
+		ork: oracleKeeper,
+	}
+}
+
+func (svcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if isSettlementTx(tx) {
+		return next(ctx, tx, simulate)
+	}
+
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	}
+
+	feePayer := feeTx.FeePayer()
+
+	msgs := tx.GetMsgs()
+	if len(msgs) > 1 {
+		return ctx, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Oracle tx should contain one msg per tx")
+	}
+
+	valAddr, err := getValidatorFromOracleMsg(msgs[0])
+	if err != nil {
+		return ctx, err
+	}
+
+	ok, err = svcd.ork.ValidateFeeder(ctx, feePayer.String(), valAddr.String())
+	if err != nil && !ok {
+		return ctx, err
+	}
+
+	return next(ctx, tx, simulate)
+}
+
+func getValidatorFromOracleMsg(msg sdk.Msg) (sdk.ValAddress, error) {
+	switch msg := msg.(type) {
+	case *oracletypes.MsgVote:
+		val, err := sdk.ValAddressFromBech32(msg.Validator)
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	case *oracletypes.MsgPrevote:
+		val, err := sdk.ValAddressFromBech32(msg.Validator)
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
+	default:
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid oracle msg type")
+	}
 }

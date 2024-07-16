@@ -33,6 +33,7 @@ type HandlerOptions struct {
 	EvmKeeper              evmante.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
 	SettlementKeeper       SettlementKeeper
+	OracleKeeper           OracleKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	SignModeHandler        authsigning.SignModeHandler
 	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
@@ -59,6 +60,10 @@ func (options HandlerOptions) Validate() error {
 
 	if options.SettlementKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "settlement keeper is required for AnteHandler")
+	}
+
+	if options.OracleKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "oracle keeper is required for AnteHandler")
 	}
 
 	if options.TxFeeChecker == nil {
@@ -118,16 +123,15 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	)
 }
 
-// newSettlementAnteHandler creates the default ante handler for Settlement transactions
-func newSettlementAnteHandler(options HandlerOptions) sdk.AnteHandler {
+func newSettlusAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		cosmosante.RejectMessagesDecorator{}, // reject MsgEthereumTxs
-		NewSettlementSetUpContextDecorator(),
+		NewSettlusSetUpContextDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.SettlementKeeper),
-		// SetPubKeyDecorator must be called before all signature verification decorators
+		NewSettlusValidatorCheckDecorator(options.OracleKeeper),
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
