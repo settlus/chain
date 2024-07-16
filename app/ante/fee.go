@@ -209,7 +209,7 @@ func NewSettlusValidatorCheckDecorator(oracleKeeper OracleKeeper) SettlusValidat
 	}
 }
 
-func (ovcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (svcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	if isSettlementTx(tx) {
 		return next(ctx, tx, simulate)
 	}
@@ -231,7 +231,7 @@ func (ovcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx
 		return ctx, err
 	}
 
-	ok, err = ovcd.ork.ValidateFeeder(ctx, feePayer.String(), valAddr.String())
+	ok, err = svcd.ork.ValidateFeeder(ctx, feePayer.String(), valAddr.String())
 	if err != nil && !ok {
 		return ctx, err
 	}
