@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,9 +49,7 @@ func (k SettlementKeeper) CreateUTXR(ctx sdk.Context, tenantId uint64, utxr *typ
 
 		accAddr := sdk.AccAddress(recipient.Address.Bytes())
 		if !k.ak.HasAccount(ctx, accAddr) {
-			fmt.Printf("addr: %s\n", k.ak.NewAccountWithAddress(ctx, accAddr))
 			k.ak.SetAccount(ctx, k.ak.NewAccountWithAddress(ctx, accAddr))
-
 		}
 	}
 

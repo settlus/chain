@@ -2,6 +2,8 @@ module github.com/settlus/chain
 
 go 1.22.2
 
+toolchain go1.22.5
+
 require (
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/errors v1.0.1

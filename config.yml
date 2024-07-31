@@ -109,6 +109,8 @@ validators:
       api:
         swagger: true
         max-open-connections: "100"
+      grpc:
+        enable: true
       evm-rpc:
         address: 0.0.0.0:8545
         ws-address: 0.0.0.0:8546
@@ -122,11 +124,11 @@ validators:
       p2p:
         seeds: ""
       consensus:
-        timeout_propose: "3s"
+        timeout_propose: "1s"
         timeout_propose_delta: "500ms"
         timeout_prevote: "1s"
         timeout_prevote_delta: "500ms"
         timeout_precommit: "1s"
         timeout_precommit_delta: "500ms"
-        timeout_commit: "5s"
+        timeout_commit: "2s"
     home: $HOME/.settlus

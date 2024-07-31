@@ -76,8 +76,6 @@ func MintNFT(
 ) error {
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 
-	fmt.Printf("constructorArgs %v\n", constructorArgs)
-
 	_, err := appSettlus.EvmKeeper.CallEVM(ctx, contract.ABI, from, contractAddress, true, "safeMint", constructorArgs...)
 	if err != nil {
 		return fmt.Errorf("call evm failed: %w", err)

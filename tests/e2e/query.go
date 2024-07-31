@@ -54,10 +54,12 @@ func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error)
 		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
 
-	fmt.Println(string(body))
 	var tenantsResp settlementtypes.QueryTenantsResponse
 	if err := cdc.UnmarshalJSON(body, &tenantsResp); err != nil {
 		return nil, err
+	}
+	if tenantsResp.Tenants == nil {
+		return nil, fmt.Errorf("tenant array is nil: %v", tenantsResp.Tenants)
 	}
 
 	return tenantsResp.Tenants, nil

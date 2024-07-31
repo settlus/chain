@@ -146,7 +146,6 @@ func (s *IntegrationTestSuite) execCreateTenant(
 	}
 
 	s.executeSettlusTxCommand(ctx, settlusCmd)
-	time.Sleep(5 * time.Second)
 }
 
 func (s *IntegrationTestSuite) execCreateMcTenant(
@@ -178,7 +177,6 @@ func (s *IntegrationTestSuite) execCreateMcTenant(
 	}
 
 	s.executeSettlusTxCommand(ctx, settlusCmd)
-	time.Sleep(5 * time.Second)
 }
 
 func (s *IntegrationTestSuite) execRecord(
@@ -218,8 +216,8 @@ func (s *IntegrationTestSuite) execRecord(
 		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
+	fmt.Println(settlusCmd)
 	s.executeSettlusTxCommand(ctx, settlusCmd)
-	time.Sleep(5 * time.Second)
 }
 
 func (s *IntegrationTestSuite) execDepositToTreasury(
@@ -268,5 +266,4 @@ func (s *IntegrationTestSuite) executeSettlusTxCommand(ctx context.Context, sett
 		s.T().Log("STDERR:", stderr.String())
 	}
 	s.Require().NoError(err)
-	time.Sleep(3 * time.Second)
 }
