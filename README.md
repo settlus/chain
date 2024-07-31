@@ -6,7 +6,7 @@
 ### Install necessary dependencies
 ```shell
 # install ignite CLI
-# Check https://github.com/ignite/cli/releases/tag/v0.26.1 to find appropriate asset version for your OS
+# Check https://github.com/ignite/cli/releases/tag/v0.27.2 to find appropriate asset version for your OS
 curl -L -o ignite.tar.gz https://github.com/ignite/cli/releases/download/v0.27.2/ignite_0.27.2_darwin_amd64.tar.gz
 tar -xzvf ignite.tar.gz
 sudo mv ignite /usr/local/bin
@@ -59,4 +59,4 @@ make localnet-stop
 ```
 
 ## License
-This project is licensed under the [LGPL-3.0 license](LICENSE). Specifically, the contents within the **evmos** folder are dervied from remarkable work originally pioneered by the [Evmos Foundation](https://evmos.org/), also under the LGPL-3.0 license. We have utilized code from [Evmos v12](https://github.com/evmos/evmos/commits/release/v12.x.x/) (**`b43ee16`**) and have made several modifications. All changes are documented [here](/evmos/CHANGES.diff), as well as in the commit logs of this repository.
+This project is licensed under the [LGPL-3.0 license](LICENSE).
