@@ -4,14 +4,15 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/evmos/evmos/v19/encoding"
 
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/evmos/encoding"
 	"github.com/settlus/chain/testutil/tx"
 )
 
@@ -21,7 +22,7 @@ import (
 //  2. DeliverTx
 //  3. EndBlock
 //  4. Commit
-func Commit(ctx sdk.Context, app *app.App, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
+func Commit(ctx sdk.Context, app *app.SettlusApp, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
 	header := ctx.BlockHeader()
 
 	if vs != nil {
@@ -54,7 +55,7 @@ func Commit(ctx sdk.Context, app *app.App, t time.Duration, vs *tmtypes.Validato
 // If a private key is provided, it will attempt to sign all messages with the given private key,
 // otherwise, it will assume the messages have already been signed.
 func DeliverEthTx(
-	appSettlus *app.App,
+	appSettlus *app.SettlusApp,
 	priv cryptotypes.PrivKey,
 	msgs ...sdk.Msg,
 ) (abci.ResponseDeliverTx, error) {
@@ -68,7 +69,7 @@ func DeliverEthTx(
 }
 
 // BroadcastTxBytes encodes a transaction and calls DeliverTx on the app.
-func BroadcastTxBytes(app *app.App, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseDeliverTx, error) {
+func BroadcastTxBytes(app *app.SettlusApp, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseDeliverTx, error) {
 	// bz are bytes to be broadcasted over the network
 	bz, err := txEncoder(tx)
 	if err != nil {

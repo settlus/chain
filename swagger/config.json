@@ -7,14 +7,6 @@
   },
   "apis": [
     {
-      "url": "./tmp-swagger-gen/settlus/nftownership/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "NFTOwnershipParams"
-        }
-      }
-    },
-    {
       "url": "./tmp-swagger-gen/settlus/oracle/v1alpha1/query.swagger.json",
       "operationIds": {
           "rename": {
@@ -23,7 +15,7 @@
         }
     },
     {
-      "url": "./tmp-swagger-gen/settlus/settlement/query.swagger.json",
+      "url": "./tmp-swagger-gen/settlus/settlement/v1alpha1/query.swagger.json",
       "operationIds": {
           "rename": {
           "Params": "SettlementParams"
@@ -31,29 +23,31 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/evmos/erc20/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/ibc/applications/transfer/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "ERC20Params"
+          "Params": "TransferParams"
         }
       }
     },
     {
-      "url": "./tmp-swagger-gen/ethermint/evm/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/ibc/core/client/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "EvmParams"
+          "Params": "ClientParams"
         }
       }
     },
     {
-      "url": "./tmp-swagger-gen/ethermint/feemarket/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/ibc/core/connection/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "FeeMarketParams",
-          "BaseFee": "FeeMarketBaseFee"
+          "Params": "ConnectionParams"
         }
       }
+    },
+    {
+      "url": "./tmp-swagger-gen/ibc/core/channel/v1/query.swagger.json"
     },
     {
       "url": "./tmp-swagger-gen/cosmos/auth/v1beta1/query.swagger.json",

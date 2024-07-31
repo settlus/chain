@@ -7,7 +7,7 @@
 ```shell
 # install ignite CLI
 # Check https://github.com/ignite/cli/releases/tag/v0.26.1 to find appropriate asset version for your OS
-curl -L -o ignite.tar.gz https://github.com/ignite/cli/releases/download/v0.26.1/ignite_0.26.1_darwin_amd64.tar.gz
+curl -L -o ignite.tar.gz https://github.com/ignite/cli/releases/download/v0.27.2/ignite_0.27.2_darwin_amd64.tar.gz
 tar -xzvf ignite.tar.gz
 sudo mv ignite /usr/local/bin
 rm -rf ignite.tar.gz

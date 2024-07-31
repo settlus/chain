@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
 
 	"github.com/settlus/chain/x/oracle/types"
 )

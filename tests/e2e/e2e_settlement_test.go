@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/settlus/chain/x/settlement/types"
 )
 
@@ -28,6 +29,7 @@ func (s *IntegrationTestSuite) SetupSettlementTestSuite() {
 	admin := "admin" + strconv.Itoa(rand.Intn(10000000000))
 	s.admin = s.execKeyAdd(admin)
 
+	s.T().Log("creating new account and transferring initial fund...")
 	initialAmount := fmt.Sprintf("%d%s,%d%s", 10000000000000, asetlDenom, 10000000000000, uusdcDenom)
 	s.execBankSend(treasuryAddr, s.admin, initialAmount, standardFees.String())
 
@@ -36,12 +38,13 @@ func (s *IntegrationTestSuite) SetupSettlementTestSuite() {
 	s.Require().NoError(err)
 	s.ethClient = ethClient
 
-	s.T().Log("mint NFT for settlement Test")
-	contractAddr, err := mintNFTContract(ethClient)
+	s.T().Log("deploying NFT contract...")
+	contractAddr, err := deployNFTContract(ethClient)
 	s.Require().NoError(err)
 	s.internalNftAddr = contractAddr
 	s.T().Log("NFT:", contractAddr)
 
+	s.T().Log("minting NFT...")
 	err = mintNFT(ethClient, contractAddr, internalNftOwner)
 	s.Require().NoError(err)
 }
@@ -158,6 +161,7 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 		s.execCreateMcTenant(s.admin, denom, strconv.FormatInt(int64(period), 10))
 		afterTenants, err := queryTenants(chainAPIEndpoint)
 		s.Require().NoError(err)
+
 		s.Require().Equal(len(beforeTenants)+1, len(afterTenants))
 
 		newTenant := afterTenants[len(afterTenants)-1]

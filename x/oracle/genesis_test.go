@@ -4,17 +4,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
 
-	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+	feemarkettypes "github.com/evmos/evmos/v19/x/feemarket/types"
 
 	"github.com/settlus/chain/app"
 	utiltx "github.com/settlus/chain/testutil/tx"
+	"github.com/settlus/chain/utils"
 	"github.com/settlus/chain/x/oracle"
 	"github.com/settlus/chain/x/oracle/types"
 )
@@ -22,7 +23,7 @@ import (
 type GenesisTestSuite struct {
 	suite.Suite
 	ctx     sdk.Context
-	app     *app.App
+	app     *app.SettlusApp
 	genesis types.GenesisState
 }
 
@@ -35,7 +36,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 	consAddress := sdk.ConsAddress(utiltx.GenerateAddress().Bytes())
 	checkTx := false
 
-	suite.app = app.Setup(checkTx, feemarkettypes.DefaultGenesisState())
+	suite.app = app.Setup(checkTx, feemarkettypes.DefaultGenesisState(), utils.MainnetChainID)
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:          1,
 		ChainID:         "settlus_5371-1",

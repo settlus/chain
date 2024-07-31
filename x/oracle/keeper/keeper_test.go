@@ -25,12 +25,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
 
 	"github.com/settlus/chain/app"
 	"github.com/settlus/chain/cmd/settlusd/config"
 	"github.com/settlus/chain/testutil"
 	utiltx "github.com/settlus/chain/testutil/tx"
+	"github.com/settlus/chain/utils"
 	"github.com/settlus/chain/x/oracle"
 	"github.com/settlus/chain/x/oracle/types"
 )
@@ -39,7 +40,7 @@ type OracleTestSuite struct {
 	suite.Suite
 
 	ctx         sdk.Context
-	app         *app.App
+	app         *app.SettlusApp
 	queryClient types.QueryClient
 
 	address     sdk.AccAddress
@@ -51,10 +52,6 @@ type OracleTestSuite struct {
 }
 
 var s *OracleTestSuite
-
-const (
-	DefaultBondAmount = 100000000000
-)
 
 func TestKeeperTestSuite(t *testing.T) {
 	s = new(OracleTestSuite)
@@ -86,7 +83,7 @@ func (suite *OracleTestSuite) DoSetupTest(t *testing.T) {
 	checkTx := false
 
 	// init app
-	suite.app = app.Setup(checkTx, nil)
+	suite.app = app.Setup(checkTx, nil, utils.MainnetChainID)
 
 	// setup context
 	header := testutil.NewHeader(
@@ -102,7 +99,9 @@ func (suite *OracleTestSuite) DoSetupTest(t *testing.T) {
 	// bond denom
 	stakingParams := suite.app.StakingKeeper.GetParams(suite.ctx)
 	stakingParams.BondDenom = config.BaseDenom
-	suite.app.StakingKeeper.SetParams(suite.ctx, stakingParams)
+	if err = suite.app.StakingKeeper.SetParams(suite.ctx, stakingParams); err != nil {
+		return
+	}
 
 	oracleAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Minter)
 	suite.app.AccountKeeper.SetModuleAccount(suite.ctx, oracleAcc)
@@ -117,21 +116,14 @@ func (suite *OracleTestSuite) DoSetupTest(t *testing.T) {
 	)
 	suite.Require().NoError(err)
 
-	// create four validators
-	stakingMsgSvr := stakingkeeper.NewMsgServerImpl(suite.app.StakingKeeper)
-	bondedAmount := sdkmath.NewInt(DefaultBondAmount)
-	for range [4]int{} {
-		_, err = stakingMsgSvr.CreateValidator(suite.ctx, s.NewValidator(bondedAmount))
-		suite.Require().NoError(err)
-	}
-
 	staking.EndBlocker(suite.ctx, suite.app.StakingKeeper)
 	oracle.EndBlocker(suite.ctx, *suite.app.OracleKeeper)
 
-	validators := s.app.StakingKeeper.GetValidators(s.ctx, 5)
+	validators := s.app.StakingKeeper.GetValidators(s.ctx, 99)
 	var bondedValidators []stakingtypes.Validator
 	for i, validator := range validators {
-		if len(bondedValidators) > 3 {
+		// four validators are enough for test
+		if len(bondedValidators) > 4 {
 			break
 		}
 
@@ -139,13 +131,8 @@ func (suite *OracleTestSuite) DoSetupTest(t *testing.T) {
 			panic("validator " + fmt.Sprintf("%d", i) + " is not bonded")
 		}
 
-		if !validator.GetBondedTokens().Equal(bondedAmount) {
-			// skip if bonded amount is not equal to the amount we set
-			continue
-		}
-
 		validator = stakingkeeper.TestingUpdateValidator(suite.app.StakingKeeper, suite.ctx, validator, true)
-		err = suite.app.StakingKeeper.AfterValidatorCreated(suite.ctx, validator.GetOperator())
+		err = suite.app.StakingKeeper.Hooks().AfterValidatorCreated(suite.ctx, validator.GetOperator())
 		require.NoError(t, err)
 		err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
 		require.NoError(t, err)
@@ -168,9 +155,9 @@ func (suite *OracleTestSuite) NewValidator(amt sdkmath.Int) *stakingtypes.MsgCre
 		sdk.NewCoin(config.BaseDenom, amt),
 		stakingtypes.NewDescription("moniker", "indentity", "website", "security_contract", "details"),
 		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-		sdk.OneInt(),
-		sdk.ZeroInt(),
-		false,
+		sdkmath.OneInt(),
+		sdkmath.ZeroInt(),
+		sdk.ZeroDec(),
 	)
 	suite.Require().NoError(err)
 	return msgCreate
@@ -620,7 +607,7 @@ func (suite *OracleTestSuite) TestKeeper_ClearBallots() {
 }
 
 func (suite *OracleTestSuite) TestKeeper_SlashValidatorsAndResetMissCount() {
-	amt := sdk.TokensFromConsensusPower(DefaultBondAmount, sdk.NewInt(1))
+	amt := sdk.DefaultPowerReduction
 
 	tests := []struct {
 		name                 string

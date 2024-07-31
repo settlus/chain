@@ -1,14 +1,15 @@
 package keeper
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/settlus/chain/x/settlement/types"
+	"fmt"
 
 	sdkerrors "cosmossdk.io/errors"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+
 	ctypes "github.com/settlus/chain/types"
+	"github.com/settlus/chain/x/settlement/types"
 )
 
 // GetUTXRStore returns the UTXR store for the given tenantId
@@ -50,7 +51,9 @@ func (k SettlementKeeper) CreateUTXR(ctx sdk.Context, tenantId uint64, utxr *typ
 
 		accAddr := sdk.AccAddress(recipient.Address.Bytes())
 		if !k.ak.HasAccount(ctx, accAddr) {
+			fmt.Printf("addr: %s\n", k.ak.NewAccountWithAddress(ctx, accAddr))
 			k.ak.SetAccount(ctx, k.ak.NewAccountWithAddress(ctx, accAddr))
+
 		}
 	}
 

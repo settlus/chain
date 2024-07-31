@@ -39,7 +39,6 @@ genesis:
     erc20:
       params:
         enable_erc20: true
-        enable_evm_hook: true
     feemarket:
       block_gas: 1000000000000
       params:
@@ -114,9 +113,9 @@ validators:
         address: 0.0.0.0:8545
         ws-address: 0.0.0.0:8546
       json-rpc:
-        enabled: true
+        enable: true
         api: "eth,net,web3,txpool,debug,personal"
-      minimum-gas-prices: 1
+      minimum-gas-prices: 1setl
     config:
       fees: 210000000000000asetl
       moniker: treasury-node

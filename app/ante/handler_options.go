@@ -10,14 +10,14 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	cosmosante "github.com/settlus/chain/evmos/app/ante/cosmos"
-	evmante "github.com/settlus/chain/evmos/app/ante/evm"
-	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	cosmosante "github.com/evmos/evmos/v19/app/ante/cosmos"
+	evmante "github.com/evmos/evmos/v19/app/ante/evm"
+	anteutils "github.com/evmos/evmos/v19/app/ante/utils"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	ibcante "github.com/cosmos/ibc-go/v6/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 )
 
 // HandlerOptions defines the list of module keepers required to run the Settlus
@@ -33,11 +33,12 @@ type HandlerOptions struct {
 	EvmKeeper              evmante.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
 	SettlementKeeper       SettlementKeeper
+	OracleKeeper           OracleKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	SignModeHandler        authsigning.SignModeHandler
 	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
-	TxFeeChecker           anteutils.TxFeeChecker
+	TxFeeChecker           ante.TxFeeChecker
 }
 
 func (options HandlerOptions) Validate() error {
@@ -61,6 +62,10 @@ func (options HandlerOptions) Validate() error {
 		return errorsmod.Wrap(errortypes.ErrLogic, "settlement keeper is required for AnteHandler")
 	}
 
+	if options.OracleKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "oracle keeper is required for AnteHandler")
+	}
+
 	if options.TxFeeChecker == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "tx fee checker is required for AnteHandler")
 	}
@@ -68,25 +73,18 @@ func (options HandlerOptions) Validate() error {
 	return nil
 }
 
-// newEVMAnteHandler creates the default ante handler for Ethereum transactions
-func newEVMAnteHandler(options HandlerOptions) sdk.AnteHandler {
+// newMonoEVMAnteHandler creates the default ante handler for Ethereum transactions
+func newMonoEVMAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		RejectMessagesDecorator{},
-		// outermost AnteDecorator. SetUpContext must be called first
-		evmante.NewEthSetUpContextDecorator(options.EvmKeeper),
-		// Check eth effective gas price against the node's minimal-gas-prices config
-		evmante.NewEthMempoolFeeDecorator(options.EvmKeeper),
-		// Check eth effective gas price against the global MinGasPrice
-		evmante.NewEthMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper),
-		evmante.NewEthValidateBasicDecorator(options.EvmKeeper),
-		evmante.NewEthSigVerificationDecorator(options.EvmKeeper),
-		evmante.NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper),
-		evmante.NewCanTransferDecorator(options.EvmKeeper),
-		evmante.NewEthGasConsumeDecorator(options.BankKeeper, options.DistributionKeeper, options.EvmKeeper, options.StakingKeeper, options.MaxTxGasWanted),
-		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper),
-		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
-		// emit eth tx hash and index at the very last ante handler.
-		evmante.NewEthEmitEventDecorator(options.EvmKeeper),
+		evmante.NewMonoDecorator(
+			options.AccountKeeper,
+			options.BankKeeper,
+			options.FeeMarketKeeper,
+			options.EvmKeeper,
+			options.DistributionKeeper,
+			options.StakingKeeper,
+			options.MaxTxGasWanted,
+		),
 	)
 }
 
@@ -118,16 +116,15 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	)
 }
 
-// newSettlementAnteHandler creates the default ante handler for Settlement transactions
-func newSettlementAnteHandler(options HandlerOptions) sdk.AnteHandler {
+func newSettlusAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
 		cosmosante.RejectMessagesDecorator{}, // reject MsgEthereumTxs
-		NewSettlementSetUpContextDecorator(),
+		NewSettlusSetUpContextDecorator(),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.SettlementKeeper),
-		// SetPubKeyDecorator must be called before all signature verification decorators
+		NewSettlusValidatorCheckDecorator(options.OracleKeeper),
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),

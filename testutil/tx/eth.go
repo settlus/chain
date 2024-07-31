@@ -15,17 +15,18 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	evmosserverconfig "github.com/evmos/evmos/v19/server/config"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
+
 	"github.com/settlus/chain/app"
 	"github.com/settlus/chain/cmd/settlusd/config"
-	evmosserverconfig "github.com/settlus/chain/evmos/server/config"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 )
 
 // PrepareEthTx creates an ethereum tx and signs it with the provided messages and private key.
 // It returns the signed transaction and an error
 func PrepareEthTx(
 	txCfg client.TxConfig,
-	appSettlus *app.App,
+	appSettlus *app.SettlusApp,
 	priv cryptotypes.PrivKey,
 	msgs ...sdk.Msg,
 ) (authsigning.Tx, error) {

@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/tendermint/tendermint/libs/cli/flags"
+	"github.com/cometbft/cometbft/libs/cli/flags"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/server"
 )

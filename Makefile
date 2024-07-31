@@ -99,9 +99,13 @@ lint:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=v0.7
-protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
+protoVer=0.11.6
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(protoImageName)
+
+protoLintVer=0.44.0
+protoLinterImage=yoheimuta/protolint
+protoLinter=$(DOCKER) run --rm -v "$(CURDIR):/workspace" --workdir /workspace --user 0 $(protoLinterImage):$(protoLintVer)
 
 SWAGGER_DIR=./swagger-proto
 THIRD_PARTY_DIR=$(SWAGGER_DIR)/third_party
@@ -118,18 +122,19 @@ proto-gen:
 	@$(protoImage) sh ./scripts/protocgen.sh
 
 proto-format:
-	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
+	@echo "Formatting Protobuf files"
+	$(protoImage) find ./ -name *.proto -exec clang-format -i {} \;
 
 proto-lint:
+	@echo "Linting Protobuf files"
 	@$(protoImage) buf lint --error-format=json
+	@$(protoLinter) lint ./proto
 
 proto-swagger-gen:
 	@echo "Downloading Protobuf dependencies"
-	@go get github.com/cosmos/gogoproto
 	@make proto-download-deps
 	@echo "Generating Protobuf Swagger"
 	$(protoImage) sh ./scripts/protoc-swagger-gen.sh
-	@go mod tidy
 
 proto-download-deps:
 	mkdir -p "$(THIRD_PARTY_DIR)/cosmos_tmp" && \
@@ -142,6 +147,17 @@ proto-download-deps:
 	rm -f ./proto/buf.* && \
 	mv ./proto/* ..
 	rm -rf "$(THIRD_PARTY_DIR)/cosmos_tmp"
+
+	mkdir -p "$(THIRD_PARTY_DIR)/ibc_tmp" && \
+	cd "$(THIRD_PARTY_DIR)/ibc_tmp" && \
+	git init && \
+	git remote add origin "https://github.com/cosmos/ibc-go.git" && \
+	git config core.sparseCheckout true && \
+	printf "proto\n" > .git/info/sparse-checkout && \
+	git pull origin "$(DEPS_IBC_GO_VERSION)" && \
+	rm -f ./proto/buf.* && \
+	mv ./proto/* ..
+	rm -rf "$(THIRD_PARTY_DIR)/ibc_tmp"
 
 	mkdir -p "$(THIRD_PARTY_DIR)/cosmos_proto_tmp" && \
 	cd "$(THIRD_PARTY_DIR)/cosmos_proto_tmp" && \
@@ -160,6 +176,9 @@ proto-download-deps:
 	mkdir -p "$(THIRD_PARTY_DIR)/google/api" && \
 	curl -sSL https://raw.githubusercontent.com/googleapis/googleapis/master/google/api/annotations.proto > "$(THIRD_PARTY_DIR)/google/api/annotations.proto"
 	curl -sSL https://raw.githubusercontent.com/googleapis/googleapis/master/google/api/http.proto > "$(THIRD_PARTY_DIR)/google/api/http.proto"
+
+	mkdir -p "$(THIRD_PARTY_DIR)/cosmos/ics23/v1" && \
+	curl -sSL "https://raw.githubusercontent.com/cosmos/ics23/$(DEPS_COSMOS_ICS23)/proto/cosmos/ics23/v1/proofs.proto" > "$(THIRD_PARTY_DIR)/cosmos/ics23/v1/proofs.proto"
 
 proto-clean:
 	rm -rf $(SWAGGER_DIR) tmp-swagger-gen

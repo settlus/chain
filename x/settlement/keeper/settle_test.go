@@ -2,19 +2,16 @@ package keeper_test
 
 import (
 	"fmt"
-	"math/big"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
 	"github.com/settlus/chain/x/settlement/types"
 )
 
-func (suite *SettlementTestSuite) TestSettle_Settle() {
+func (suite *SettlementTestSuite) TestSettle_Settle_Native() {
 	_, err := suite.msgServer.DepositToTreasury(suite.ctx, &types.MsgDepositToTreasury{
 		TenantId: 1,
 		Amount:   sdk.NewCoin("uusdc", math.NewInt(1000)),
@@ -44,8 +41,8 @@ func (suite *SettlementTestSuite) TestSettle_Settle() {
 	utxr = suite.keeper.GetUTXRByRequestId(suite.ctx.WithBlockHeight(12), 1, requestId)
 	suite.Nil(utxr)
 
-	balance := s.app.Erc20Keeper.BalanceOf(suite.ctx, contracts.ERC20Contract.ABI, suite.erc20Address, common.BytesToAddress(recipient.Bytes()))
-	suite.EqualValues(big.NewInt(10), balance)
+	balance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, "uusdc")
+	suite.EqualValues(10, balance.Amount.Int64())
 }
 
 func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance() {
@@ -56,6 +53,7 @@ func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance(
 		Sender:   suite.appAdmin.String(),
 	})
 	suite.NoError(err)
+	s.Commit()
 
 	recipient := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
@@ -88,8 +86,8 @@ func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance(
 	suite.EqualValues(0, len(coins))
 
 	// recipient balance should be 50
-	balance := s.app.Erc20Keeper.BalanceOf(suite.ctx, contracts.ERC20Contract.ABI, suite.erc20Address, common.BytesToAddress(recipient.Bytes()))
-	suite.EqualValues(big.NewInt(50), balance)
+	balance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, "uusdc")
+	suite.EqualValues(50, balance.Amount.Int64())
 }
 
 func (suite *SettlementTestSuite) TestSettle_Settle_TopUpTreasuryBalance() {
@@ -124,12 +122,13 @@ func (suite *SettlementTestSuite) TestSettle_Settle_TopUpTreasuryBalance() {
 		Amount:   sdk.NewCoin("uusdc", math.NewInt(50)),
 	})
 	suite.NoError(err)
+	suite.Commit()
 
 	suite.keeper.Settle(suite.ctx.WithBlockHeight(100), 1)
 
 	utxr = suite.keeper.GetUTXRByRequestId(suite.ctx, 1, "request-1")
 	suite.Nil(utxr)
 
-	balance := s.app.Erc20Keeper.BalanceOf(suite.ctx, contracts.ERC20Contract.ABI, suite.erc20Address, common.BytesToAddress(recipient.Bytes()))
-	suite.EqualValues(big.NewInt(100), balance)
+	balance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, "uusdc")
+	suite.EqualValues(100, balance.Amount.Int64())
 }

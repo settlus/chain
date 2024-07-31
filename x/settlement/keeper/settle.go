@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/settlus/chain/contracts"
-	erc20types "github.com/settlus/chain/evmos/x/erc20/types"
 	"github.com/settlus/chain/x/settlement/types"
 )
 
@@ -117,7 +116,12 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 		switch payoutMethod := tenant.PayoutMethod; {
 		case payoutMethod == types.PayoutMethod_Native:
 			if k.erc20k.IsDenomRegistered(ctx, amount.Denom) {
-				_, err = k.erc20k.ConvertCoin(ctx, erc20types.NewMsgConvertCoin(amount, common.BytesToAddress(recipientCosmosAddr), treasuryAddr))
+				// convert from erc20 to Coin
+				// TODO
+				//pair := erc20types.NewTokenPair()
+				//_, err = k.erc20k.ConvertCoinNativeERC20(
+				//	ctx, erc20types.MsgConvertERC20(amount)
+				//)
 			} else {
 				err = k.bk.SendCoins(ctx, treasuryAddr, recipientCosmosAddr, sdk.NewCoins(amount))
 			}

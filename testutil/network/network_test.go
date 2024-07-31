@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/settlus/chain/evmos/server/config"
+	"github.com/evmos/evmos/v19/server/config"
 	"github.com/settlus/chain/testutil/network"
 
 	evmosnetwork "github.com/settlus/chain/testutil/network"

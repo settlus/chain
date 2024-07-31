@@ -1,16 +1,15 @@
 package types
 
 import (
-	"context"
-
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	erc20types "github.com/settlus/chain/evmos/x/erc20/types"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -32,7 +31,7 @@ type BankKeeper interface {
 }
 
 type Erc20Keeper interface {
-	ConvertCoin(goCtx context.Context, msg *erc20types.MsgConvertCoin) (*erc20types.MsgConvertCoinResponse, error)
+	ConvertCoinNativeERC20(ctx sdk.Context, pari erc20types.TokenPair, amount math.Int, receiver common.Address, sender sdk.AccAddress) error
 	IsDenomRegistered(ctx sdk.Context, denom string) bool
 }
 

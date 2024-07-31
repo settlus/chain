@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	"github.com/settlus/chain/evmos/encoding"
+	"github.com/evmos/evmos/v19/encoding"
 	settlementtypes "github.com/settlus/chain/x/settlement/types"
 )
 

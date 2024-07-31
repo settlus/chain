@@ -24,7 +24,7 @@ func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
 		feeCoins := feeTx.GetFee()
 		params := k.GetParams(ctx)
 		gasPrices := params.GetGasPrices()
-		gasRequired := calculateGasCost(tx)
+		gasRequired := CalculateGasCost(tx)
 		for _, gasPrice := range gasPrices {
 			gasPrice := sdk.NormalizeDecCoin(gasPrice)
 			requiredFees := gasPrice.Amount.Mul(sdk.NewDec(int64(gasRequired))).TruncateInt()
@@ -38,7 +38,7 @@ func newSettlementFeeChecker(k SettlementKeeper) ante.TxFeeChecker {
 	}
 }
 
-func calculateGasCost(tx sdk.Tx) (gas uint64) {
+func CalculateGasCost(tx sdk.Tx) (gas uint64) {
 	for _, msg := range tx.GetMsgs() {
 		gas += SettlementBasicGasCost
 		url := sdk.MsgTypeURL(msg)

@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	evmtypes "github.com/settlus/chain/evmos/types"
+	evmtypes "github.com/evmos/evmos/v19/types"
 )
 
 const (

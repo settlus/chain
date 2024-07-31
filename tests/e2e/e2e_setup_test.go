@@ -20,7 +20,7 @@ const (
 
 var (
 	standardFees = sdk.NewCoin(asetlDenom, sdk.NewInt(300000000000000))
-	treasuryAddr = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp"
+	treasuryAddr = "settlus12g8w5dr5jyncct8jwdxwsy2g9ktdrjjlcs5f0a"
 )
 
 type IntegrationTestSuite struct {

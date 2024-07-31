@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
 	settlusconfig "github.com/settlus/chain/cmd/settlusd/config"
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
 	"github.com/settlus/chain/tools/interop-node/types"
 )
 

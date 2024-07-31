@@ -1,28 +1,28 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
 
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
 	utiltx "github.com/settlus/chain/testutil/tx"
+	"github.com/settlus/chain/utils"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
-	erc20types "github.com/settlus/chain/evmos/x/erc20/types"
-	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
+	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
+	feemarkettypes "github.com/evmos/evmos/v19/x/feemarket/types"
 
 	"github.com/settlus/chain/app"
 	"github.com/settlus/chain/cmd/settlusd/config"
@@ -43,7 +43,7 @@ func newCoin(amt int64) sdk.Coin {
 type SettlementTestSuite struct {
 	suite.Suite
 
-	app            *app.App
+	app            *app.SettlusApp
 	keeper         *keeper.SettlementKeeper
 	msgServer      types.MsgServer
 	ctx            sdk.Context
@@ -72,8 +72,6 @@ func (suite *SettlementTestSuite) SetupTest() {
 }
 
 func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
-	chainId := "settlus_5371-1"
-
 	// account key
 	priv, err := ethsecp256k1.GenerateKey()
 	require.NoError(t, err)
@@ -89,9 +87,9 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 	consAddress := sdk.ConsAddress(privCons.PubKey().Address())
 	suite.consAddress = consAddress
 
-	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState())
+	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState(), utils.MainnetChainID)
 	header := testutil.NewHeader(
-		1, time.Now().UTC(), chainId, consAddress, nil, nil,
+		1, time.Now().UTC(), utils.MainnetChainID, consAddress, nil, nil,
 	)
 	suite.ctx = suite.app.BaseApp.NewContext(false, header)
 
@@ -107,7 +105,9 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 	// bond denoms
 	stakingParams := suite.app.StakingKeeper.GetParams(suite.ctx)
 	stakingParams.BondDenom = config.BaseDenom
-	suite.app.StakingKeeper.SetParams(suite.ctx, stakingParams)
+	if err = suite.app.StakingKeeper.SetParams(suite.ctx, stakingParams); err != nil {
+		panic(fmt.Errorf("failed to set staking params: %w", err))
+	}
 
 	evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
 	evmParams.EvmDenom = config.BaseDenom
@@ -138,24 +138,18 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 	validator, err := stakingtypes.NewValidator(valAddr, privCons.PubKey(), stakingtypes.Description{})
 	require.NoError(t, err)
 	validator = stakingkeeper.TestingUpdateValidator(suite.app.StakingKeeper, suite.ctx, validator, true)
-	err = suite.app.StakingKeeper.AfterValidatorCreated(suite.ctx, validator.GetOperator())
+	err = suite.app.StakingKeeper.Hooks().AfterValidatorCreated(suite.ctx, validator.GetOperator())
 	require.NoError(t, err)
 	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
 	require.NoError(t, err)
 
-	tokenPair, err := suite.app.Erc20Keeper.RegisterCoin(suite.ctx, banktypes.Metadata{
-		Description: "USDC",
-		DenomUnits: []*banktypes.DenomUnit{
-			{
-				Denom:    "uusdc",
-				Exponent: 0,
-			},
-		},
-		Base:    "uusdc",
-		Display: "uusdc",
-		Name:    "uusdc",
-		Symbol:  "uusdc",
-	})
+	contractAddr, err := suite.DeployTokenContract("usdc", "uusdc", uint8(6))
+	suite.Require().NoError(err)
+	suite.Commit()
+
+	tokenPair, err := suite.app.Erc20Keeper.RegisterERC20(suite.ctx, contractAddr)
+	suite.Require().NoError(err)
+	suite.Commit()
 
 	// TODO change to setup with 1 validator
 	validators := suite.app.StakingKeeper.GetValidators(s.ctx, 2)
@@ -193,30 +187,10 @@ func (suite *SettlementTestSuite) addTestTenants() {
 
 func (suite *SettlementTestSuite) deploySampleContract() {
 	ownerAddress := utiltx.GenerateAddress()
-	contractAddress := s.DeployAndMintSampleContract(ownerAddress)
+	contractAddress := suite.DeployAndMintSampleContract(ownerAddress)
 
 	suite.nftOwner = ownerAddress.Hex()
 	suite.sampleContract = contractAddress
-}
-
-func (suite *SettlementTestSuite) balanceOf(contract, account common.Address) any { //nolint
-	erc20 := contracts.ERC20Contract.ABI
-
-	// TODO: use erc20 BalanceOf keeper
-	res, err := suite.app.EvmKeeper.CallEVM(suite.ctx, erc20, erc20types.ModuleAddress, contract, false, "balanceOf", account)
-	if err != nil {
-		return nil
-	}
-
-	unpacked, err := erc20.Unpack("balanceOf", res.Ret)
-	if err != nil {
-		return nil
-	}
-	if len(unpacked) == 0 {
-		return nil
-	}
-
-	return unpacked[0]
 }
 
 // Commit commits and starts a new block with an updated context.
@@ -242,17 +216,46 @@ func (suite *SettlementTestSuite) CommitAndBeginBlockAfter(t time.Duration) {
 
 // DeployAndMintSampleContract deploys the ERC721 contract with the provided name and symbol
 func (suite *SettlementTestSuite) DeployAndMintSampleContract(ownerAddress common.Address) common.Address {
-	addr, err := s.DeployContract("Bored Ape Yatch Club", "BAYC")
+	// TODO: remove excessive Commit() calls
+	suite.Commit()
+	addr, err := suite.DeployNFTContract("Bored Ape Yacht Club", "BAYC")
 	suite.NoError(err)
+	suite.Commit()
 
-	err = s.MintNFT(addr, ownerAddress)
+	suite.Commit()
+	err = suite.MintNFT(addr, ownerAddress)
 	suite.NoError(err)
+	suite.Commit()
+
+	suite.Commit()
+	err = suite.MintNFT(addr, ownerAddress)
+	suite.NoError(err)
+	suite.Commit()
+
+	exists, err := suite.CheckNFTExists(addr, big.NewInt(0))
+	suite.NoError(err)
+	suite.True(exists)
 
 	return addr
 }
 
-// DeployContract deploys the ERC721 contract with the provided name and symbol
-func (suite *SettlementTestSuite) DeployContract(name, symbol string) (common.Address, error) {
+// DeployTokenContract deploys the ERC721 contract with the provided name and symbol
+func (suite *SettlementTestSuite) DeployTokenContract(name, symbol string, decimals uint8) (common.Address, error) {
+	suite.Commit()
+	addr, err := testutil.DeployContract(
+		suite.ctx,
+		suite.app,
+		suite.priv,
+		suite.queryClientEvm,
+		contracts.ERC20Contract,
+		name, symbol, decimals,
+	)
+	suite.Commit()
+	return addr, err
+}
+
+// DeployNFTContract deploys the ERC721 contract with the provided name and symbol
+func (suite *SettlementTestSuite) DeployNFTContract(name, symbol string) (common.Address, error) {
 	suite.Commit()
 	addr, err := testutil.DeployContract(
 		suite.ctx,

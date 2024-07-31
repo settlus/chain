@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/settlus/chain/contracts"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,7 +16,7 @@ import (
 
 const masterPrivateKey = "f56cf1cd9f03c9a556da34ac8aefa1109c42d6e11d2e35ede699b515d0c7a56a"
 
-func mintNFTContract(client *ethclient.Client) (string, error) {
+func deployNFTContract(client *ethclient.Client) (string, error) {
 	privateKey, err := crypto.HexToECDSA(masterPrivateKey)
 	if err != nil {
 		return "", err
@@ -28,7 +29,7 @@ func mintNFTContract(client *ethclient.Client) (string, error) {
 
 	address, tx, _, err := bind.DeployContract(auth, contracts.ERC721Contract.ABI, contracts.ERC721Contract.Bin, client, "E2E_NFT", "E2E_NFT")
 	if err != nil {
-		fmt.Println("failed to deply contract", err)
+		fmt.Println("failed to deploy contract", err)
 
 		return "", err
 	}
