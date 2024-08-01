@@ -64,7 +64,7 @@ import (
 
 	"github.com/settlus/chain/app/ante"
 	"github.com/settlus/chain/app/post"
-	v2 "github.com/settlus/chain/app/upgrades/v2"
+	"github.com/settlus/chain/app/upgrades/v1"
 
 	"github.com/settlus/chain/swagger"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -483,8 +483,8 @@ func (app *SettlusApp) SimulationManager() *module.SimulationManager {
 // setupUpgradeHandlers sets up the upgrade handlers
 func (app *SettlusApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
-		v2.UpgradeName,
-		v2.CreateUpgradeHandler(
+		v1.UpgradeName,
+		v1.CreateUpgradeHandler(
 			app.mm, app.configurator,
 		),
 	)
