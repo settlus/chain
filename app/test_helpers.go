@@ -158,7 +158,7 @@ func GenesisStateWithValSet(app *SettlusApp, genesisState simapp.GenesisState,
 			UnbondingTime:     time.Unix(0, 0).UTC(),
 			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			MinSelfDelegation: sdk.ZeroInt(),
-			Probono:           false,
+			// Probono:           false,
 			ProbonoRate:       sdk.ZeroDec(),
 		}
 		validators = append(validators, validator)
