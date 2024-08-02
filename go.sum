@@ -1213,10 +1213,10 @@ github.com/segmentio/fasthash v1.0.3/go.mod h1:waKX8l2N8yckOgmSsXJi7x1ZfdKZ4x7KR
 github.com/segmentio/kafka-go v0.1.0/go.mod h1:X6itGqS9L4jDletMsxZ7Dz+JFWxM6JHfPOCvTvk+EJo=
 github.com/segmentio/kafka-go v0.2.0/go.mod h1:X6itGqS9L4jDletMsxZ7Dz+JFWxM6JHfPOCvTvk+EJo=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
-github.com/settlus/cosmos-sdk v0.47.12-settlus-alpha h1:8XEuwxKhRIA1mZvL3y71wz0jSnqazZTWCNZv06Ja+f4=
-github.com/settlus/cosmos-sdk v0.47.12-settlus-alpha/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
-github.com/settlus/evmos/v19 v19.0.0-settlus.1 h1:/Mflt1By3l92QiJiSXg4exUzmAjji1YVRZSQXtQ4i4I=
-github.com/settlus/evmos/v19 v19.0.0-settlus.1/go.mod h1:BjlwXOxPrB+9o3zdxseaPV7gylV1XHoJrJYQIYshQ6E=
+github.com/settlus/cosmos-sdk v0.47.12-settlus.1 h1:e1/VfWFPPpRCcFnJP2wrD7fCzGPkLAu5tX805eRdKYw=
+github.com/settlus/cosmos-sdk v0.47.12-settlus.1/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
+github.com/settlus/evmos/v19 v19.0.0-settlus.2 h1:ZBfhDOoAKUTyaWcDwt5bD37XLmGNugaIXuzCxkaeP1k=
+github.com/settlus/evmos/v19 v19.0.0-settlus.2/go.mod h1:+x+Q/kYytddmg6XpUGW5NPaHhMhURrvL6gmTBdkcjns=
 github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible h1:Bn1aCHHRnjv4Bl16T8rcaFjYSrGrIZvpiGO6P3Q4GpU=
 github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=

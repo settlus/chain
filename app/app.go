@@ -65,6 +65,7 @@ import (
 	"github.com/settlus/chain/app/ante"
 	"github.com/settlus/chain/app/post"
 	"github.com/settlus/chain/app/upgrades/v1"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/settlus/chain/swagger"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -262,7 +263,8 @@ func NewSettlus(
 	app.setPostHandler()
 	app.SetEndBlocker(app.EndBlocker)
 	app.setupUpgradeHandlers()
-
+	app.setUpgradeStoreLoaders()
+	
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(fmt.Sprintf("failed to load latest version: %s", err))
@@ -485,9 +487,24 @@ func (app *SettlusApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v1.UpgradeName,
 		v1.CreateUpgradeHandler(
-			app.mm, app.configurator,
+			app.mm, app.configurator, app.ConsensusParamsKeeper, app.IBCKeeper.ClientKeeper, app.ParamsKeeper, app.appCodec,
 		),
 	)
+}
+
+func (app *SettlusApp) setUpgradeStoreLoaders() {
+	upgradeInfo, err := app.AppKeepers.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	}
+	if app.AppKeepers.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	if upgradeInfo.Name == v1.UpgradeName {
+		storeUpgrades := v1.StoreUpgrades
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
 }
 
 // GetKey returns the KVStoreKey for the provided store key.
