@@ -163,40 +163,6 @@ func (suite *OracleTestSuite) NewValidator(amt sdkmath.Int) *stakingtypes.MsgCre
 	return msgCreate
 }
 
-func (suite *OracleTestSuite) TestKeeper_GetBlockData() {
-	bd := types.BlockData{
-		ChainId:     "1",
-		BlockNumber: 100,
-		BlockHash:   "foobar",
-	}
-	s.app.OracleKeeper.SetBlockData(s.ctx, bd)
-	actual, err := s.app.OracleKeeper.GetBlockData(s.ctx, "1")
-	s.Require().NoError(err)
-	s.Equal(bd, *actual)
-}
-
-func (suite *OracleTestSuite) TestKeeper_GetAllBlockData() {
-	var l []types.BlockData
-	a := types.BlockData{
-		ChainId:     "1",
-		BlockNumber: 100,
-		BlockHash:   "foobar",
-	}
-	s.app.OracleKeeper.SetBlockData(s.ctx, a)
-	l = append(l, a)
-
-	b := types.BlockData{
-		ChainId:     "2",
-		BlockNumber: 200,
-		BlockHash:   "foobar",
-	}
-	s.app.OracleKeeper.SetBlockData(s.ctx, b)
-	l = append(l, b)
-
-	actual := s.app.OracleKeeper.GetAllBlockData(s.ctx)
-	s.Equal(l, actual)
-}
-
 func (suite *OracleTestSuite) TestKeeper_GetFeederDelegation() {
 	validator := s.validators[0]
 	err := s.app.OracleKeeper.SetFeederDelegation(s.ctx, validator.GetOperator().String(), s.address.String())

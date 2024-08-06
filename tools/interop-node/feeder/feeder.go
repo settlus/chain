@@ -114,32 +114,15 @@ func (feeder *Feeder) HandlePrevote(ctx context.Context) error {
 	}
 
 	voteData := types.VoteDataArr{}
-	for _, od := range round.OracleData {
-		switch od.Topic {
-		case oracletypes.OralceTopic_BLOCK:
-			blockDataStr, err := feeder.gatherBlockDataString(od.Sources, uint64(round.Timestamp))
-			if err != nil {
-				feeder.abstainRoundId = round.Id
-				return err
-			}
-
-			voteData = append(voteData, &oracletypes.VoteData{
-				Topic: oracletypes.OralceTopic_BLOCK,
-				Data:  blockDataStr,
-			})
-
-		case oracletypes.OralceTopic_OWNERSHIP:
-			nftDataStr, err := feeder.gatherNftOwnerDataString(od.Sources, uint64(round.Timestamp))
-			if err != nil {
-				feeder.abstainRoundId = round.Id
-				return err
-			}
-			voteData = append(voteData, &oracletypes.VoteData{
-				Topic: oracletypes.OralceTopic_OWNERSHIP,
-				Data:  nftDataStr,
-			})
-		}
+	nftDataStr, err := feeder.gatherNftOwnerDataString(round.Ownerships, uint64(round.Timestamp))
+	if err != nil {
+		feeder.abstainRoundId = round.Id
+		return err
 	}
+	voteData = append(voteData, &oracletypes.VoteData{
+		Topic: oracletypes.OralceTopic_OWNERSHIP,
+		Data:  nftDataStr,
+	})
 
 	salt, err := GenerateSalt()
 	if err != nil {
@@ -175,7 +158,7 @@ func (feeder *Feeder) HandleAbstain(ctx context.Context) error {
 	}
 
 	// abstain from voting
-	abstainData := []*oracletypes.VoteData{}
+	var abstainData []*oracletypes.VoteData
 	if err := feeder.sendPrevote(ctx, abstainData, salt, round.Id); err != nil {
 		return fmt.Errorf("failed to send abstain prevote: %w", err)
 	}
@@ -189,20 +172,6 @@ func (feeder *Feeder) HandleAbstain(ctx context.Context) error {
 	return nil
 }
 
-func (feeder *Feeder) gatherBlockDataString(chainIds []string, timestamp uint64) ([]string, error) {
-	blockDataList := make([]oracletypes.BlockData, len(chainIds))
-	for idx, cid := range chainIds {
-		bd, err := feeder.getOldestBlock(cid, timestamp)
-		if err != nil {
-			return nil, err
-		}
-
-		blockDataList[idx] = bd
-	}
-
-	return blockDataListToBlockDataString(blockDataList), nil
-}
-
 func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (oracletypes.BlockData, error) {
 	sub, ok := feeder.subscribers[chainId]
 	if !ok {
@@ -210,6 +179,10 @@ func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (oraclety
 	}
 
 	bd, err := sub.GetOldestBlock(timestamp)
+	if err != nil {
+		return oracletypes.BlockData{}, err
+	}
+
 	return oracletypes.BlockData{
 		ChainId:     chainId,
 		BlockNumber: bd.BlockNumber,
@@ -217,6 +190,7 @@ func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (oraclety
 	}, err
 }
 
+// gatherNftOwnerDataString gathers nft owner data string from the subscribers
 func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64) ([]string, error) {
 	s := make([]string, len(nftIds))
 	for i, nftId := range nftIds {
@@ -237,6 +211,7 @@ func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64
 
 		owner, err := sub.OwnerOf(context.TODO(), nft.ContractAddr.String(), nft.TokenId.String(), bd.BlockHash)
 		if err != nil {
+			feeder.logger.Debug("failed to get ownerOf", "nftId", nftId, "error", err)
 			return nil, err
 		}
 
@@ -289,13 +264,4 @@ func (feeder *Feeder) sendPrevote(ctx context.Context, vda types.VoteDataArr, sa
 	feeder.logger.Info("prevote sent successfully", "msg", msg.String(), "vote data", vda)
 
 	return nil
-}
-
-// BlockDataListToBlockDataString converts a list of BlockData to a string
-func blockDataListToBlockDataString(bdList []oracletypes.BlockData) []string {
-	s := make([]string, len(bdList))
-	for i, bd := range bdList {
-		s[i] = fmt.Sprintf("%s:%d/%s", bd.ChainId, bd.BlockNumber, bd.BlockHash)
-	}
-	return s
 }

@@ -340,6 +340,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 	return nil
 }
 
+// ClearBallots clears all ballots after the reward distribution
 func (k Keeper) ClearBallots(ctx sdk.Context) {
 	// Clear all aggregate prevotes
 	k.IterateAggregatePrevotes(ctx, func(validatorAddress string, aggregatePrevote types.AggregatePrevote) (stop bool) {

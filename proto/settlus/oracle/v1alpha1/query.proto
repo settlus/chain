@@ -18,18 +18,6 @@ service Query {
     option (google.api.http).get = "/settlus/oracle/v1alpha1/params";
   }
 
-  // Queries a list of BlockData items for a given chainId.
-  rpc BlockData(QueryBlockDataRequest) returns (QueryBlockDataResponse) {
-    option (google.api.http).get =
-        "/settlus/oracle/v1alpha1/block_data/{chain_id}";
-  }
-
-  // Queries a list of BlockDatas items for all chainIds.
-  rpc AllBlockData(QueryAllBlockDataRequest)
-      returns (QueryAllBlockDataResponse) {
-    option (google.api.http).get = "/settlus/oracle/v1alpha1/block_data";
-  }
-
   // Queries an aggregate prevote of a validator.
   rpc AggregatePrevote(QueryAggregatePrevoteRequest)
       returns (QueryAggregatePrevoteResponse) {
@@ -91,22 +79,6 @@ message QueryParamsResponse {
 
   // params holds all the parameters of this module.
   Params params = 1 [ (gogoproto.nullable) = false ];
-}
-
-// QueryBlockDataRequest is request type for the Query/BlockData RPC method.
-message QueryBlockDataRequest { string chain_id = 1; }
-
-// QueryBlockDataResponse is response type for the Query/BlockData RPC method.
-message QueryBlockDataResponse { BlockData block_data = 1; }
-
-// QueryAllBlockDataRequest is request type for the Query/AllBlockData RPC
-// method.
-message QueryAllBlockDataRequest {}
-
-// QueryAllBlockDataResponse is response type for the Query/AllBlockData RPC
-// method.
-message QueryAllBlockDataResponse {
-  repeated BlockData block_data = 2 [ (gogoproto.nullable) = false ];
 }
 
 // QueryFeederDelegationRequest is request type for the Query/FeederDelegation

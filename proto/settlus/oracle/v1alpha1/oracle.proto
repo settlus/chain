@@ -23,13 +23,8 @@ message Params {
 }
 
 enum OralceTopic {
-  BLOCK = 0;
+  BLOCK = 0; // deprecated
   OWNERSHIP = 1;
-}
-
-message OracleData {
-  OralceTopic topic = 1;
-  repeated string sources = 2;
 }
 
 message VoteData {
@@ -67,7 +62,7 @@ message RoundInfo {
   uint64 id = 1;
   int64 prevote_end = 2;
   int64 vote_end = 3;
-  repeated OracleData oracle_data = 4;
+  repeated string ownerships = 4;
   // UNIX time in milliseconds
   int64 timestamp = 5;
 }
