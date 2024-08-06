@@ -23,8 +23,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
-	cmd.AddCommand(CmdQueryBlockData())
-	cmd.AddCommand(CmdQueryAllBlockData())
 	cmd.AddCommand(CmdQueryAggregatePrevote())
 	cmd.AddCommand(CmdQueryAggregatePrevotes())
 	cmd.AddCommand(CmdQueryAggregateVote())
@@ -51,68 +49,6 @@ func CmdQueryParams() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// CmdQueryBlockData queries a list of BlockData items for a given chain ID.
-func CmdQueryBlockData() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "block-data [chain-id]",
-		Short: "Query block data",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			reqChainId := args[0]
-
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			params := &types.QueryBlockDataRequest{
-
-				ChainId: reqChainId,
-			}
-
-			res, err := queryClient.BlockData(cmd.Context(), params)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// CmdQueryAllBlockData queries a list of all BlockData for all chain IDs.
-func CmdQueryAllBlockData() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "all-block-data",
-		Short: "Query all block data",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			queryClient := types.NewQueryClient(clientCtx)
-
-			params := &types.QueryAllBlockDataRequest{}
-
-			res, err := queryClient.AllBlockData(cmd.Context(), params)
 			if err != nil {
 				return err
 			}
@@ -353,7 +289,7 @@ func CmdQueryRewardPool() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryRewardPool queries the current oracle reward pool balance.
+// CmdQueryCurrentRoundInfo queries the current oracle reward pool balance.
 func CmdQueryCurrentRoundInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "round-info",

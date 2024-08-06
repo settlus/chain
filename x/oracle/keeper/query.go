@@ -19,23 +19,6 @@ func (k Keeper) Params(goCtx context.Context, _ *types.QueryParamsRequest) (*typ
 	return &types.QueryParamsResponse{Params: params}, nil
 }
 
-// BlockData queries block data of oracle module
-func (k Keeper) BlockData(goCtx context.Context, req *types.QueryBlockDataRequest) (*types.QueryBlockDataResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	blockData, err := k.GetBlockData(ctx, req.ChainId)
-	if err != nil {
-		return nil, fmt.Errorf("error while getting block data: %w", err)
-	}
-	return &types.QueryBlockDataResponse{BlockData: blockData}, nil
-}
-
-// AllBlockData queries all block data of oracle module
-func (k Keeper) AllBlockData(goCtx context.Context, _ *types.QueryAllBlockDataRequest) (*types.QueryAllBlockDataResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	blockData := k.GetAllBlockData(ctx)
-	return &types.QueryAllBlockDataResponse{BlockData: blockData}, nil
-}
-
 // AggregatePrevote queries aggregate prevote of a given validator
 func (k Keeper) AggregatePrevote(goCtx context.Context, request *types.QueryAggregatePrevoteRequest) (*types.QueryAggregatePrevoteResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

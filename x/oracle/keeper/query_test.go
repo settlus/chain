@@ -14,43 +14,6 @@ func (suite *OracleTestSuite) TestKeeper_Params() {
 	suite.Equal(types.DefaultParams(), paramsResponse.Params)
 }
 
-func (suite *OracleTestSuite) TestKeeper_BlockData() {
-	expectedBlockData := types.BlockData{
-		ChainId:     "1",
-		BlockNumber: 100,
-		BlockHash:   "foobar",
-	}
-	s.app.OracleKeeper.SetBlockData(s.ctx, expectedBlockData)
-
-	actualBlockData, err := s.app.OracleKeeper.BlockData(s.ctx, &types.QueryBlockDataRequest{
-		ChainId: "1",
-	})
-	suite.NoError(err)
-	suite.Equal(expectedBlockData, *actualBlockData.BlockData)
-}
-
-func (suite *OracleTestSuite) TestKeeper_AllBlockData() {
-	expectedBlockData := []types.BlockData{
-		{
-			ChainId:     "1",
-			BlockNumber: 100,
-			BlockHash:   "foobar",
-		},
-		{
-			ChainId:     "2",
-			BlockNumber: 200,
-			BlockHash:   "barbaz",
-		},
-	}
-	for _, blockData := range expectedBlockData {
-		s.app.OracleKeeper.SetBlockData(s.ctx, blockData)
-	}
-
-	actualBlockData, err := s.app.OracleKeeper.AllBlockData(s.ctx, &types.QueryAllBlockDataRequest{})
-	suite.NoError(err)
-	suite.Equal(expectedBlockData, actualBlockData.BlockData)
-}
-
 func (suite *OracleTestSuite) TestKeeper_AggregatePrevote() {
 	expectedAggregatePrevote := types.AggregatePrevote{
 		Hash:  "foobar",

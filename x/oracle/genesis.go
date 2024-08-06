@@ -24,9 +24,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, missCount := range genState.MissCounts {
 		k.SetMissCount(ctx, missCount.ValidatorAddress, missCount.MissCount)
 	}
-	for _, blockData := range genState.BlockData {
-		k.SetBlockData(ctx, blockData)
-	}
 	for _, feederDelegation := range genState.FeederDelegation {
 		if err := k.SetFeederDelegation(ctx, feederDelegation.ValidatorAddress, feederDelegation.FeederAddress); err != nil {
 			panic(fmt.Errorf("failed to set feeder delegation (%s)", err))
@@ -43,7 +40,6 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.AggregateVotes = k.GetAggregateVotes(ctx)
 	genesis.AggregatePrevotes = k.GetAggregatePrevotes(ctx)
 	genesis.MissCounts = k.GetMissCounts(ctx)
-	genesis.BlockData = k.GetAllBlockData(ctx)
 	genesis.FeederDelegation = k.GetFeederDelegations(ctx)
 
 	return genesis
