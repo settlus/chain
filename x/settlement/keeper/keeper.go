@@ -12,11 +12,11 @@ import (
 	ctypes "github.com/settlus/chain/types"
 	"github.com/settlus/chain/x/settlement/types"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 type SettlementKeeper struct {
@@ -65,9 +65,7 @@ func (k SettlementKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-//NFT
-
-// GetRecipient returns the owner of the given NFT from x/nftownership module
+// GetRecipients returns the owner of the given NFT from x/nftownership module
 func (k SettlementKeeper) GetRecipients(ctx sdk.Context, chainId string, contractAddr string, tokenIdHex string) ([]*types.Recipient, error) {
 	recipients := make([]*types.Recipient, 0)
 	if k.IsSupportedChain(ctx, chainId) && ctx.ChainID() != chainId {

@@ -13,7 +13,11 @@ import (
 // Ethereum or SDK transaction to an internal ante handler for performing
 // transaction-level processing (e.g. fee payment, signature verification) before
 // being passed onto it's respective handler.
-func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
+func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
+	if err := options.Validate(); err != nil {
+		return nil, err
+	}
+
 	return func(
 		ctx sdk.Context, tx sdk.Tx, sim bool,
 	) (newCtx sdk.Context, err error) {
@@ -29,7 +33,7 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 				switch typeURL := opts[0].GetTypeUrl(); typeURL {
 				case "/ethermint.evm.v1.ExtensionOptionsEthereumTx":
 					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = newEVMAnteHandler(options)
+					anteHandler = newMonoEVMAnteHandler(options)
 				default:
 					return ctx, errorsmod.Wrapf(
 						errortypes.ErrUnknownExtensionOptions,
@@ -50,10 +54,10 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		}
 
 		return anteHandler(ctx, tx, sim)
-	}
+	}, nil
 }
 
-func isSettlementTx(tx sdk.Tx) bool {
+func IsSettlementTx(tx sdk.Tx) bool {
 	if len(tx.GetMsgs()) == 0 {
 		return false
 	}
@@ -83,20 +87,8 @@ func isOracleTx(tx sdk.Tx) bool {
 }
 
 func isSettlusTx(tx sdk.Tx) bool {
-	if isOracleTx(tx) || isSettlementTx(tx) {
+	if isOracleTx(tx) || IsSettlementTx(tx) {
 		return true
 	}
 	return false
-}
-
-func NewPostHandler(options HandlerOptions) sdk.AnteHandler {
-	return func(ctx sdk.Context, tx sdk.Tx, sim bool) (sdk.Context, error) {
-		if isSettlementTx(tx) {
-			return sdk.ChainAnteDecorators(
-				NewSettlementGasConsumeDecorator(),
-			)(ctx, tx, sim)
-		}
-
-		return ctx, nil
-	}
 }

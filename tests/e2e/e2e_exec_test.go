@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+	"time"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	"time"
 )
 
 const (
@@ -46,7 +45,7 @@ func applyOptions(chainID string, options []flagOption) map[string]interface{} {
 		flagKeyringBackend: "test",
 		flagOutput:         "json",
 		flagGas:            "auto",
-		flagBroadcastMode:  "block",
+		flagBroadcastMode:  "sync",
 		flagGasAdjustment:  "1.5",
 		flagChainID:        chainID,
 		flagFees:           standardFees.String(),
@@ -217,6 +216,7 @@ func (s *IntegrationTestSuite) execRecord(
 		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
+	fmt.Println(settlusCmd)
 	s.executeSettlusTxCommand(ctx, settlusCmd)
 }
 

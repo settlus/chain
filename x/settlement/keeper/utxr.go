@@ -1,14 +1,13 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/settlus/chain/x/settlement/types"
-
-	sdkerrors "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ctypes "github.com/settlus/chain/types"
+	"github.com/settlus/chain/x/settlement/types"
 )
 
 // GetUTXRStore returns the UTXR store for the given tenantId

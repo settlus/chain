@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/settlus/chain/tools/interop-node/client"
 	cfg "github.com/settlus/chain/tools/interop-node/config"

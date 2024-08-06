@@ -8,6 +8,7 @@ import (
 
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
+	"github.com/settlus/chain/utils"
 
 	"github.com/settlus/chain/x/settlement/types"
 )
@@ -19,9 +20,9 @@ func (suite *SettlementTestSuite) TestMsgServer_Record() {
 		TenantId:        1,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
-		TokenIdHex:      "0x0",
+		TokenIdHex:      "0x1",
 	})
 
 	suite.NoError(err)
@@ -34,30 +35,32 @@ func (suite *SettlementTestSuite) TestMsgServer_Record() {
 }
 
 func (suite *SettlementTestSuite) TestMsgServer_Record_CreateAccount() {
-	suite.deploySampleContract()
-	newAccountEVM := sample.EthAddress()
-	newAccount := newAccountEVM.Bytes()
-	err := suite.MintNFT(suite.sampleContract, newAccountEVM)
-	suite.NoError(err)
+	s.deploySampleContract()
+	tokenIdHex := "0x1"
 
-	acc := suite.app.AccountKeeper.GetAccount(suite.ctx, newAccount)
-	suite.Nil(acc)
+	nftOwnerAddr, err := s.app.SettlementKeeper.FindInternalOwner(s.ctx, s.sampleContract.String(), tokenIdHex)
+	s.NoError(err)
+	s.NotNil(nftOwnerAddr)
 
-	res, err := suite.msgServer.Record(suite.ctx, &types.MsgRecord{
-		Sender:          suite.appAdmin.String(),
+	acc := s.app.AccountKeeper.GetAccount(s.ctx, sdk.AccAddress(nftOwnerAddr.Bytes()))
+	s.Nil(acc)
+
+	s.Commit()
+	res, err := s.msgServer.Record(s.ctx, &types.MsgRecord{
+		Sender:          s.appAdmin.String(),
 		TenantId:        1,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
-		ContractAddress: suite.sampleContract.String(),
-		TokenIdHex:      "0x1",
+		ChainId:         utils.MainnetChainID,
+		ContractAddress: s.sampleContract.String(),
+		TokenIdHex:      tokenIdHex,
 	})
+	s.NoError(err)
+	s.NotNil(res)
+	s.Commit()
 
-	suite.NoError(err)
-	suite.NotNil(res)
-
-	acc = suite.app.AccountKeeper.GetAccount(suite.ctx, newAccount)
-	suite.NotNil(acc)
+	acc = s.app.AccountKeeper.GetAccount(s.ctx, sdk.AccAddress(nftOwnerAddr.Bytes()))
+	s.NotNil(acc)
 }
 
 func (suite *SettlementTestSuite) TestMsgServer_Record_NonAdminMustFail() {
@@ -67,7 +70,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_NonAdminMustFail() {
 		TenantId:        1,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
 		TokenIdHex:      "0x0",
 	})
@@ -83,7 +86,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_InvalidTenantID() {
 		TenantId:        100,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
 		TokenIdHex:      "0x0",
 	})
@@ -99,7 +102,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_UniqueRequestID() {
 		TenantId:        1,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
 		TokenIdHex:      "0x0",
 	})
@@ -112,7 +115,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_UniqueRequestID() {
 		TenantId:        1,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
 		TokenIdHex:      "0x0",
 	})
@@ -125,7 +128,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_UniqueRequestID() {
 		TenantId:        2,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
 		TokenIdHex:      "0x0",
 	})
@@ -138,7 +141,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_UniqueRequestID() {
 		TenantId:        2,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: suite.sampleContract.String(),
 		TokenIdHex:      "0x0",
 	})
@@ -155,7 +158,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_IDInOrder() {
 			TenantId:        1,
 			RequestId:       fmt.Sprintf("request-%d", i),
 			Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-			ChainId:         "settlus_5371-1",
+			ChainId:         utils.MainnetChainID,
 			ContractAddress: suite.sampleContract.String(),
 			TokenIdHex:      "0x0",
 		})
@@ -178,7 +181,7 @@ func (suite *SettlementTestSuite) TestMsgServer_Record_NftNotMinted() {
 		TenantId:        1,
 		RequestId:       "request-1",
 		Amount:          sdk.NewCoin("uusdc", math.NewInt(10)),
-		ChainId:         "settlus_5371-1",
+		ChainId:         utils.MainnetChainID,
 		ContractAddress: contractAddress.String(),
 		TokenIdHex:      "0xa",
 	})

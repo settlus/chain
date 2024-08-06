@@ -6,9 +6,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
-	"github.com/settlus/chain/evmos/x/erc20/types"
+	"github.com/evmos/evmos/v19/x/erc20/types"
 )
 
 var (

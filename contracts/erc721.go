@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/common"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
 	"github.com/settlus/chain/x/settlement/types"
 )

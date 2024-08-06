@@ -9,7 +9,8 @@ import (
 	tenderminttypes "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
+
 	settlementtypes "github.com/settlus/chain/x/settlement/types"
 )
 
@@ -56,6 +57,9 @@ func queryTenants(endpoint string) ([]settlementtypes.TenantWithTreasury, error)
 	var tenantsResp settlementtypes.QueryTenantsResponse
 	if err := cdc.UnmarshalJSON(body, &tenantsResp); err != nil {
 		return nil, err
+	}
+	if tenantsResp.Tenants == nil {
+		return nil, fmt.Errorf("tenant array is nil: %v", tenantsResp.Tenants)
 	}
 
 	return tenantsResp.Tenants, nil

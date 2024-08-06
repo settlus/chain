@@ -18,9 +18,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	evmoskr "github.com/settlus/chain/evmos/crypto/keyring"
-	"github.com/settlus/chain/evmos/types"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	evmoskr "github.com/evmos/evmos/v19/crypto/keyring"
+	"github.com/evmos/evmos/v19/types"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 )
 
 // AddGenesisAccountCmd returns add-genesis-account cobra Command.

@@ -166,21 +166,6 @@ func CalculateFees(ofp sdk.Dec, fees sdk.Coins) (gasFees, oracleFees sdk.Coins) 
 	return
 }
 
-// SettlementGasConsumeDecorator is used as a post-handler for settlement tx,
-// designed to allocate a constant amount of gas regardless of the gas consumed during execution.
-type SettlementGasConsumeDecorator struct{}
-
-func NewSettlementGasConsumeDecorator() SettlementGasConsumeDecorator {
-	return SettlementGasConsumeDecorator{}
-}
-
-func (SettlementGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	ctx.GasMeter().RefundGas(ctx.GasMeter().GasConsumed(), "reset the gas count")
-	ctx.GasMeter().ConsumeGas(calculateGasCost(tx), "apply settlement tx")
-
-	return next(ctx, tx, simulate)
-}
-
 type SettlusSetUpContextDecorator struct{}
 
 func NewSettlusSetUpContextDecorator() SettlusSetUpContextDecorator {
@@ -210,7 +195,7 @@ func NewSettlusValidatorCheckDecorator(oracleKeeper OracleKeeper) SettlusValidat
 }
 
 func (svcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	if isSettlementTx(tx) {
+	if IsSettlementTx(tx) {
 		return next(ctx, tx, simulate)
 	}
 

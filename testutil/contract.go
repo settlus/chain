@@ -4,34 +4,33 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/settlus/chain/testutil/tx"
-
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	evm "github.com/evmos/evmos/v19/x/evm/types"
 	"github.com/gogo/protobuf/proto"
-	evm "github.com/settlus/chain/evmos/x/evm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/settlus/chain/app"
+	"github.com/settlus/chain/testutil/tx"
 )
 
 // DeployContract deploys a contract with the provided private key,
 // compiled contract data and constructor arguments
 func DeployContract(
 	ctx sdk.Context,
-	appSettlus *app.App,
+	app *app.SettlusApp,
 	priv cryptotypes.PrivKey,
 	queryClientEvm evm.QueryClient,
 	contract evm.CompiledContract,
 	constructorArgs ...interface{},
 ) (common.Address, error) {
-	chainID := appSettlus.EvmKeeper.ChainID()
+	chainID := app.EvmKeeper.ChainID()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
-	nonce := appSettlus.EvmKeeper.GetNonce(ctx, from)
+	nonce := app.EvmKeeper.GetNonce(ctx, from)
 
 	ctorArgs, err := contract.ABI.Pack("", constructorArgs...)
 	if err != nil {
@@ -48,19 +47,19 @@ func DeployContract(
 		ChainID:   chainID,
 		Nonce:     nonce,
 		GasLimit:  gas,
-		GasFeeCap: appSettlus.FeeMarketKeeper.GetBaseFee(ctx),
+		GasFeeCap: app.FeeMarketKeeper.GetBaseFee(ctx),
 		GasTipCap: big.NewInt(1),
 		Input:     data,
 		Accesses:  &ethtypes.AccessList{},
 	})
 	msgEthereumTx.From = from.String()
 
-	res, err := DeliverEthTx(appSettlus, priv, msgEthereumTx)
+	res, err := DeliverEthTx(app, priv, msgEthereumTx)
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	if _, err := CheckEthTxResponse(res, appSettlus.AppCodec()); err != nil {
+	if _, err := CheckEthTxResponse(res, app.AppCodec()); err != nil {
 		return common.Address{}, err
 	}
 
@@ -69,7 +68,7 @@ func DeployContract(
 
 func MintNFT(
 	ctx sdk.Context,
-	appSettlus *app.App,
+	appSettlus *app.SettlusApp,
 	priv cryptotypes.PrivKey,
 	contract evm.CompiledContract,
 	contractAddress common.Address,
@@ -87,7 +86,7 @@ func MintNFT(
 
 func CheckNFTExists(
 	ctx sdk.Context,
-	appSettlus *app.App,
+	appSettlus *app.SettlusApp,
 	priv cryptotypes.PrivKey,
 	contract evm.CompiledContract,
 	contractAddress common.Address,

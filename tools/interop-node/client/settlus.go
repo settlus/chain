@@ -10,6 +10,10 @@ import (
 	"strings"
 	"time"
 
+	cometlog "github.com/cometbft/cometbft/libs/log"
+	httpclient "github.com/cometbft/cometbft/rpc/client/http"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	jsonrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cosmosclient "github.com/cosmos/cosmos-sdk/client"
 	cosmoscodec "github.com/cosmos/cosmos-sdk/codec"
 	cosmoscodectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -19,18 +23,15 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	cometlog "github.com/tendermint/tendermint/libs/log"
-	httpclient "github.com/tendermint/tendermint/rpc/client/http"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	jsonrpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	oracletypes "github.com/settlus/chain/x/oracle/types"
 
+	"github.com/evmos/evmos/v19/encoding"
+
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/evmos/encoding"
 	"github.com/settlus/chain/tools/interop-node/config"
 	"github.com/settlus/chain/tools/interop-node/signer"
 )
@@ -187,7 +188,7 @@ func CreateGrpcConnection(isInsecure bool, grpcAddress string) (*grpc.ClientConn
 	}
 
 	address := HTTPProtocols.ReplaceAllString(grpcAddress, "")
-	return grpc.Dial(address, grpcOpts...)
+	return grpc.NewClient(address, grpcOpts...)
 }
 
 // LatestHeight get the latest height from the RPC client.

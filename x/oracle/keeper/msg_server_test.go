@@ -3,9 +3,9 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/settlus/chain/x/oracle/keeper"
 	"github.com/settlus/chain/x/oracle/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 func (suite *OracleTestSuite) TestMsgServer_Prevote() {

@@ -10,8 +10,6 @@ printf "version: v1\nname: buf.build/settlus/settlus\n" > "$SWAGGER_DIR/proto/bu
 cp ./proto/buf.gen.swagger.yaml "$SWAGGER_DIR/proto/buf.gen.swagger.yaml"
 
 # copy existing proto files
-cp -r ./proto/evmos "$SWAGGER_DIR/proto"
-cp -r ./proto/ethermint "$SWAGGER_DIR/proto"
 cp -r ./proto/settlus "$SWAGGER_DIR/proto"
 
 # create temporary folder to store intermediate results from `buf generate`

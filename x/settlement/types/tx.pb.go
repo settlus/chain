@@ -8,9 +8,9 @@ import (
 	fmt "fmt"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
+	grpc1 "github.com/cosmos/gogoproto/grpc"
+	proto "github.com/cosmos/gogoproto/proto"
 	_ "github.com/gogo/protobuf/gogoproto"
-	grpc1 "github.com/gogo/protobuf/grpc"
-	proto "github.com/gogo/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -390,6 +390,7 @@ type MsgCreateTenantWithMintableContract struct {
 	Denom        string `protobuf:"bytes,2,opt,name=denom,proto3" json:"denom,omitempty"`
 	PayoutPeriod uint64 `protobuf:"varint,3,opt,name=payout_period,json=payoutPeriod,proto3" json:"payout_period,omitempty"`
 	// Types that are valid to be assigned to XContractAddress:
+	//
 	//	*MsgCreateTenantWithMintableContract_ContractAddress
 	XContractAddress isMsgCreateTenantWithMintableContract_XContractAddress `protobuf_oneof:"_contract_address"`
 }

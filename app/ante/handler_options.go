@@ -10,14 +10,14 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	cosmosante "github.com/settlus/chain/evmos/app/ante/cosmos"
-	evmante "github.com/settlus/chain/evmos/app/ante/evm"
-	anteutils "github.com/settlus/chain/evmos/app/ante/utils"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	cosmosante "github.com/evmos/evmos/v19/app/ante/cosmos"
+	evmante "github.com/evmos/evmos/v19/app/ante/evm"
+	anteutils "github.com/evmos/evmos/v19/app/ante/utils"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	ibcante "github.com/cosmos/ibc-go/v6/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 )
 
 // HandlerOptions defines the list of module keepers required to run the Settlus
@@ -38,7 +38,7 @@ type HandlerOptions struct {
 	SignModeHandler        authsigning.SignModeHandler
 	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
-	TxFeeChecker           anteutils.TxFeeChecker
+	TxFeeChecker           ante.TxFeeChecker
 }
 
 func (options HandlerOptions) Validate() error {
@@ -73,25 +73,18 @@ func (options HandlerOptions) Validate() error {
 	return nil
 }
 
-// newEVMAnteHandler creates the default ante handler for Ethereum transactions
-func newEVMAnteHandler(options HandlerOptions) sdk.AnteHandler {
+// newMonoEVMAnteHandler creates the default ante handler for Ethereum transactions
+func newMonoEVMAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		RejectMessagesDecorator{},
-		// outermost AnteDecorator. SetUpContext must be called first
-		evmante.NewEthSetUpContextDecorator(options.EvmKeeper),
-		// Check eth effective gas price against the node's minimal-gas-prices config
-		evmante.NewEthMempoolFeeDecorator(options.EvmKeeper),
-		// Check eth effective gas price against the global MinGasPrice
-		evmante.NewEthMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper),
-		evmante.NewEthValidateBasicDecorator(options.EvmKeeper),
-		evmante.NewEthSigVerificationDecorator(options.EvmKeeper),
-		evmante.NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper),
-		evmante.NewCanTransferDecorator(options.EvmKeeper),
-		evmante.NewEthGasConsumeDecorator(options.BankKeeper, options.DistributionKeeper, options.EvmKeeper, options.StakingKeeper, options.MaxTxGasWanted),
-		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper),
-		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
-		// emit eth tx hash and index at the very last ante handler.
-		evmante.NewEthEmitEventDecorator(options.EvmKeeper),
+		evmante.NewMonoDecorator(
+			options.AccountKeeper,
+			options.BankKeeper,
+			options.FeeMarketKeeper,
+			options.EvmKeeper,
+			options.DistributionKeeper,
+			options.StakingKeeper,
+			options.MaxTxGasWanted,
+		),
 	)
 }
 

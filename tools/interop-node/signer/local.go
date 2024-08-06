@@ -4,7 +4,7 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
+	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
 )
 
 type localSigner struct {

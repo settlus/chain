@@ -78,6 +78,7 @@ func (suite *SettlementTestSuite) TestKeeper_UTXRs() {
 		s.NoError(err)
 		s.Equal(uint64(i), utxrId)
 	}
+	s.Commit()
 
 	// Get UTXRs
 	res, err := s.queryClient.UTXRs(s.ctx, &types.QueryUTXRsRequest{
@@ -102,7 +103,8 @@ func (suite *SettlementTestSuite) TestKeeper_Tenant() {
 		PayoutMethod: "native",
 		PayoutPeriod: 1,
 	}
-	suite.keeper.SetTenant(suite.ctx, tenant)
+	s.keeper.SetTenant(suite.ctx, tenant)
+	s.Commit()
 
 	// Get Tenant
 	res, err := s.queryClient.Tenant(s.ctx, &types.QueryTenantRequest{TenantId: 3})
@@ -115,6 +117,7 @@ func (suite *SettlementTestSuite) TestKeeper_Tenant() {
 	newBalance := sdk.NewCoin("uusdc", sdk.NewInt(100))
 	err = s.app.BankKeeper.SendCoins(s.ctx, s.creator, types.GetTenantTreasuryAccount(3), sdk.NewCoins(newBalance))
 	s.NoError(err)
+	s.Commit()
 
 	// Check if the balance is updated
 	res, err = s.queryClient.Tenant(s.ctx, &types.QueryTenantRequest{TenantId: 3})
@@ -129,7 +132,8 @@ func (suite *SettlementTestSuite) TestKeeper_Tenants() {
 		Admins:       []string{s.appAdmin.String()},
 		PayoutPeriod: 1,
 	}
-	suite.keeper.SetTenant(suite.ctx, tenant)
+	s.keeper.SetTenant(suite.ctx, tenant)
+	s.Commit()
 
 	// Get Tenant
 	res, err := s.queryClient.Tenants(s.ctx, &types.QueryTenantsRequest{})

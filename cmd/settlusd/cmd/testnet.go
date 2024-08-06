@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"cosmossdk.io/math"
+	tmconfig "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/types"
+	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/spf13/cobra"
-	tmconfig "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -37,16 +37,16 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/settlus/chain/evmos/crypto/hd"
-	"github.com/settlus/chain/evmos/server/config"
-	srvflags "github.com/settlus/chain/evmos/server/flags"
+	"github.com/evmos/evmos/v19/crypto/hd"
+	"github.com/evmos/evmos/v19/server/config"
+	srvflags "github.com/evmos/evmos/v19/server/flags"
 
-	evmostypes "github.com/settlus/chain/evmos/types"
-	evmtypes "github.com/settlus/chain/evmos/x/evm/types"
+	evmoskr "github.com/evmos/evmos/v19/crypto/keyring"
+	evmostypes "github.com/evmos/evmos/v19/types"
+	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
 	settluscfg "github.com/settlus/chain/cmd/settlusd/config"
-	evmoskr "github.com/settlus/chain/evmos/crypto/keyring"
-	"github.com/settlus/chain/evmos/testutil/network"
+	"github.com/settlus/chain/testutil/network"
 )
 
 var (
@@ -92,7 +92,7 @@ func addTestnetFlagsToCmd(cmd *cobra.Command) {
 	cmd.Flags().StringP(flagOutputDir, "o", "./.testnets", "Directory to store initialization data for the testnet")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(sdkserver.FlagMinGasPrices, fmt.Sprintf("0.000006%s", settluscfg.BaseDenom), "Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum")
-	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.EthSecp256k1Type), "Key signing algorithm to generate keys for")
+	cmd.Flags().String(flags.FlagKeyType, string(hd.EthSecp256k1Type), "Key signing algorithm to generate keys for")
 }
 
 // NewTestnetCmd creates a root testnet command with subcommands to run an in-process testnet or initialize
@@ -145,7 +145,7 @@ Example:
 			args.nodeDaemonHome, _ = cmd.Flags().GetString(flagNodeDaemonHome)
 			args.startingIPAddress, _ = cmd.Flags().GetString(flagStartingIPAddress)
 			args.numValidators, _ = cmd.Flags().GetInt(flagNumValidators)
-			args.algo, _ = cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			args.algo, _ = cmd.Flags().GetString(flags.FlagKeyType)
 
 			return initTestnetFiles(clientCtx, cmd, serverCtx.Config, mbm, genBalIterator, args)
 		},
@@ -178,7 +178,7 @@ Example:
 			args.chainID, _ = cmd.Flags().GetString(flags.FlagChainID)
 			args.minGasPrices, _ = cmd.Flags().GetString(sdkserver.FlagMinGasPrices)
 			args.numValidators, _ = cmd.Flags().GetInt(flagNumValidators)
-			args.algo, _ = cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			args.algo, _ = cmd.Flags().GetString(flags.FlagKeyType)
 			args.enableLogging, _ = cmd.Flags().GetBool(flagEnableLogging)
 			args.rpcAddress, _ = cmd.Flags().GetString(flagRPCAddress)
 			args.apiAddress, _ = cmd.Flags().GetString(flagAPIAddress)
@@ -313,9 +313,9 @@ func initTestnetFiles(
 			sdk.NewCoin(settluscfg.BaseDenom, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-			sdk.OneInt(),
-			sdk.ZeroInt(),
-			false,
+			math.OneInt(),
+			math.ZeroInt(),
+			sdk.ZeroDec(),
 		)
 		if err != nil {
 			return err
@@ -417,9 +417,6 @@ func initGenFiles(
 	var distGenState disttypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[disttypes.ModuleName], &distGenState)
 
-	distGenState.Params.BaseProposerReward = sdk.MustNewDecFromStr("0")
-	distGenState.Params.BonusProposerReward = sdk.MustNewDecFromStr("0")
-
 	appGenState[disttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&distGenState)
 
 	var stakingGenState stakingtypes.GenesisState
@@ -431,13 +428,8 @@ func initGenFiles(
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	var govGenState govv1.GenesisState
-	newPeriod := time.Minute * 3
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
 
-	govGenState.DepositParams.MaxDepositPeriod = &newPeriod
-	govGenState.VotingParams.VotingPeriod = &newPeriod
-	govGenState.DepositParams.MinDeposit[0].Amount = sdk.NewInt(1000)
-	govGenState.DepositParams.MinDeposit[0].Denom = coinDenom
 	appGenState[govtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&govGenState)
 
 	var mintGenState minttypes.GenesisState
@@ -507,7 +499,8 @@ func collectGenFiles(
 			return err
 		}
 
-		nodeAppState, err := genutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig, nodeConfig, initCfg, *genDoc, genBalIterator)
+		nodeAppState, err := genutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig,
+			nodeConfig, initCfg, *genDoc, genBalIterator, genutiltypes.DefaultMessageValidator)
 		if err != nil {
 			return err
 		}

@@ -12,10 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
+	"github.com/evmos/evmos/v19/encoding"
+	feemarkettypes "github.com/evmos/evmos/v19/x/feemarket/types"
+
 	"github.com/settlus/chain/app"
-	"github.com/settlus/chain/evmos/crypto/ethsecp256k1"
-	"github.com/settlus/chain/evmos/encoding"
-	feemarkettypes "github.com/settlus/chain/evmos/x/feemarket/types"
 	"github.com/settlus/chain/testutil"
 	"github.com/settlus/chain/utils"
 )
@@ -27,7 +28,7 @@ type AnteTestSuite struct {
 
 	ctx       sdk.Context
 	clientCtx client.Context
-	app       *app.App
+	app       *app.SettlusApp
 	denom     string
 }
 
@@ -38,7 +39,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	consAddress := sdk.ConsAddress(privCons.PubKey().Address())
 
 	isCheckTx := false
-	suite.app = app.Setup(isCheckTx, feemarkettypes.DefaultGenesisState())
+	suite.app = app.Setup(isCheckTx, feemarkettypes.DefaultGenesisState(), utils.MainnetChainID)
 	suite.Require().NotNil(suite.app.AppCodec())
 
 	header := testutil.NewHeader(

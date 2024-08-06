@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine as builder
+FROM golang:1.22.5-alpine as builder
 
 ENV CGO_ENABLED=1 GO111MODULE=on GOOS=linux
 
@@ -15,12 +15,13 @@ RUN go mod download
 
 # Dockerfile Cross-Compilation Guide
 # https://www.docker.com/blog/faster-multi-platform-builds-dockerfile-cross-compilation-guide
-ARG TARGETOS TARGETARCH
+ARG TARGETOS
+ARG TARGETARCH
 
 # install simapp, remove packages
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH make build
 
-FROM alpine:3
+FROM alpine:3.20
 
 EXPOSE 26656 26657 1317 9090 8545
 
