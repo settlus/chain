@@ -1,10 +1,13 @@
 package v1
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
@@ -27,6 +30,7 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	ak authkeeper.AccountKeeper,
 	ck consensuskeeper.Keeper,
 	clientKeeper ibctmmigrations.ClientKeeper,
 	pk paramskeeper.Keeper,
@@ -80,7 +84,31 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		if err := MigrateFeeCollector(ak, ctx); err != nil {
+			return nil, err
+		}
+
 		logger.Debug("running module migrations ...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+func MigrateFeeCollector(ak authkeeper.AccountKeeper, ctx sdk.Context) error {
+	feeCollectorModuleAccount := ak.GetModuleAccount(ctx, authtypes.FeeCollectorName)
+	if feeCollectorModuleAccount == nil {
+		return fmt.Errorf("fee collector module account not found")
+	}
+
+	modAcc, ok := feeCollectorModuleAccount.(*authtypes.ModuleAccount)
+	if !ok {
+		return fmt.Errorf("fee collector module account is not a module account")
+	}
+
+	// Create a new FeeCollector module account with the same address and balance as the old one.
+	newFeeCollectorModuleAccount := authtypes.NewModuleAccount(modAcc.BaseAccount, authtypes.FeeCollectorName, authtypes.Burner)
+
+	// Override the FeeCollector module account in the auth keeper.
+	ak.SetModuleAccount(ctx, newFeeCollectorModuleAccount)
+
+	return nil
 }

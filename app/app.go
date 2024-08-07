@@ -487,7 +487,7 @@ func (app *SettlusApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v1.UpgradeName,
 		v1.CreateUpgradeHandler(
-			app.mm, app.configurator, app.ConsensusParamsKeeper, app.IBCKeeper.ClientKeeper, app.ParamsKeeper, app.appCodec,
+			app.mm, app.configurator, app.AccountKeeper, app.ConsensusParamsKeeper, app.IBCKeeper.ClientKeeper, app.ParamsKeeper, app.appCodec,
 		),
 	)
 }
