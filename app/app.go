@@ -81,6 +81,8 @@ func init() {
 
 	// manually update the power reduction by replacing micro (u) -> atto (a) evmos
 	sdk.DefaultPowerReduction = evmostypes.PowerReduction
+	// Constant reward is true to follow Settlus reward distribution rules
+	sdk.ConstantReward = true
 	// modify fee market parameter defaults through global
 	feemarkettypes.DefaultMinGasPrice = evmosapp.MainnetMinGasPrices
 	feemarkettypes.DefaultMinGasMultiplier = evmosapp.MainnetMinGasMultiplier
