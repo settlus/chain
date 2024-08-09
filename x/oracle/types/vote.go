@@ -41,6 +41,15 @@ func BlockDataToVoteData(bd *BlockData) []*VoteData {
 	}
 }
 
+func OwnershipDataToVoteData(od *) []*VoteData {
+	return []*VoteData{
+		{
+			Topic: OracleTopic_OWNERSHIP,
+			Data:  []string{fmt.Sprintf("%s:%s", od.ChainId, od.Owner)},
+		},
+	}
+}
+
 // IsLastBlockOfSlashWindow returns true if we are at the last block of the slash slashWindow
 func IsLastBlockOfSlashWindow(ctx sdk.Context, slashWindow uint64) bool {
 	if slashWindow == 0 {
