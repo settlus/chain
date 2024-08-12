@@ -88,7 +88,7 @@ func StringToOwnershipData(voteString string) (ctypes.Nft, ctypes.HexAddressStri
 		return ctypes.Nft{}, "", fmt.Errorf("invalid nftId: %s", data[0])
 	}
 
-	owner := ctypes.NoramlizeHexAddress(data[1])
+	owner := ctypes.NormalizeHexAddress(data[1])
 
 	return nft, owner, err
 }

@@ -14,7 +14,7 @@ func NewHexAddrFromBytes(addr []byte) HexAddressString {
 	return HexAddressString(common.BytesToAddress(addr).Hex())
 }
 
-func NoramlizeHexAddress(addr string) HexAddressString {
+func NormalizeHexAddress(addr string) HexAddressString {
 	return HexAddressString(common.HexToAddress(addr).Hex())
 }
 
