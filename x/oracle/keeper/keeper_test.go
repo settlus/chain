@@ -157,7 +157,7 @@ func (suite *OracleTestSuite) NewValidator(amt sdkmath.Int) *stakingtypes.MsgCre
 		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		sdkmath.OneInt(),
 		sdkmath.ZeroInt(),
-		sdk.ZeroDec(),
+		false,
 	)
 	suite.Require().NoError(err)
 	return msgCreate
@@ -523,7 +523,7 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 			s.Equal(s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl"), sdk.ZeroDec())
 
 			for _, idx := range tt.probonoIndex {
-				s.validators[idx].ProbonoRate = sdk.OneDec()
+				s.validators[idx].Probono = true
 				s.validators[idx] = stakingkeeper.TestingUpdateValidator(s.app.StakingKeeper, s.ctx, s.validators[idx], true)
 			}
 
@@ -533,9 +533,9 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 			s.NoError(err)
 
 			for _, validator := range s.validators {
-				if validator.ProbonoRate.Equal(sdk.OneDec()) {
+				if validator.IsProbono() {
 					probonoRewards = probonoRewards.Add(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"))
-					validator.ProbonoRate = sdk.ZeroDec()
+					validator.Probono = false
 					continue
 				}
 				rewards := s.app.DistrKeeper.GetValidatorCurrentRewards(s.ctx, validator.GetOperator())
