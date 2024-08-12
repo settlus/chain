@@ -9,10 +9,6 @@ const (
 
 	// RouterKey defines the module's message routing key
 	RouterKey = ModuleName
-
-	// TransientKey is the key to access the Oracle transient store, that is reset
-	// during the Commit phase.
-	TransientKey = "transient_" + ModuleName
 )
 
 var (
@@ -22,8 +18,6 @@ var (
 	AggregatePrevoteKeyPrefix = []byte{0x03}
 	AggregateVoteKeyPrefix    = []byte{0x04}
 	RoundKeyPrefix            = []byte{0x05}
-
-	CurrentRoundBytesTransientKeyPrefix = []byte{0x00}
 )
 
 func KeyPrefix(p string) []byte {

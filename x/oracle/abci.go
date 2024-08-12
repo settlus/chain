@@ -29,8 +29,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 		return
 	}
 
-	logger := k.Logger(ctx)
-
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
 	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
 	defer iterator.Close()
@@ -89,6 +87,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// distribute rewards to winners
 	if err := k.RewardBallotWinners(ctx, validatorClaimMap); err != nil {
+		logger := k.Logger(ctx)
 		logger.Error("failed to distribute rewards", "error", err)
 	}
 
