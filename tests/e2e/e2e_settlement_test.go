@@ -211,29 +211,29 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 	})
 	s.Require().True(pass)
 
-	//pass = s.Run("record_internal_nft_revenue", func() {
-	//	requestId := NewReqId()
-	//	s.execRecord(s.admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
-	//
-	//	utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
-	//	s.Require().NoError(err)
-	//	s.Require().Equal(common.FromHex(internalNftOwner), utxr.Recipients[0].Address.Bytes())
-	//	s.Require().Equal(revenue, utxr.Amount)
-	//
-	//	beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
-	//	s.Require().NoError(err)
-	//
-	//	s.Require().Eventually(
-	//		func() bool {
-	//			afterBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
-	//			s.Require().NoError(err)
-	//			return afterBalance-beforeBalance == revenue.Amount.Uint64()
-	//		},
-	//		time.Minute,
-	//		2*time.Second,
-	//	)
-	//})
-	//s.Require().True(pass)
+	pass = s.Run("record_internal_nft_revenue", func() {
+		requestId := NewReqId()
+		s.execRecord(s.admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
+
+		utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
+		s.Require().NoError(err)
+		s.Require().Equal(common.FromHex(internalNftOwner), utxr.Recipients[0].Address.Bytes())
+		s.Require().Equal(revenue, utxr.Amount)
+
+		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
+		s.Require().NoError(err)
+
+		s.Require().Eventually(
+			func() bool {
+				afterBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
+				s.Require().NoError(err)
+				return afterBalance-beforeBalance == revenue.Amount.Uint64()
+			},
+			time.Minute,
+			2*time.Second,
+		)
+	})
+	s.Require().True(pass)
 
 	pass = s.Run("record_external_nft_revenue", func() {
 		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)
