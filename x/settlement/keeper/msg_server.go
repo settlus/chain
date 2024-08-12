@@ -53,8 +53,8 @@ func (k msgServer) Record(goCtx context.Context, msg *types.MsgRecord) (*types.M
 	}
 
 	payoutBlock := uint64(ctx.BlockHeight())
-	contractAddr := ctypes.NoramlizeHexAddress(msg.ContractAddress)
-	tokenId := ctypes.NoramlizeHexAddress(msg.TokenIdHex)
+	contractAddr := ctypes.NormalizeHexAddress(msg.ContractAddress)
+	tokenId := ctypes.NormalizeHexAddress(msg.TokenIdHex)
 	utxrId, err := k.CreateUTXR(
 		ctx,
 		msg.TenantId,
