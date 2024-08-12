@@ -313,7 +313,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 		}
 
 		if !rewardCoins.IsZero() {
-			if receiverVal.ProbonoRate.GT(sdk.ZeroDec()) {
+			if receiverVal.IsProbono() {
 				probonoReward = probonoReward.Add(rewardCoins...)
 				continue
 			}
