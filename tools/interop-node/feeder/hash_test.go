@@ -35,17 +35,17 @@ func Test_GeneratePrevoteHash(t *testing.T) {
 		{
 			name: "single chain",
 			args: args{
-				blockDataString: []string{"1:123:0x123"},
+				blockDataString: []string{"1/0x123/0x1"},
 				salt:            "foo",
 			},
-			want: "01A164031A468DE61267F23A6BD7642AA33422C983D0E298085AEE1244A51F40",
+			want: "8D09B5CA5B1208D79CD5A507187E762EE32B7403ECE64F313B6F9F071D10AEB2",
 		}, {
 			name: "multiple chains",
 			args: args{
-				blockDataString: []string{"1:123:0x123", "2:456:0x456"},
+				blockDataString: []string{"1/0x123/0x1", "2/0x456/0x2"},
 				salt:            "bar",
 			},
-			want: "1776F5F1BCACEFC9E75DA6623C9C9B1AA6DDF9831DBDEC3453D0C69B380FBE97",
+			want: "7E36F2C54F6354F0B1F2D0B2FE71AF21F131D08E2B092A03840CAC9EEC47BF01",
 		},
 	}
 
@@ -53,7 +53,7 @@ func Test_GeneratePrevoteHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			voteData := types.VoteDataArr{
 				{
-					Topic: oracletypes.OracleTopic_BLOCK,
+					Topic: oracletypes.OracleTopic_OWNERSHIP,
 					Data:  tt.args.blockDataString,
 				},
 			}
