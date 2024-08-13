@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"crypto/rand"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,20 +10,15 @@ import (
 func (s *IntegrationTestSuite) TestBankTokenTransfer() {
 	s.Run("send_setl_between_accounts", func() {
 		var err error
-		sender := treasuryAddr
-		recipient := "settlus10z74aw2m660tuezej4w5zr35zye6684t5ejjmk"
+		sender := bobAddr
+		recipient := makeRandomAccAddress()
 
-		var (
-			beforeSenderASetlBalance    sdk.Coin
-			beforeRecipientASetlBalance sdk.Coin
-		)
+		var beforeSenderASetlBalance sdk.Coin
+		beforeRecipientASetlBalance := sdk.NewCoin(asetlDenom, sdk.NewInt(0))
 
 		s.Require().Eventually(
 			func() bool {
 				beforeSenderASetlBalance, err = getSpecificBalance(chainAPIEndpoint, sender, asetlDenom)
-				s.Require().NoError(err)
-
-				beforeRecipientASetlBalance, err = getSpecificBalance(chainAPIEndpoint, recipient, asetlDenom)
 				s.Require().NoError(err)
 
 				return true
@@ -51,4 +47,10 @@ func (s *IntegrationTestSuite) TestBankTokenTransfer() {
 			2*time.Second,
 		)
 	})
+}
+
+func makeRandomAccAddress() string {
+	recipientBytes := make([]byte, 20)
+	_, _ = rand.Read(recipientBytes)
+	return sdk.AccAddress(recipientBytes).String()
 }

@@ -20,7 +20,8 @@ const (
 
 var (
 	standardFees = sdk.NewCoin(asetlDenom, sdk.NewInt(300000000000000))
-	treasuryAddr = "settlus12g8w5dr5jyncct8jwdxwsy2g9ktdrjjlcs5f0a"
+	faucetAddr   = "settlus10z74aw2m660tuezej4w5zr35zye6684t5ejjmk" // faucet address specified in the config.yml
+	bobAddr      = "settlus1vfhltz7wr4ca862xd0azjuap4tupwgyzk7qukp" // bob address specified in the config.yml
 )
 
 type IntegrationTestSuite struct {

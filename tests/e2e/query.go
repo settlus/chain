@@ -87,7 +87,7 @@ func queryUtxr(endpoint string, tenantId uint64, requestId string) (*settlementt
 
 	var utxrResp settlementtypes.QueryUTXRResponse
 	if err := cdc.UnmarshalJSON(body, &utxrResp); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w, %v", err, body)
 	}
 
 	return &utxrResp.Utxr, nil
@@ -102,6 +102,10 @@ func querySettlusAllBalances(endpoint, addr string) (sdk.Coins, error) {
 	var balancesResp banktypes.QueryAllBalancesResponse
 	if err := cdc.UnmarshalJSON(body, &balancesResp); err != nil {
 		return nil, err
+	}
+
+	if balancesResp.Balances == nil || len(balancesResp.Balances) == 0 {
+		return nil, fmt.Errorf("balances are nil or empty for address %s", addr)
 	}
 
 	return balancesResp.Balances, nil
