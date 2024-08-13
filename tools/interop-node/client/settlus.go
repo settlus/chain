@@ -207,7 +207,6 @@ func (sc *SettlusClient) GetLatestHeight(ctx context.Context) (int64, error) {
 	for retryCount := 0; retryCount < HeightRetryCount; retryCount++ {
 		latestBlockHeight, err := sc.latestHeight(ctx)
 		if err == nil {
-			sc.logger.Debug("GetLatestHeight", "blocknumber", latestBlockHeight)
 			return latestBlockHeight, nil
 		}
 
