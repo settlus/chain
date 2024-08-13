@@ -31,7 +31,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 		BeforeEach(func() {
 		})
 		It("Less than the threshold signs, block data consensus fails", func() {
-			oracle.BeginBlocker(s.ctx, *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx, *s.app.OracleKeeper)
 
 			salt := "1"
 			validator := s.validators[0]
@@ -44,7 +44,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			Expect(bd).To(BeNil())
 		})
 		It("All validators sign same block data, block data consensus succeeds", func() {
-			oracle.BeginBlocker(s.ctx, *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx, *s.app.OracleKeeper)
 
 			// All validators sign
 			for i, validator := range s.validators {
@@ -60,7 +60,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			Expect(*bd).To(Equal(types.BlockData{ChainId: "1", BlockNumber: 100, BlockHash: blockHash}))
 		})
 		It("Tie between two block data, block data consensus succeeds", func() {
-			oracle.BeginBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod), *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod-1), *s.app.OracleKeeper)
 
 			// Two validators sign block number 100
 			for i, validator := range s.validators[:2] {
@@ -82,7 +82,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			Expect(bd).To(BeNil())
 		})
 		It("Abstain validator's power is majority, block data consensus fails", func() {
-			oracle.BeginBlocker(s.ctx.WithBlockHeight(2), *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(1), *s.app.OracleKeeper)
 
 			// One validator abstains
 			abstainValidator := s.validators[0]
@@ -105,7 +105,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 
 	Context("Test oracle vote period", func() {
 		BeforeEach(func() {
-			oracle.BeginBlocker(s.ctx.WithBlockHeight(1), *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(0), *s.app.OracleKeeper)
 
 			for i, validator := range s.validators {
 				salt := fmt.Sprintf("%d", i)
@@ -114,7 +114,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			oracle.EndBlocker(s.ctx.WithBlockHeight(1), *s.app.OracleKeeper)
 		})
 		It("Vote period is 10, prevote is submitted at block 1, vote is submitted at block 10, block data is updated at block 19", func() {
-			oracle.BeginBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod), *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod-1), *s.app.OracleKeeper)
 
 			for i, validator := range s.validators {
 				salt := fmt.Sprintf("%d", i)
@@ -129,7 +129,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			Expect(*bd).To(Equal(types.BlockData{ChainId: "1", BlockNumber: 100, BlockHash: blockHash}))
 		})
 		It("Vote period is 10, prevote is submitted at block 1, vote is submitted at block 11, block data is not updated at block 12", func() {
-			oracle.BeginBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod+1), *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(DefaultVotePeriod), *s.app.OracleKeeper)
 
 			for i, validator := range s.validators {
 				salt := fmt.Sprintf("%d", i)
@@ -150,7 +150,7 @@ var _ = Describe("Oracle module integration tests", Ordered, func() {
 			Expect(prevotes.AggregatePrevotes).To(BeNil())
 		})
 		It("Vote period is 10, send prevote at block 1 and another at block 2. Send vote at block 10. Block data is updated at block 19", func() {
-			oracle.BeginBlocker(s.ctx.WithBlockHeight(2), *s.app.OracleKeeper)
+			oracle.EndBlocker(s.ctx.WithBlockHeight(1), *s.app.OracleKeeper)
 
 			voteData := types.BlockDataToVoteData(&types.BlockData{ChainId: "1", BlockNumber: 101, BlockHash: blockHash})
 

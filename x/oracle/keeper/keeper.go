@@ -92,9 +92,9 @@ func (k Keeper) SetCurrentRoundInfo(ctx sdk.Context, roundInfo *types.RoundInfo)
 	store.Set(types.RoundKeyPrefix, bz)
 }
 
-func (k Keeper) CalculateCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
+func (k Keeper) CalculateNextRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	params := k.GetParams(ctx)
-	blockHeight := ctx.BlockHeight()
+	blockHeight := ctx.BlockHeight() + 1
 	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
 
 	oracleData := []*types.OracleData{}

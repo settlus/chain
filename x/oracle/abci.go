@@ -11,15 +11,12 @@ import (
 	"github.com/settlus/chain/x/oracle/voteprocessor"
 )
 
-// BeginBlocker runs at the beginning of every block
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
-	roundInfo := k.CalculateCurrentRoundInfo(ctx)
-	k.SetCurrentRoundInfo(ctx, roundInfo)
-}
-
 // EndBlocker runs at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
+
+	roundInfo := k.CalculateNextRoundInfo(ctx)
+	k.SetCurrentRoundInfo(ctx, roundInfo)
 
 	params := k.GetParams(ctx)
 
