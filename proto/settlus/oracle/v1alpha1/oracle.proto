@@ -31,6 +31,11 @@ enum OracleTopic {
   OWNERSHIP = 1;
 }
 
+message OracleData {
+  OracleTopic topic = 1;
+  repeated string sources = 2;
+}
+
 message VoteData {
   OracleTopic topic = 1;
   repeated string data = 2;
@@ -66,7 +71,7 @@ message RoundInfo {
   uint64 id = 1;
   int64 prevote_end = 2;
   int64 vote_end = 3;
-  repeated string ownerships = 4;
+  repeated OracleData oracle_data = 4;
   // UNIX time in milliseconds
   int64 timestamp = 5;
 }

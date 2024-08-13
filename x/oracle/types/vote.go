@@ -32,20 +32,11 @@ func GetAggregateVoteHash(voteData []*VoteData, salt string) (string, error) {
 	return fmt.Sprintf("%X", bs), nil
 }
 
-func BlockDataToVoteData(bd *BlockData) []*VoteData {
-	return []*VoteData{
-		{
-			Topic: OralceTopic_BLOCK,
-			Data:  []string{fmt.Sprintf("%s:%d/%s", bd.ChainId, bd.BlockNumber, bd.BlockHash)},
-		},
-	}
-}
-
-func OwnershipDataToVoteData(od *) []*VoteData {
+func OwnershipDataToVoteData(chainId, contractAddr, tokenId string) []*VoteData {
 	return []*VoteData{
 		{
 			Topic: OracleTopic_OWNERSHIP,
-			Data:  []string{fmt.Sprintf("%s:%s", od.ChainId, od.Owner)},
+			Data:  []string{fmt.Sprintf("%s/%s/%s", chainId, contractAddr, tokenId)},
 		},
 	}
 }

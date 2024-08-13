@@ -50,12 +50,8 @@ func (suite *OracleTestSuite) TestKeeper_AggregatePrevotes() {
 
 func (suite *OracleTestSuite) TestKeeper_AggregateVote() {
 	expectedAggregateVote := types.AggregateVote{
-		VoteData: types.BlockDataToVoteData(&types.BlockData{
-			ChainId:     "1",
-			BlockNumber: 100,
-			BlockHash:   "foobar",
-		}),
-		Voter: s.validators[0].GetOperator().String(),
+		VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0"),
+		Voter:    s.validators[0].GetOperator().String(),
 	}
 	s.app.OracleKeeper.SetAggregateVote(s.ctx, expectedAggregateVote)
 	actualAggregateVote, err := s.app.OracleKeeper.AggregateVote(s.ctx, &types.QueryAggregateVoteRequest{
@@ -68,23 +64,12 @@ func (suite *OracleTestSuite) TestKeeper_AggregateVote() {
 func (suite *OracleTestSuite) TestKeeper_AggregateVotes() {
 	expectedAggregateVotes := []types.AggregateVote{
 		{
-			VoteData: types.BlockDataToVoteData(&types.BlockData{
-				ChainId:     "1",
-				BlockNumber: 100,
-				BlockHash:   "foobar",
-			},
-			),
-			Voter: s.validators[0].GetOperator().String(),
+			VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0"),
+			Voter:    s.validators[0].GetOperator().String(),
 		},
 		{
-			VoteData: types.BlockDataToVoteData(&types.BlockData{
-
-				ChainId:     "2",
-				BlockNumber: 200,
-				BlockHash:   "barbaz",
-			},
-			),
-			Voter: s.validators[1].GetOperator().String(),
+			VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0"),
+			Voter:    s.validators[1].GetOperator().String(),
 		},
 	}
 	for _, aggregateVote := range expectedAggregateVotes {

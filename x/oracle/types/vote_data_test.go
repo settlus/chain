@@ -3,58 +3,10 @@ package types
 import (
 	"testing"
 
-	ctypes "github.com/settlus/chain/types"
 	"github.com/stretchr/testify/require"
+
+	ctypes "github.com/settlus/chain/types"
 )
-
-func TestParseBlockDataString(t *testing.T) {
-	tests := []struct {
-		name         string
-		blockData    BlockData
-		blockDatastr string
-		wantErr      bool
-	}{
-		{
-			name: "valid block data string",
-			blockData: BlockData{
-				ChainId:     "1",
-				BlockNumber: 100,
-				BlockHash:   "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
-			},
-			blockDatastr: "1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
-			wantErr:      false,
-		}, {
-			name:         "invalid block data string: no colon",
-			blockData:    BlockData{},
-			blockDatastr: "1100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd32",
-			wantErr:      true,
-		},
-		{
-			name:         "invalid block data string: no slash",
-			blockData:    BlockData{},
-			blockDatastr: "1:100315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd32",
-			wantErr:      true,
-		},
-		{
-			name:         "invalid block data string: non-integer block number",
-			blockData:    BlockData{},
-			blockDatastr: "1:abc:315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",
-			wantErr:      true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, bd, err := StringToBlockData(tt.blockDatastr)
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.blockData, bd)
-			}
-		})
-	}
-}
 
 func TestStringToOwnershipData(t *testing.T) {
 	type Result struct {

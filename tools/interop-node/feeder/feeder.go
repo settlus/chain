@@ -114,15 +114,22 @@ func (feeder *Feeder) HandlePrevote(ctx context.Context) error {
 	}
 
 	voteData := types.VoteDataArr{}
-	nftDataStr, err := feeder.gatherNftOwnerDataString(round.Ownerships, uint64(round.Timestamp))
-	if err != nil {
-		feeder.abstainRoundId = round.Id
-		return err
+	for _, od := range round.OracleData {
+		switch od.Topic {
+		case oracletypes.OracleTopic_OWNERSHIP:
+			nftDataStr, err := feeder.gatherNftOwnerDataString(od.Sources, uint64(round.Timestamp))
+			if err != nil {
+				feeder.abstainRoundId = round.Id
+				return err
+			}
+			voteData = append(voteData, &oracletypes.VoteData{
+				Topic: oracletypes.OracleTopic_OWNERSHIP,
+				Data:  nftDataStr,
+			})
+		default:
+			feeder.logger.Debug("unsupported oracle topic", "topic", od.Topic)
+		}
 	}
-	voteData = append(voteData, &oracletypes.VoteData{
-		Topic: oracletypes.OralceTopic_OWNERSHIP,
-		Data:  nftDataStr,
-	})
 
 	salt, err := GenerateSalt()
 	if err != nil {

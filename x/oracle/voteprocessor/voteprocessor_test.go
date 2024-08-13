@@ -33,7 +33,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 			Voter: addrs[0].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_OWNERSHIP,
+					Topic: types.OracleTopic_OWNERSHIP,
 					Data:  []string{"1/0x123/0x0:0x777"},
 				},
 			},
@@ -42,7 +42,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 			Voter: addrs[1].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_OWNERSHIP,
+					Topic: types.OracleTopic_OWNERSHIP,
 					Data:  []string{"1/0x123/0x0:0x777"},
 				},
 			},
@@ -51,7 +51,7 @@ func TestOwnershipVoteProcessor(t *testing.T) {
 			Voter: addrs[2].String(),
 			VoteData: []*types.VoteData{
 				{
-					Topic: types.OralceTopic_OWNERSHIP,
+					Topic: types.OracleTopic_OWNERSHIP,
 					Data:  []string{"1/0x123/0x0:0x666"},
 				},
 			},

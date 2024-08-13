@@ -97,18 +97,21 @@ func (k Keeper) CalculateNextRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	blockHeight := ctx.BlockHeight() + 1
 	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
 
+	var oracleData []*types.OracleData
+	oracleData = appendIfValid(oracleData, k.ownershipOracleData(ctx, params.VotePeriod))
+
 	roundInfo := types.RoundInfo{
 		Id:         types.CalculateRoundId(blockHeight, params.VotePeriod),
 		PrevoteEnd: prevoteEnd,
 		VoteEnd:    voteEnd,
-		Ownerships: k.ownershipOracleData(ctx, params.VotePeriod),
+		OracleData: oracleData,
 		Timestamp:  ctx.BlockHeader().Time.Add(-BlockTimestampMargin).UnixMilli(),
 	}
 
 	return &roundInfo
 }
 
-func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) []string {
+func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) *types.OracleData {
 	// We will retrieve all NFTs that need to be verified collected until the last round.
 	// Because list of nfts in the current round can be increased as the round progresses
 	startHeight := types.CalculateRoundStartHeight(ctx.BlockHeight(), votePeriod)
@@ -118,10 +121,21 @@ func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) []string
 		sources[i] = nft.FormatString()
 	}
 
-	return sources
+	return &types.OracleData{
+		Topic:   types.OracleTopic_OWNERSHIP,
+		Sources: sources,
+	}
 }
 
 func (k Keeper) FillSettlementRecipients(ctx sdk.Context, nftOwnership map[ctypes.Nft]ctypes.HexAddressString) {
 	startHeight := types.CalculateRoundStartHeight(ctx.BlockHeight(), k.GetParams(ctx).VotePeriod)
 	k.SettlementKeeper.SetRecipients(ctx, nftOwnership, startHeight-1)
+}
+
+func appendIfValid(slice []*types.OracleData, elem *types.OracleData) []*types.OracleData {
+	if len(elem.Sources) == 0 {
+		return slice
+	}
+
+	return append(slice, elem)
 }

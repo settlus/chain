@@ -12,21 +12,12 @@ const (
 )
 
 var (
-	BlockDataKeyPrefix        = []byte{0x00}
 	FeederDelegationKeyPrefix = []byte{0x01}
 	MissCountKeyPrefix        = []byte{0x02}
 	AggregatePrevoteKeyPrefix = []byte{0x03}
 	AggregateVoteKeyPrefix    = []byte{0x04}
 	RoundKeyPrefix            = []byte{0x05}
 )
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
-
-func BlockDataKey(chainId string) []byte {
-	return append(BlockDataKeyPrefix, KeyPrefix(chainId)...)
-}
 
 func FeederDelegationKey(validatorAddress string) []byte {
 	return append(FeederDelegationKeyPrefix, validatorAddress...)

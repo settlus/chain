@@ -4,6 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/settlus/chain/x/oracle/keeper"
 	"github.com/settlus/chain/x/oracle/types"
 )
@@ -57,11 +58,11 @@ func (suite *OracleTestSuite) TestMsgServer_Vote() {
 	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
 	voteData := []*types.VoteData{
 		{
-			Topic: types.OralceTopic_BLOCK,
+			Topic: types.OracleTopic_BLOCK,
 			Data:  blockStr,
 		},
 		{
-			Topic: types.OralceTopic_OWNERSHIP,
+			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  ownershipStr,
 		},
 	}
@@ -88,11 +89,11 @@ func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_with_different
 	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
 	voteData := []*types.VoteData{
 		{
-			Topic: types.OralceTopic_BLOCK,
+			Topic: types.OracleTopic_BLOCK,
 			Data:  blockStr,
 		},
 		{
-			Topic: types.OralceTopic_OWNERSHIP,
+			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  ownershipStr,
 		},
 	}
@@ -116,11 +117,11 @@ func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_if_exceed_vote
 	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
 	voteData := []*types.VoteData{
 		{
-			Topic: types.OralceTopic_BLOCK,
+			Topic: types.OracleTopic_BLOCK,
 			Data:  blockStr,
 		},
 		{
-			Topic: types.OralceTopic_OWNERSHIP,
+			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  ownershipStr,
 		},
 	}
@@ -200,11 +201,11 @@ func (suite *OracleTestSuite) doPrevote(msgSvr types.MsgServer, voteData []*type
 func buildVoteData(blockStr, ownershipStr string) []*types.VoteData {
 	return []*types.VoteData{
 		{
-			Topic: types.OralceTopic_BLOCK,
+			Topic: types.OracleTopic_BLOCK,
 			Data:  []string{blockStr},
 		},
 		{
-			Topic: types.OralceTopic_OWNERSHIP,
+			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  []string{ownershipStr},
 		},
 	}

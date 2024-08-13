@@ -215,7 +215,7 @@ func (suite *OracleTestSuite) TestKeeper_GetSetDeleteVote() {
 	vote := types.AggregateVote{
 		VoteData: []*types.VoteData{
 			{
-				Topic: types.OralceTopic_BLOCK,
+				Topic: types.OracleTopic_BLOCK,
 				Data:  []string{"1:100:foobar"},
 			},
 		},
@@ -541,7 +541,7 @@ func (suite *OracleTestSuite) TestKeeper_ClearBallots() {
 				s.app.OracleKeeper.SetAggregateVote(s.ctx, types.AggregateVote{
 					VoteData: []*types.VoteData{
 						{
-							Topic: types.OralceTopic_BLOCK,
+							Topic: types.OracleTopic_BLOCK,
 							Data:  []string{"1:100:foobar"},
 						},
 					},

@@ -25,7 +25,7 @@ func NewOwnershipVoteProcessor(
 	thresholdVotes math.Int) *VoteProcessor[ctypes.Nft, ctypes.HexAddressString] {
 
 	return &VoteProcessor[ctypes.Nft, ctypes.HexAddressString]{
-		topic:          types.OralceTopic_OWNERSHIP,
+		topic:          types.OracleTopic_OWNERSHIP,
 		aggregateVotes: aggregateVotes,
 		thresholdVotes: thresholdVotes,
 		dataConverter:  types.StringToOwnershipData,

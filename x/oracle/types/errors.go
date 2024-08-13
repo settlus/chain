@@ -9,7 +9,6 @@ import (
 // x/oracle module sentinel errors
 var (
 	ErrChainNotFound         = errorsmod.Register(ModuleName, 1000, "chain not found")
-	ErrBlockDataNotFound     = errorsmod.Register(ModuleName, 1001, "block data not found")
 	ErrNoVotingPermission    = errorsmod.Register(ModuleName, 1002, "no voting permission")
 	ErrValidatorNotFound     = errorsmod.Register(ModuleName, 1003, "invalid validator")
 	ErrRevealPeriodMissMatch = errorsmod.Register(ModuleName, 1004, "reveal period of submitted vote do not match with registered prevote")
