@@ -186,10 +186,6 @@ func (feeder *Feeder) getOldestBlock(chainId string, timestamp uint64) (oraclety
 	}
 
 	bd, err := sub.GetOldestBlock(timestamp)
-	if err != nil {
-		return oracletypes.BlockData{}, err
-	}
-
 	return oracletypes.BlockData{
 		ChainId:     chainId,
 		BlockNumber: bd.BlockNumber,
