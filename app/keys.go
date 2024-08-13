@@ -67,7 +67,7 @@ func (appKeepers *AppKeepers) GenerateKeys() {
 
 	// Define transient store keys
 	appKeepers.tkeys = sdk.NewTransientStoreKeys(
-		paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, oraclemoduletypes.TransientKey,
+		paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey,
 	)
 
 	// MemKeys are for information that is stored only in RAM.

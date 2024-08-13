@@ -343,7 +343,6 @@ func NewAppKeeper(
 	appKeepers.OracleKeeper = oraclemodulekeeper.NewKeeper(
 		appCodec,
 		appKeepers.keys[oraclemoduletypes.StoreKey],
-		appKeepers.tkeys[oraclemoduletypes.TransientKey],
 		appKeepers.GetSubspace(oraclemoduletypes.ModuleName),
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,

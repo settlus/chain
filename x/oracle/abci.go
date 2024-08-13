@@ -11,15 +11,12 @@ import (
 	"github.com/settlus/chain/x/oracle/voteprocessor"
 )
 
-// BeginBlocker runs at the beginning of every block
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
-	roundInfo := k.CalculateCurrentRoundInfo(ctx)
-	k.SetCurrentRoundInfo(ctx, roundInfo)
-}
-
 // EndBlocker runs at the end of every block
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
+
+	roundInfo := k.CalculateNextRoundInfo(ctx)
+	k.SetCurrentRoundInfo(ctx, roundInfo)
 
 	params := k.GetParams(ctx)
 
@@ -28,8 +25,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 	if ctx.BlockHeight() != voteEnd {
 		return
 	}
-
-	logger := k.Logger(ctx)
 
 	maxValidators := k.StakingKeeper.MaxValidators(ctx)
 	iterator := k.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
@@ -89,6 +84,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// distribute rewards to winners
 	if err := k.RewardBallotWinners(ctx, validatorClaimMap); err != nil {
+		logger := k.Logger(ctx)
 		logger.Error("failed to distribute rewards", "error", err)
 	}
 

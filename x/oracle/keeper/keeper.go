@@ -18,10 +18,9 @@ const BlockTimestampMargin = 15 * time.Second
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeKey     storetypes.StoreKey
-		transientKey storetypes.StoreKey
-		paramstore   paramtypes.Subspace
+		cdc        codec.BinaryCodec
+		storeKey   storetypes.StoreKey
+		paramstore paramtypes.Subspace
 
 		AccountKeeper      types.AccountKeeper
 		BankKeeper         types.BankKeeper
@@ -35,7 +34,7 @@ type (
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey, transientKey storetypes.StoreKey,
+	storeKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 
 	accountKeeper types.AccountKeeper,
@@ -57,10 +56,9 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:          cdc,
-		storeKey:     storeKey,
-		transientKey: transientKey,
-		paramstore:   ps,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		paramstore: ps,
 
 		AccountKeeper:      accountKeeper,
 		BankKeeper:         bankKeeper,
@@ -77,8 +75,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
-	store := ctx.TransientStore(k.transientKey)
-	bz := store.Get(types.CurrentRoundBytesTransientKeyPrefix)
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.RoundKeyPrefix)
 	if len(bz) == 0 {
 		return nil
 	}
@@ -89,14 +87,14 @@ func (k Keeper) GetCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
 }
 
 func (k Keeper) SetCurrentRoundInfo(ctx sdk.Context, roundInfo *types.RoundInfo) {
-	store := ctx.TransientStore(k.transientKey)
+	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(roundInfo)
-	store.Set(types.CurrentRoundBytesTransientKeyPrefix, bz)
+	store.Set(types.RoundKeyPrefix, bz)
 }
 
-func (k Keeper) CalculateCurrentRoundInfo(ctx sdk.Context) *types.RoundInfo {
+func (k Keeper) CalculateNextRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	params := k.GetParams(ctx)
-	blockHeight := ctx.BlockHeight()
+	blockHeight := ctx.BlockHeight() + 1
 	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
 
 	roundInfo := types.RoundInfo{
