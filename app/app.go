@@ -62,10 +62,10 @@ import (
 
 	memiavlstore "github.com/crypto-org-chain/cronos/store"
 
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/settlus/chain/app/ante"
 	"github.com/settlus/chain/app/post"
 	"github.com/settlus/chain/app/upgrades/v1"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/settlus/chain/swagger"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -93,10 +93,8 @@ const (
 	Name = "settlus"
 )
 
-var (
-	// DefaultNodeHome default home directories for the application daemon
-	DefaultNodeHome string
-)
+// DefaultNodeHome default home directories for the application daemon
+var DefaultNodeHome string
 
 var (
 	_ runtime.AppI            = (*SettlusApp)(nil)
@@ -265,7 +263,7 @@ func NewSettlus(
 	app.SetEndBlocker(app.EndBlocker)
 	app.setupUpgradeHandlers()
 	app.setUpgradeStoreLoaders()
-	
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(fmt.Sprintf("failed to load latest version: %s", err))

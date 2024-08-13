@@ -11,11 +11,9 @@ const (
 	UpgradeName = "v2.0.0"
 )
 
-var (
-	StoreUpgrades = store.StoreUpgrades{
-		Added: []string{
-			consensustypes.ModuleName,
-			crisistypes.ModuleName,
-		},
-	}
-)
+var StoreUpgrades = store.StoreUpgrades{
+	Added: []string{
+		consensustypes.ModuleName,
+		crisistypes.ModuleName,
+	},
+}

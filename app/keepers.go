@@ -367,7 +367,7 @@ func NewAppKeeper(
 	// NOTE: app.Erc20Keeper is already initialized elsewhere
 
 	// Override the ICS20 app module
-	//transferModule := transfer.NewAppModule(appKeepers.TransferKeeper)
+	// transferModule := transfer.NewAppModule(appKeepers.TransferKeeper)
 
 	/*
 		Create Transfer Stack
