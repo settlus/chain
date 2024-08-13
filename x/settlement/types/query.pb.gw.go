@@ -555,15 +555,15 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "settlement", "v1alpha1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "settlement", "v1alpha1", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_UTXR_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"settlus", "settlement", "v1alpha1", "utxr", "tenant_id", "request_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_UTXR_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"settlus", "settlement", "v1alpha1", "utxr", "tenant_id", "request_id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_UTXRs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "settlement", "v1alpha1", "utxrs", "tenant_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_UTXRs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "settlement", "v1alpha1", "utxrs", "tenant_id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Tenant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "settlement", "v1alpha1", "tenant", "tenant_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Tenant_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "settlement", "v1alpha1", "tenant", "tenant_id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Tenants_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "settlement", "v1alpha1", "tenants"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Tenants_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "settlement", "v1alpha1", "tenants"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

@@ -182,13 +182,10 @@ func (msg *MsgCreateTenant) ValidateBasic() error {
 
 func NewMsgCreateTenantWithMintableContract(sender string, denom string, payoutPeriod uint64, contractAddress string) *MsgCreateTenantWithMintableContract {
 	msg := &MsgCreateTenantWithMintableContract{
-		Sender:       sender,
-		Denom:        denom,
-		PayoutPeriod: payoutPeriod,
-	}
-
-	if contractAddress != "" {
-		msg.XContractAddress = &MsgCreateTenantWithMintableContract_ContractAddress{ContractAddress: contractAddress}
+		Sender:          sender,
+		Denom:           denom,
+		PayoutPeriod:    payoutPeriod,
+		ContractAddress: contractAddress,
 	}
 
 	return msg
