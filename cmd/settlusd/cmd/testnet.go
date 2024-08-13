@@ -428,6 +428,13 @@ func initGenFiles(
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	var govGenState govv1.GenesisState
+	newPeriod := time.Minute * 2
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
+
+	govGenState.Params.MaxDepositPeriod = &newPeriod
+	govGenState.Params.VotingPeriod = &newPeriod
+	govGenState.Params.MinDeposit[0].Amount = sdk.NewInt(1000)
+	govGenState.Params.MinDeposit[0].Denom = coinDenom
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[govtypes.ModuleName], &govGenState)
 
 	appGenState[govtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&govGenState)
@@ -436,7 +443,7 @@ func initGenFiles(
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[minttypes.ModuleName], &mintGenState)
 
 	mintGenState.Params.MintDenom = coinDenom
-	mintGenState.Params.BlockReward = sdk.NewInt(5000000000000000000)
+	mintGenState.Params.BlockReward = sdk.NewInt(3000000000000000000)
 	appGenState[minttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&mintGenState)
 
 	var crisisGenState crisistypes.GenesisState

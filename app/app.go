@@ -78,9 +78,8 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
-
-	// manually update the power reduction by replacing micro (u) -> atto (a) evmos
-	sdk.DefaultPowerReduction = evmostypes.PowerReduction
+	// Set power reduction
+	sdk.DefaultPowerReduction = sdk.NewIntFromUint64(1000000)
 	// Constant reward is true to follow Settlus reward distribution rules
 	sdk.ConstantReward = true
 	// modify fee market parameter defaults through global
