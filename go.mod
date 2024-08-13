@@ -251,11 +251,11 @@ replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use Settlus flavored Cosmos-SDK https://github.com/settlus/cosmos-sdk/releases
-	github.com/cosmos/cosmos-sdk => /Users/uhyun/scripts/settlus-cosmos
+	github.com/cosmos/cosmos-sdk => github.com/settlus/cosmos-sdk v0.47.12-settlus.2
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 	// use Settlus flavored Evmos
-	github.com/evmos/evmos/v19 => /Users/uhyun/scripts/settlus-evmos
+	github.com/evmos/evmos/v19 => github.com/settlus/evmos/v19 v19.0.0-settlus.3.rc
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 	// use cosmos flavored protobufs
