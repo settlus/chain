@@ -30,7 +30,7 @@ func (s *IntegrationTestSuite) SetupSettlementTestSuite() {
 	admin := "admin" + strconv.Itoa(rand.Intn(10000000000))
 	s.admin = s.execKeyAdd(admin)
 	initialAmount := fmt.Sprintf("%d%s,%d%s", 10000000000000, asetlDenom, 10000000000000, uusdcDenom)
-	s.execBankSend(treasuryAddr, s.admin, initialAmount, standardFees.String())
+	s.execBankSend(faucetAddr, s.admin, initialAmount, standardFees.String())
 	s.Require().EventuallyWithT(
 		func(c *assert.CollectT) {
 			balance, err := getSpecificBalance(chainAPIEndpoint, s.admin, asetlDenom)
@@ -192,14 +192,14 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 		s.Require().EventuallyWithT(
 			func(c *assert.CollectT) {
 				afterTenants, err := queryTenants(chainAPIEndpoint)
-				s.Require().NoError(err)
-				s.Require().Equal(len(beforeTenants)+1, len(afterTenants))
+				require.NoError(c, err)
+				require.Equal(c, len(beforeTenants)+1, len(afterTenants))
 
 				newTenant := afterTenants[len(afterTenants)-1]
-				s.Require().Equal(denom, newTenant.Tenant.Denom)
-				s.Require().Equal(period, int(newTenant.Tenant.PayoutPeriod))
-				s.Require().Equal(types.PayoutMethod_MintContract, newTenant.Tenant.PayoutMethod)
-				s.Require().NotEmpty(newTenant.Tenant.ContractAddress)
+				require.Equal(c, denom, newTenant.Tenant.Denom)
+				require.Equal(c, period, int(newTenant.Tenant.PayoutPeriod))
+				require.Equal(c, types.PayoutMethod_MintContract, newTenant.Tenant.PayoutMethod)
+				require.NotEmpty(c, newTenant.Tenant.ContractAddress)
 
 				tenantId = newTenant.Tenant.Id
 				tenantContractAddr = newTenant.Tenant.ContractAddress
@@ -211,29 +211,37 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 	})
 	s.Require().True(pass)
 
-	//pass = s.Run("record_internal_nft_revenue", func() {
-	//	requestId := NewReqId()
-	//	s.execRecord(s.admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
-	//
-	//	utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
-	//	s.Require().NoError(err)
-	//	s.Require().Equal(common.FromHex(internalNftOwner), utxr.Recipients[0].Address.Bytes())
-	//	s.Require().Equal(revenue, utxr.Amount)
-	//
-	//	beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
-	//	s.Require().NoError(err)
-	//
-	//	s.Require().Eventually(
-	//		func() bool {
-	//			afterBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
-	//			s.Require().NoError(err)
-	//			return afterBalance-beforeBalance == revenue.Amount.Uint64()
-	//		},
-	//		time.Minute,
-	//		2*time.Second,
-	//	)
-	//})
-	//s.Require().True(pass)
+	pass = s.Run("record_internal_nft_revenue", func() {
+		requestId := NewReqId()
+		s.execRecord(s.admin, tenantId, requestId, revenue.String(), chainId, s.internalNftAddr, internalNftId)
+
+		s.Require().EventuallyWithT(
+			func(c *assert.CollectT) {
+				utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
+				require.NoError(c, err)
+				require.Equal(c, 1, len(utxr.Recipients))
+				require.Equal(c, common.FromHex(internalNftOwner), utxr.Recipients[0].Address.Bytes())
+				require.Equal(c, revenue, utxr.Amount)
+			},
+			10*time.Second,
+			time.Second,
+			"failed to query UTXR after recording internal NFT revenue",
+		)
+
+		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
+		s.Require().NoError(err)
+
+		s.Require().Eventually(
+			func() bool {
+				afterBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, internalNftOwner)
+				s.Require().NoError(err)
+				return afterBalance-beforeBalance == revenue.Amount.Uint64()
+			},
+			time.Minute,
+			2*time.Second,
+		)
+	})
+	s.Require().True(pass)
 
 	pass = s.Run("record_external_nft_revenue", func() {
 		beforeBalance, err := queryERC20Balance(s.ethClient, tenantContractAddr, extNftOwner)
@@ -245,11 +253,11 @@ func (s *IntegrationTestSuite) TestMintableContractTenant() {
 		s.Require().EventuallyWithT(
 			func(c *assert.CollectT) {
 				utxr, err := queryUtxr(chainAPIEndpoint, tenantId, requestId)
-				s.Require().NoError(err)
-				s.Require().Equal(revenue, utxr.Amount)
+				require.NoError(c, err)
+				require.Equal(c, revenue, utxr.Amount)
 
-				s.Require().Greater(len(utxr.Recipients), 0)
-				s.Require().Equal(common.FromHex(extNftOwner), utxr.Recipients[0].Address.Bytes())
+				require.Greater(c, len(utxr.Recipients), 0)
+				require.Equal(c, common.FromHex(extNftOwner), utxr.Recipients[0].Address.Bytes())
 			},
 			time.Minute,
 			time.Second,

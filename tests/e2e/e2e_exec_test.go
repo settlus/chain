@@ -216,7 +216,6 @@ func (s *IntegrationTestSuite) execRecord(
 		settlusCmd = append(settlusCmd, fmt.Sprintf("--%s=%v", flag, value))
 	}
 
-	fmt.Println(settlusCmd)
 	s.executeSettlusTxCommand(ctx, settlusCmd)
 }
 
