@@ -2,32 +2,33 @@
 InterOp Node is an application that facilitates communication between Settlus and external chains, supporting multi-chain NFT interoperability.
 
 ## Concepts
+There are mainly two components in the InterOp Node: Subscriber and Feeder.
+The Subscriber is responsible for fetching information from external chains, and the Feeder is responsible for sending votes to Settlus.
 
 ### Subscriber
-Each subscriber retrieves block data and NFT ownership information from external blockchain networks and stores it locally in a database.
+Each subscriber retrieves block data and NFT ownership information from external blockchain networks.
+External blockchain's block information (hash and number) is stored in the cache.
+NFT owner information is always fetched from the external chain.
 
-#### DB Schema
-For each block, the Subscriber stores three types of key-value pairs in a single transaction:
+Supported chains:
+- [Ethereum](./subscriber/ethereum_subscriber.go)
 
-| Type          | Prefix |                                                                Key |        Value |
-|---------------|-------|-------------------------------------------------------------------|-------------|
-| Block Hash    |   BH   |                                               BLOCK_HASH (32bytes) | BLOCK_NUMBER |
-| Block Number  |   BN   |                                             BLOCK_NUMBER (32bytes) |   BLOCK_HASH |
-| NFT Ownership |   NO   | NFT_ADDR (20bytes) \+ TOKEN_ID (32bytes) \+ BLOCK_NUMBER (32bytes) |  OWNER_ADDR  |
+#### Cache
+For each block, the subscriber stores the block hash and number in a memory cache.
+Each subscriber runs a separate goroutine to periodically check the latest block number and hash from the external chain and update the cache.
 
-To find the owner of an NFT at block number A, a reverse iterator is utilized with the key (NO + NFT_ADDR + TOKEN_ID + A). To identify the owner at a specific block hash X, the process begins by searching with the key (BH + BLOCK_HASH) to retrieve the block number, then proceeds in the same manner.
+When initializing the cache, users can specify the cache size to limit memory usage.
 
-#### Fallback
-If the database lacks the ownership data, the system can directly query the blockchain network. This situation might arise when the node is new and hasn't yet processed all the block data.
+Cache implementation: [cache.go](./subscriber/cache.go)
 
 ### Feeder
 
-Feeder sends vote to Settlus. There can be multiple topics for voting, but currently we only support topic to decide block number.
-- The feeder will check if Settlus is in the `VOTING` period.
-   - If Settlus is in the `VOTING` period, feeder submits the `Vote` TX to Settlus.
-   - If Settlus is not in the `VOTING` period, feeder gathers block data from the chains and submits the `Prevote` TX to Settlus.
-   - If the feeder cannot send the vote appropriately, it submits an Abstain vote to Settlus.
-
+The Feeder sends votes to Settlus. There can be multiple topics for voting, but currently, there is only one topic: `NFT Ownership`.
+1. The feeder fetches `RoundInfo` from the Settlus blockchain.
+2. From the `RoundInfo`, the feeder checks if Settlus is in the `VOTING` period.
+  - If Settlus is in the `VOTING` period, the feeder submits the `Vote` TX to Settlus.
+  - If Settlus is not in the `VOTING` period, the feeder gathers block data from the chains and submits the `Prevote` TX to Settlus.
+  - If the feeder cannot send the vote appropriately, it submits an Abstain vote to Settlus.
 
 ## How to Run
 Initialize the config file.
@@ -42,12 +43,12 @@ Edit the config file with appropriate values and run the oracle feeder.
 ```
 
 ## Local Development
-First run local Settlus.
+First, run local Settlus.
 ```shell
 ignite chain serve
 ```
 
-Create feeder account.
+Create a feeder account.
 ```shell
 settlusd keys add foo
 - address: settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy
@@ -61,7 +62,7 @@ Fund the feeder account.
 settlusd tx bank send YOUR_KEY_WITH_FUND settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy 10setl --fees 0.001setl --keyring-backend test
 ```
 
-Get private key of the feeder account
+Get the private key of the feeder account.
 ```shell
 settlusd keys export foo --unarmored-hex --unsafe --keyring-backend test
 
@@ -109,7 +110,7 @@ settlus:
     amount: "10000000000000"
 feeder:
   address: settlus1nyw0ruj3t5wdh9ycgcsxles6mpfz9xmk93m9cy
-  private_key: 1b8dac2949968eae623859330172283d27dda8b496f1dae2cbed9b1bcce51cb1
+  private_key: 1b8dac2949968eae623859330172283d27dda8b496f1dae2cbed9b1bcce51cb1 # <- example private key
   validator_address: settlusvaloper12g8w5dr5jyncct8jwdxwsy2g9ktdrjjluy76df
 chains:
 - chain_id: "1"
