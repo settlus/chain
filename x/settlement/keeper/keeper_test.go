@@ -166,9 +166,6 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 	suite.Commit()
 	suite.erc20TokenPair = tokenPair
 
-	suite.MintERC20Token(tokenPair.GetERC20Contract(), erc20types.ModuleAddress, common.Address(suite.appAdmin), big.NewInt(1000000000000000000))
-	suite.Commit()
-
 	// TODO change to setup with 1 validator
 	validators := suite.app.StakingKeeper.GetValidators(s.ctx, 2)
 	// set a bonded validator that takes part in consensus

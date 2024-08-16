@@ -124,9 +124,9 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 				}
 				msg := erc20types.NewMsgConvertERC20(
 					amount.Amount,
-					treasuryAddr,
+					recipientCosmosAddr,
 					contractAddr,
-					common.Address(common.FromHex(recipient.Address.String())),
+					common.Address(treasuryAddr),
 				)
 				_, err = k.erc20k.ConvertERC20(ctx, msg)
 			} else {
@@ -140,7 +140,7 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 			return true, fmt.Errorf("invalid payout method: %s", payoutMethod)
 		}
 		if err != nil {
-			return true, err
+			return false, err
 		}
 	}
 

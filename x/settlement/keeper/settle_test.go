@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
 
 	"github.com/evmos/evmos/v19/contracts"
 
@@ -50,17 +51,15 @@ func (suite *SettlementTestSuite) TestSettle_Settle_Native() {
 
 func (suite *SettlementTestSuite) TestSettle_Settle_ERC20_Conversion() {
 	tenantId := uint64(2)
-	amount := sdk.NewCoin(suite.erc20TokenPair.Denom, math.NewInt(100))
+	amount := math.NewInt(100)
 	treasuryAddr := types.GetTenantTreasuryAccount(tenantId)
 
-	err := suite.app.Erc20Keeper.ConvertCoinNativeERC20(
-		suite.ctx,
-		*suite.erc20TokenPair,
-		amount.Amount,
+	suite.MintERC20Token(
+		suite.erc20TokenPair.GetERC20Contract(),
+		erc20types.ModuleAddress,
 		common.Address(treasuryAddr),
-		suite.appAdmin.Bytes(),
+		amount.BigInt(),
 	)
-	suite.Require().NoError(err)
 	suite.Commit()
 
 	treasuryBalance := suite.app.Erc20Keeper.BalanceOf(
@@ -69,11 +68,11 @@ func (suite *SettlementTestSuite) TestSettle_Settle_ERC20_Conversion() {
 		suite.erc20TokenPair.GetERC20Contract(),
 		common.Address(treasuryAddr),
 	)
-	suite.Require().EqualValues(amount.Amount.Int64(), treasuryBalance.Int64())
+	suite.Require().EqualValues(amount.Int64(), treasuryBalance.Int64())
 
 	requestId := "req-1"
 	recipient := sdk.MustAccAddressFromBech32(sample.AccAddress())
-	_, err = suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
+	_, err := suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
 		RequestId:  requestId,
 		Recipients: types.SingleRecipients(recipient),
 		Amount:     sdk.NewCoin(suite.erc20TokenPair.Denom, math.NewInt(10)),
@@ -93,7 +92,7 @@ func (suite *SettlementTestSuite) TestSettle_Settle_ERC20_Conversion() {
 	suite.Nil(utxr)
 
 	balance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, suite.erc20TokenPair.Denom)
-	suite.EqualValues(10, balance.Amount.Int64())
+	suite.EqualValues(amount.Int64(), balance.Amount.Int64())
 }
 
 func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance() {
