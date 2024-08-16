@@ -407,10 +407,10 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 		vcm          map[string]types.Claim
 		totalCoin    sdk.Coins
 		rewardMap    map[string]sdk.DecCoins
-		probonoIndex []int
+		probonoMap   map[int]sdk.Dec
 	}{
 		{
-			name: "Probono validators send rewards to community pool, normal validators get rewards as usual",
+			name: "Probono validators send rewards to community pool with their probono rate, normal validators get rewards",
 			vcm: map[string]types.Claim{
 				s.validators[0].GetOperator().String(): {
 					Weight:  100,
@@ -440,7 +440,10 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 				s.validators[2].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
 				s.validators[3].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
 			},
-			probonoIndex: []int{0, 1},
+			probonoMap: map[int]sdk.Dec{
+				0: sdk.NewDecFromIntWithPrec(sdk.NewInt(2), 1), // 20% probono
+				1: sdk.NewDecFromIntWithPrec(sdk.NewInt(1), 0), // 100% probono
+			},
 		},
 		{
 			name: "All probono validator, there's no normal validator",
@@ -473,7 +476,12 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 				s.validators[2].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
 				s.validators[3].GetOperator().String(): sdk.NewDecCoins(sdk.NewInt64DecCoin("asetl", 1000000)),
 			},
-			probonoIndex: []int{0, 1, 2, 3},
+			probonoMap: map[int]sdk.Dec{
+				0: sdk.NewDecFromIntWithPrec(sdk.NewInt(1), 0), // 100% probono
+				1: sdk.NewDecFromIntWithPrec(sdk.NewInt(1), 0), // 100% probono
+				2: sdk.NewDecFromIntWithPrec(sdk.NewInt(1), 0), // 100% probono
+				3: sdk.NewDecFromIntWithPrec(sdk.NewInt(1), 0), // 100% probono
+			},
 		},
 	}
 
@@ -488,30 +496,35 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 			s.app.DistrKeeper.SetFeePool(s.ctx, disttypes.InitialFeePool())
 			s.Equal(s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl"), sdk.ZeroDec())
 
-			for _, idx := range tt.probonoIndex {
+			for idx, rate := range tt.probonoMap {
 				s.validators[idx].Probono = true
+				s.validators[idx].Commission = stakingtypes.NewCommission(
+					rate,
+					sdk.NewDecWithPrec(1, 0),
+					sdk.NewDecWithPrec(0, 0),
+				)
 				s.validators[idx] = stakingkeeper.TestingUpdateValidator(s.app.StakingKeeper, s.ctx, s.validators[idx], true)
 			}
 
-			probonoRewards := sdk.ZeroDec()
+			var probonoRewards sdk.DecCoins
 
 			err = s.app.OracleKeeper.RewardBallotWinners(s.ctx, tt.vcm)
 			s.NoError(err)
 
 			for _, validator := range s.validators {
-				if validator.IsProbono() {
-					probonoRewards = probonoRewards.Add(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"))
-					validator.Probono = false
-					continue
-				}
+				contribution := tt.rewardMap[validator.GetOperator().String()].MulDec(validator.GetProbonoRate())
+
+				probonoRewards = probonoRewards.Add(contribution...)
+				
 				rewards := s.app.DistrKeeper.GetValidatorCurrentRewards(s.ctx, validator.GetOperator())
-				s.Equal(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"), rewards.Rewards.AmountOf("asetl"))
+				s.Equal(tt.rewardMap[validator.GetOperator().String()].Sub(contribution).AmountOf("asetl"), rewards.Rewards.AmountOf("asetl"))
+				
 				s.app.DistrKeeper.DeleteValidatorCurrentRewards(s.ctx, validator.GetOperator())
 			}
 
 			// check community pool
 			actualCommunityAmount := s.app.DistrKeeper.GetFeePoolCommunityCoins(s.ctx).AmountOf("asetl")
-			s.Equal(probonoRewards, actualCommunityAmount)
+			s.Equal(probonoRewards.AmountOf("asetl"), actualCommunityAmount)
 			s.app.DistrKeeper.SetFeePool(s.ctx, disttypes.InitialFeePool())
 		})
 	}
