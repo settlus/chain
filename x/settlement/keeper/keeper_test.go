@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
 	evmtypes "github.com/evmos/evmos/v19/x/evm/types"
 
 	utiltx "github.com/settlus/chain/testutil/tx"
@@ -21,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	evmoscontracts "github.com/evmos/evmos/v19/contracts"
 	"github.com/evmos/evmos/v19/crypto/ethsecp256k1"
 	feemarkettypes "github.com/evmos/evmos/v19/x/feemarket/types"
 
@@ -55,7 +58,7 @@ type SettlementTestSuite struct {
 	appAdmin       sdk.AccAddress
 	evmAddress     common.Address
 	consAddress    sdk.ConsAddress
-	erc20Address   common.Address
+	erc20TokenPair *erc20types.TokenPair
 	creator        sdk.AccAddress
 	nftOwner       string
 	sampleContract common.Address
@@ -143,12 +146,27 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
 	require.NoError(t, err)
 
-	contractAddr, err := suite.DeployTokenContract("usdc", "uusdc", uint8(6))
+	// register USDC as an ERC20 token
+	usdcContractAddr, err := suite.app.Erc20Keeper.DeployERC20Contract(suite.ctx, banktypes.Metadata{
+		Name:        "uusdc",
+		Symbol:      "uusdc",
+		Description: "USDC",
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    "uusdc",
+				Exponent: 6,
+			},
+		},
+	})
 	suite.Require().NoError(err)
 	suite.Commit()
 
-	tokenPair, err := suite.app.Erc20Keeper.RegisterERC20(suite.ctx, contractAddr)
+	tokenPair, err := suite.app.Erc20Keeper.RegisterERC20(suite.ctx, usdcContractAddr)
 	suite.Require().NoError(err)
+	suite.Commit()
+	suite.erc20TokenPair = tokenPair
+
+	suite.MintERC20Token(tokenPair.GetERC20Contract(), erc20types.ModuleAddress, common.Address(suite.appAdmin), big.NewInt(1000000000000000000))
 	suite.Commit()
 
 	// TODO change to setup with 1 validator
@@ -160,7 +178,6 @@ func (suite *SettlementTestSuite) DoSetupTest(t require.TestingT) {
 		suite.validator = validators[1]
 	}
 
-	suite.erc20Address = common.HexToAddress(tokenPair.Erc20Address)
 	suite.NoError(err)
 
 	suite.addTestTenants()
@@ -177,7 +194,7 @@ func (suite *SettlementTestSuite) addTestTenants() {
 	tenant2 := &types.Tenant{
 		Id:           2,
 		Admins:       []string{suite.appAdmin.String()},
-		Denom:        "uusdc",
+		Denom:        suite.erc20TokenPair.Denom,
 		PayoutPeriod: 1,
 		PayoutMethod: "native",
 	}
@@ -239,21 +256,6 @@ func (suite *SettlementTestSuite) DeployAndMintSampleContract(ownerAddress commo
 	return addr
 }
 
-// DeployTokenContract deploys the ERC721 contract with the provided name and symbol
-func (suite *SettlementTestSuite) DeployTokenContract(name, symbol string, decimals uint8) (common.Address, error) {
-	suite.Commit()
-	addr, err := testutil.DeployContract(
-		suite.ctx,
-		suite.app,
-		suite.priv,
-		suite.queryClientEvm,
-		contracts.ERC20Contract,
-		name, symbol, decimals,
-	)
-	suite.Commit()
-	return addr, err
-}
-
 // DeployNFTContract deploys the ERC721 contract with the provided name and symbol
 func (suite *SettlementTestSuite) DeployNFTContract(name, symbol string) (common.Address, error) {
 	suite.Commit()
@@ -294,6 +296,13 @@ func (suite *SettlementTestSuite) CheckNFTExists(contractAddress common.Address,
 	)
 
 	return exists, err
+}
+
+func (suite *SettlementTestSuite) MintERC20Token(contractAddr, from, to common.Address, amount *big.Int) {
+	transferData, err := evmoscontracts.ERC20MinterBurnerDecimalsContract.ABI.Pack("mint", to, amount)
+	suite.Require().NoError(err)
+	_, err = suite.app.EvmKeeper.CallEVMWithData(suite.ctx, from, &contractAddr, transferData, true)
+	suite.Require().NoError(err)
 }
 
 func TestKeeperTestSuite(t *testing.T) {

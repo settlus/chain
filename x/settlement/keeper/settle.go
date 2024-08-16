@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
 
 	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/x/settlement/types"
@@ -117,11 +118,17 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 		case payoutMethod == types.PayoutMethod_Native:
 			if k.erc20k.IsDenomRegistered(ctx, amount.Denom) {
 				// convert from erc20 to Coin
-				// TODO
-				//pair := erc20types.NewTokenPair()
-				//_, err = k.erc20k.ConvertCoinNativeERC20(
-				//	ctx, erc20types.MsgConvertERC20(amount)
-				//)
+				contractAddr, err := k.erc20k.GetCoinAddress(ctx, amount.Denom)
+				if err != nil {
+					return false, fmt.Errorf("denom is registred as erc20 but failed to get coin address: %w", err)
+				}
+				msg := erc20types.NewMsgConvertERC20(
+					amount.Amount,
+					treasuryAddr,
+					contractAddr,
+					common.Address(common.FromHex(recipient.Address.String())),
+				)
+				_, err = k.erc20k.ConvertERC20(ctx, msg)
 			} else {
 				err = k.bk.SendCoins(ctx, treasuryAddr, recipientCosmosAddr, sdk.NewCoins(amount))
 			}
