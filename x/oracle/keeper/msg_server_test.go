@@ -54,13 +54,8 @@ func (suite *OracleTestSuite) TestMsgServer_Prevote_should_be_failed_if_exceed_p
 func (suite *OracleTestSuite) TestMsgServer_Vote() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
 	salt := "TestMsgServer_Vote"
-	blockStr := []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"}
 	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
 	voteData := []*types.VoteData{
-		{
-			Topic: types.OracleTopic_BLOCK,
-			Data:  blockStr,
-		},
 		{
 			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  ownershipStr,
@@ -78,20 +73,14 @@ func (suite *OracleTestSuite) TestMsgServer_Vote() {
 	suite.NoError(err)
 
 	vote := s.app.OracleKeeper.GetAggregateVote(s.ctx, s.validators[0].GetOperator().String())
-	suite.Equal(vote.VoteData[0].Data, blockStr)
-	suite.Equal(vote.VoteData[1].Data, ownershipStr)
+	suite.Equal(vote.VoteData[0].Data, ownershipStr)
 }
 
 func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_with_different_round_id() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
 	salt := "TestMsgServer_Vote"
-	blockStr := []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"}
 	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
 	voteData := []*types.VoteData{
-		{
-			Topic: types.OracleTopic_BLOCK,
-			Data:  blockStr,
-		},
 		{
 			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  ownershipStr,
@@ -113,13 +102,8 @@ func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_with_different
 func (suite *OracleTestSuite) TestMsgServer_Vote_should_be_failed_if_exceed_vote_period() {
 	msgSvr := keeper.NewMsgServerImpl(*suite.app.OracleKeeper)
 	salt := "TestMsgServer_Vote"
-	blockStr := []string{"1:100/315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3"}
 	ownershipStr := []string{"1/0x1234567890abcdef/0x1234567890abcdef:0x77791"}
 	voteData := []*types.VoteData{
-		{
-			Topic: types.OracleTopic_BLOCK,
-			Data:  blockStr,
-		},
 		{
 			Topic: types.OracleTopic_OWNERSHIP,
 			Data:  ownershipStr,

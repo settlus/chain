@@ -228,7 +228,7 @@ func (feeder *Feeder) gatherNftOwnerDataString(nftIds []string, timestamp uint64
 func (feeder *Feeder) sendVote(ctx context.Context) error {
 	if feeder.lastPreVote.Salt == "" {
 		// we skip if salt is empty, which means no previous prevote was sent.
-		feeder.logger.Info("salt or blockDataString is empty, skipping this vote period...")
+		feeder.logger.Info("salt or datastring is empty, skipping this vote period...")
 		return nil
 	}
 
