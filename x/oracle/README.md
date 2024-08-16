@@ -128,7 +128,7 @@ A validator may abstain from voting by submitting empty data in `MsgVote`. Doing
 
 `RoundInfo` contains information about the current `VotePeriod` and a set of problems for validators to solve.
 Currently, there is only one topic: `Ownership`.
-`RoundInfo` gets overridden in the `BegineBlock` of every block.
+`RoundInfo` gets overridden in the `EndBlock` of every block.
 
 ```go
 type RoundInfo struct {
