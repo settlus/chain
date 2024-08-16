@@ -50,7 +50,7 @@ func (suite *OracleTestSuite) TestKeeper_AggregatePrevotes() {
 
 func (suite *OracleTestSuite) TestKeeper_AggregateVote() {
 	expectedAggregateVote := types.AggregateVote{
-		VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0"),
+		VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0", "0xfoobar"),
 		Voter:    s.validators[0].GetOperator().String(),
 	}
 	s.app.OracleKeeper.SetAggregateVote(s.ctx, expectedAggregateVote)
@@ -64,11 +64,11 @@ func (suite *OracleTestSuite) TestKeeper_AggregateVote() {
 func (suite *OracleTestSuite) TestKeeper_AggregateVotes() {
 	expectedAggregateVotes := []types.AggregateVote{
 		{
-			VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0"),
+			VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0", "0xfoo"),
 			Voter:    s.validators[0].GetOperator().String(),
 		},
 		{
-			VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0"),
+			VoteData: types.OwnershipDataToVoteData("1", "0x0", "0x0", "0xbar"),
 			Voter:    s.validators[1].GetOperator().String(),
 		},
 	}
