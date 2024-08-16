@@ -5,6 +5,7 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/settlus/chain/x/oracle/types"
 )
 
@@ -13,7 +14,7 @@ type IVoteProcessor interface {
 }
 
 type VoteProcessor[Source comparable, Data comparable] struct {
-	topic          types.OralceTopic
+	topic          types.OracleTopic
 	aggregateVotes []types.AggregateVote
 	thresholdVotes math.Int
 	dataConverter  DataConverter[Source, Data]

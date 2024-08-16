@@ -24,8 +24,8 @@ func Test_GenerateSalt(t *testing.T) {
 
 func Test_GeneratePrevoteHash(t *testing.T) {
 	type args struct {
-		blockDataString []string
-		salt            string
+		dataString []string
+		salt       string
 	}
 	tests := []struct {
 		name string
@@ -35,17 +35,17 @@ func Test_GeneratePrevoteHash(t *testing.T) {
 		{
 			name: "single chain",
 			args: args{
-				blockDataString: []string{"1:123:0x123"},
-				salt:            "foo",
+				dataString: []string{"1/0x123/0x1:0xfoo"},
+				salt:       "foo",
 			},
-			want: "01A164031A468DE61267F23A6BD7642AA33422C983D0E298085AEE1244A51F40",
+			want: "A13CCB8173F8C6919BAE51EAED94FA1066BCAF513F5C5286DBA8808A73C63449",
 		}, {
 			name: "multiple chains",
 			args: args{
-				blockDataString: []string{"1:123:0x123", "2:456:0x456"},
-				salt:            "bar",
+				dataString: []string{"1/0x123/0x1:0xfoo", "2/0x456/0x2:0xbar"},
+				salt:       "bar",
 			},
-			want: "1776F5F1BCACEFC9E75DA6623C9C9B1AA6DDF9831DBDEC3453D0C69B380FBE97",
+			want: "5669721A5163DA85815FB766730AC8755D2AC5AF053373EC3CB67135C3BCE21C",
 		},
 	}
 
@@ -53,8 +53,8 @@ func Test_GeneratePrevoteHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			voteData := types.VoteDataArr{
 				{
-					Topic: oracletypes.OralceTopic_BLOCK,
-					Data:  tt.args.blockDataString,
+					Topic: oracletypes.OracleTopic_OWNERSHIP,
+					Data:  tt.args.dataString,
 				},
 			}
 			if got := feeder.GeneratePrevoteHash(voteData, tt.args.salt); got != tt.want {

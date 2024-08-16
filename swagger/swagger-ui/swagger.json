@@ -19724,7 +19724,7 @@
         }
       }
     },
-    "settlus.oracle.v1alpha1.OralceTopic": {
+    "settlus.oracle.v1alpha1.OracleTopic": {
       "type": "string",
       "enum": [
         "BLOCK",

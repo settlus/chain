@@ -22,18 +22,22 @@ message Params {
   uint64 max_miss_count_per_slash_window = 5;
 }
 
-enum OralceTopic {
+// OracleTopic defines the type of oracle data. It is used to distinguish
+// different types of oracle data.
+enum OracleTopic {
+  // DEPRECATED: Do not use.
   BLOCK = 0;
+  // Ownership defines nft ownership consensus.
   OWNERSHIP = 1;
 }
 
 message OracleData {
-  OralceTopic topic = 1;
+  OracleTopic topic = 1;
   repeated string sources = 2;
 }
 
 message VoteData {
-  OralceTopic topic = 1;
+  OracleTopic topic = 1;
   repeated string data = 2;
 }
 

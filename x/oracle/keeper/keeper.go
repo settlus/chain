@@ -97,8 +97,7 @@ func (k Keeper) CalculateNextRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	blockHeight := ctx.BlockHeight() + 1
 	prevoteEnd, voteEnd := types.CalculateVotePeriod(blockHeight, params.VotePeriod)
 
-	oracleData := []*types.OracleData{}
-	oracleData = appendIfValid(oracleData, k.blockOracleData(k.SettlementKeeper.GetSupportedChainIds(ctx)))
+	var oracleData []*types.OracleData
 	oracleData = appendIfValid(oracleData, k.ownershipOracleData(ctx, params.VotePeriod))
 
 	roundInfo := types.RoundInfo{
@@ -112,13 +111,6 @@ func (k Keeper) CalculateNextRoundInfo(ctx sdk.Context) *types.RoundInfo {
 	return &roundInfo
 }
 
-func (k Keeper) blockOracleData(whitelist []string) *types.OracleData {
-	return &types.OracleData{
-		Topic:   types.OralceTopic_BLOCK,
-		Sources: whitelist,
-	}
-}
-
 func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) *types.OracleData {
 	// We will retrieve all NFTs that need to be verified collected until the last round.
 	// Because list of nfts in the current round can be increased as the round progresses
@@ -130,45 +122,9 @@ func (k Keeper) ownershipOracleData(ctx sdk.Context, votePeriod uint64) *types.O
 	}
 
 	return &types.OracleData{
-		Topic:   types.OralceTopic_OWNERSHIP,
+		Topic:   types.OracleTopic_OWNERSHIP,
 		Sources: sources,
 	}
-}
-
-// GetBlockData returns block data of a chain
-func (k Keeper) GetBlockData(ctx sdk.Context, chainId string) (*types.BlockData, error) {
-	store := ctx.KVStore(k.storeKey)
-
-	bd := store.Get(types.BlockDataKey(chainId))
-	if bd == nil {
-		return nil, types.ErrBlockDataNotFound
-	}
-	var blockData types.BlockData
-	k.cdc.MustUnmarshal(bd, &blockData)
-	return &blockData, nil
-}
-
-// GetAllBlockData returns block data of all chains
-func (k Keeper) GetAllBlockData(ctx sdk.Context) []types.BlockData {
-	store := ctx.KVStore(k.storeKey)
-	var blockData []types.BlockData
-	iterator := sdk.KVStorePrefixIterator(store, types.BlockDataKeyPrefix)
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		var bd types.BlockData
-		k.cdc.MustUnmarshal(iterator.Value(), &bd)
-		if bd.ChainId != "" {
-			blockData = append(blockData, bd)
-		}
-	}
-	return blockData
-}
-
-// SetBlockData sets block data of a chain
-func (k Keeper) SetBlockData(ctx sdk.Context, blockData types.BlockData) {
-	store := ctx.KVStore(k.storeKey)
-	bd := k.cdc.MustMarshal(&blockData)
-	store.Set(types.BlockDataKey(blockData.ChainId), bd)
 }
 
 func (k Keeper) FillSettlementRecipients(ctx sdk.Context, nftOwnership map[ctypes.Nft]ctypes.HexAddressString) {

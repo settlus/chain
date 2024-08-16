@@ -1,8 +1,7 @@
 package types
 
 import (
-	fmt "fmt"
-	"strconv"
+	"fmt"
 	"strings"
 
 	ctypes "github.com/settlus/chain/types"
@@ -16,18 +15,11 @@ func ValidateVoteData(voteData []*VoteData, chainList []string) bool {
 
 	for _, vd := range voteData {
 		switch vd.Topic {
-		case OralceTopic_BLOCK:
-			for _, data := range vd.Data {
-				chainId, _, err := StringToBlockData(data)
-				if err != nil {
-					return false
-				}
-				if _, ok := chainMap[chainId]; !ok {
-					return false
-				}
-			}
+		case OracleTopic_BLOCK:
+			// deprecated
+			return true
 
-		case OralceTopic_OWNERSHIP:
+		case OracleTopic_OWNERSHIP:
 			for _, data := range vd.Data {
 				nft, _, err := StringToOwnershipData(data)
 				if err != nil {
@@ -43,39 +35,6 @@ func ValidateVoteData(voteData []*VoteData, chainList []string) bool {
 	}
 
 	return true
-}
-
-func StringToBlockData(voteString string) (string, BlockData, error) {
-	// voteString = chainId:blockNumber/blockHash
-
-	data := strings.Split(voteString, ":")
-	if len(data) != 2 {
-		return "", BlockData{}, fmt.Errorf("invalid block data string: %s", voteString)
-	}
-
-	chainId := data[0]
-	blockDataFields := strings.Split(data[1], "/")
-	if len(blockDataFields) != 2 {
-		return "", BlockData{}, fmt.Errorf("invalid block data string: %s", voteString)
-	}
-
-	blockNumber, err := strconv.ParseInt(blockDataFields[0], 10, 64)
-	if err != nil {
-		return "", BlockData{}, fmt.Errorf("invalid block data string: %s", voteString)
-	}
-
-	blockHash := blockDataFields[1]
-	if !isValidHex(blockHash) {
-		return "", BlockData{}, fmt.Errorf("invalid block data string: %s", voteString)
-	}
-
-	blockData := BlockData{
-		ChainId:     chainId,
-		BlockNumber: blockNumber,
-		BlockHash:   blockHash,
-	}
-
-	return chainId, blockData, err
 }
 
 func StringToOwnershipData(voteString string) (ctypes.Nft, ctypes.HexAddressString, error) {
