@@ -62,6 +62,7 @@ import (
 
 	memiavlstore "github.com/crypto-org-chain/cronos/store"
 
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/settlus/chain/app/ante"
 	"github.com/settlus/chain/app/post"
 	"github.com/settlus/chain/app/upgrades/v1"
@@ -77,9 +78,10 @@ func init() {
 	}
 
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
-
-	// manually update the power reduction by replacing micro (u) -> atto (a) evmos
-	sdk.DefaultPowerReduction = evmostypes.PowerReduction
+	// Set power reduction
+	sdk.DefaultPowerReduction = sdk.NewIntFromUint64(1000000)
+	// Constant reward is true to follow Settlus reward distribution rules
+	sdk.ConstantReward = true
 	// modify fee market parameter defaults through global
 	feemarkettypes.DefaultMinGasPrice = evmosapp.MainnetMinGasPrices
 	feemarkettypes.DefaultMinGasMultiplier = evmosapp.MainnetMinGasMultiplier
@@ -91,10 +93,8 @@ const (
 	Name = "settlus"
 )
 
-var (
-	// DefaultNodeHome default home directories for the application daemon
-	DefaultNodeHome string
-)
+// DefaultNodeHome default home directories for the application daemon
+var DefaultNodeHome string
 
 var (
 	_ runtime.AppI            = (*SettlusApp)(nil)
@@ -262,6 +262,7 @@ func NewSettlus(
 	app.setPostHandler()
 	app.SetEndBlocker(app.EndBlocker)
 	app.setupUpgradeHandlers()
+	app.setUpgradeStoreLoaders()
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -485,9 +486,24 @@ func (app *SettlusApp) setupUpgradeHandlers() {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v1.UpgradeName,
 		v1.CreateUpgradeHandler(
-			app.mm, app.configurator,
+			app.mm, app.configurator, app.AccountKeeper, app.ConsensusParamsKeeper, app.IBCKeeper.ClientKeeper, app.ParamsKeeper, app.appCodec,
 		),
 	)
+}
+
+func (app *SettlusApp) setUpgradeStoreLoaders() {
+	upgradeInfo, err := app.AppKeepers.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	}
+	if app.AppKeepers.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	if upgradeInfo.Name == v1.UpgradeName {
+		storeUpgrades := v1.StoreUpgrades
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
 }
 
 // GetKey returns the KVStoreKey for the provided store key.

@@ -157,7 +157,7 @@ func (suite *OracleTestSuite) NewValidator(amt sdkmath.Int) *stakingtypes.MsgCre
 		stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		sdkmath.OneInt(),
 		sdkmath.ZeroInt(),
-		sdk.ZeroDec(),
+		false,
 	)
 	suite.Require().NoError(err)
 	return msgCreate
@@ -499,7 +499,7 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 			s.NoError(err)
 
 			for _, validator := range s.validators {
-				if validator.Probono {
+				if validator.IsProbono() {
 					probonoRewards = probonoRewards.Add(tt.rewardMap[validator.GetOperator().String()].AmountOf("asetl"))
 					validator.Probono = false
 					continue
