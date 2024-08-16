@@ -16,6 +16,8 @@ The `x/settlement` module, designed for Cosmos-SDK based blockchains, revolution
     * [Recipients](#recipients)
     * [Payout Period](#payout-period)
     * [Settlement](#settlement)
+    * [Payout Method](#payoud-method)
+    * [Fixed Fee](#fixed-fee)
 * [State](#state)
     * [Unspent Transaction Record](#unspent-transaction-record)
 * [Messages](#messages)
@@ -85,6 +87,19 @@ The UTXRs that have passed the payout period are considered eligible for settlem
 If the tenant has enough funds in the treasury to settle the UTXR, the UTXR is removed from the `unspent_records` state and the amount is transferred from the tenant's treasury to the recipient's wallet.
 If the tenant does not have enough funds in the treasury to settle the UTXR, the settlement will be deferred until the tenant has enough funds.
 The UTXR will remain in the `unspent_records` state until the tenant has enough funds to settle the UTXR.
+
+### Payout Method
+When creating a Tenant in the Settlement Module, one of two types of Payout Methods must be selected: Native, Mintable Contract
+
+#### Native
+When the Payout Method is set to Native, an existing token on the blockchain is used as the settlement currency. There is a Treasury where settlement reserves are held, and after the Payout Period ends, the Settlement Module deletes the UTXR and transfers the tokens from the Treasury to the Recipient. The Settlement Module is the only entity with transfer authority over each Tenant’s Treasury.
+
+The Tenant Admin must ensure that the Treasury has sufficient tokens to avoid any delays in settlement. This can be managed through the deposit_to_treasury function. If the settlement currency is registered as a Native/ERC20 Token Pair via the ERC20 Module, it will ultimately be converted and transferred as an ERC20 token.
+
+#### Mintable Contract
+When the Payout Method is set to Mintable Contract, an ERC20 token with a mint(address to, uint256 amount) function is used as the settlement currency. In this case, there is no separate Treasury; instead, after the Payout Period ends, the Settlement Module mints new ERC20 tokens and transfers them to the Recipient.
+
+If a specific Contract address is not provided when creating a Tenant, a new Contract is generated, which defaults to a Soul-Bound Token (Non-Transferable Token). In this case, the Settlement Module holds the exclusive minting authority. If a specific Contract address is provided, the Settlement Module must be granted the authority to execute the mint function.
 
 ### Fixed Fee
 It is common for the price of a coin to fluctuate significantly due to external factors, regardless of the supply and demand related to its actual use. Such fluctuations are more frequent before the blockchain stabilizes. If such events occur, the cost required to record a transaction could fluctuate significantly, which could be unfavorable for the creators and platform services using Settlus. To avoid this, transactions handled by the Settlement Module are paid with a fixed gas amount and gas price, such as 0.001 USDC

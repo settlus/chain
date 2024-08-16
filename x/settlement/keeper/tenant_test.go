@@ -44,7 +44,7 @@ func (suite *SettlementTestSuite) TestKeeper_GetTenant() {
 	suite.Equal(uint64(100), tenant.PayoutPeriod)
 }
 
-func (suite *SettlementTestSuite) TestKeeper_CreateNewTenant() {
+func (suite *SettlementTestSuite) TestKeeper_CreateNewTenant_Native() {
 	tenantId, err := suite.keeper.CreateNewTenant(suite.ctx, suite.appAdmin.String(), "uusdc", 100, "native", "")
 	suite.NoError(err)
 	suite.Equal(uint64(3), tenantId)
@@ -62,6 +62,19 @@ func (suite *SettlementTestSuite) TestKeeper_CreateNewTenant() {
 	tenant = suite.keeper.GetTenant(suite.ctx, tenantId)
 	suite.NotNil(tenant)
 	suite.Equal(uint64(4), tenant.Id)
+	suite.Equal([]string{suite.appAdmin.String()}, tenant.Admins)
+	suite.Equal(uint64(100), tenant.PayoutPeriod)
+}
+
+func (suite *SettlementTestSuite) TestKeeper_CreateNewTenant_MintableContract() {
+	tenantId, err := suite.keeper.CreateNewTenant(suite.ctx, suite.appAdmin.String(), "bluc", 100, "mintable_contract", "")
+	suite.NoError(err)
+	suite.Equal(uint64(3), tenantId)
+
+	tenant := suite.keeper.GetTenant(suite.ctx, tenantId)
+	suite.NotNil(tenant)
+	suite.NotNil(tenant.ContractAddress)
+	suite.Equal(uint64(3), tenant.Id)
 	suite.Equal([]string{suite.appAdmin.String()}, tenant.Admins)
 	suite.Equal(uint64(100), tenant.PayoutPeriod)
 }
