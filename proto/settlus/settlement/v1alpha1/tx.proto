@@ -91,7 +91,7 @@ message MsgCreateTenantWithMintableContract {
   string sender = 1;
   string denom = 2;
   uint64 payout_period = 3;
-  optional string contract_address = 4;
+  string contract_address = 4;
 }
 
 // MsgAddTenantAdmin is the AddTenantAdmin request type.
