@@ -35,9 +35,11 @@ The protocol tallies these votes at the end of each `VotePeriod` to update the o
 
 ## Voting Procedure
 
-Settlus provides `RoundInfo`, which includes details about the voting period, voting topics, criteria, and more. Currently, there are two types of topics: Block and Ownership.
+Settlus provides `RoundInfo`, which includes details about the voting period, voting topics, criteria, and more. Currently, there is a single type of topic: NFT Ownership.
 
-During each `VotePeriod`, validators are required to submit two types of messages: `Prevote` and `Vote`. Validators must initially pre-commit to `Data` for every topic with a `Prevote` message. Before the current `VotePeriod` ends, they must reveal their pre-committed `Data` alongside proof of the pre-commitment with a `Vote` message.
+During each `VotePeriod`, validators are required to submit two types of messages: `Prevote` and `Vote`. 
+Validators must initially pre-commit to `Data` for every topic with a `Prevote` message. 
+Before the current `VotePeriod` ends, they must reveal their pre-committed `Data` alongside proof of the pre-commitment with a `Vote` message.
 
 This process ensures that validators commit to their choices before seeing other votes, thereby reducing centralization and free-rider risks.
 
@@ -61,10 +63,6 @@ The `Vote` contains an array of data for each topic:
 ```
 [
     {
-        "Topic": "Block",
-        "Data": ["data1", "data2", "data3", ...]
-    },
-    {
         "Topic": "Ownership",
         "Data": ["data1", "data2", "data3", ...]
     },
@@ -77,7 +75,8 @@ The `Vote` contains an array of data for each topic:
 
 At each round, the protocol tallies the votes to calculate the weighted majority at the `EndBlock` stage.
 
-The submitted salt of each vote is used to verify consistency with the `Prevote` submitted by the validator during the prevote stage. If the validator has not submitted a `Prevote`, or if the SHA-256 hash resulting from the salt does not match the hash from the `Prevote`, the vote is dropped.
+The submitted salt of each vote is used to verify consistency with the `Prevote` submitted by the validator during the prevote stage. 
+If the validator has not submitted a `Prevote`, or if the SHA-256 hash resulting from the salt does not match the hash from the `Prevote`, the vote is dropped.
 
 For each topic, the most voted `Data` that has more than the `VoteThreshold` total voting power is accepted for the following voting period.
 
@@ -93,19 +92,12 @@ In the event of a reorg, the list of information is updated to reflect the new l
 
 ## Topics
 
-### Block
-
-The Block topic is for determining the current block height of an external chain corresponding to the Settlus block. The list of external chains is from the `SupportedChains` of the Settlement Module. Feeders should submit the number and hash of the block which has the smallest timestamp exceeding the `Timestamp` given in `RoundInfo`. The data format of the Block topic is:
-
-```
-<chain-id>:<block-number>/<block-hash>
-```
-
-Note that the block data itself doesn't currently have any role in the Settlus chain, but it represents the point-of-view criteria of NFT ownership.
-
 ### Ownership
 
-The Ownership topic is for determining the current owner of NFTs from external chains. The list of NFTs that need to be verified comes from `UTXR`s of the Settlement Module. Feeders should submit the NFT owner at the block that will be submitted with the Block topic in the same round (the block having the smallest timestamp exceeding the `timestamp` given in `RoundInfo`). The data format of the Ownership topic is:
+The Ownership topic is for determining the current owner of NFTs from external chains. 
+The list of NFTs that need to be verified comes from `UTXR`s of the Settlement Module. 
+Feeders should submit the NFT owner at the block that will be submitted with the Block topic in the same round (the block having the smallest timestamp exceeding the `timestamp` given in `RoundInfo`). 
+The data format of the Ownership topic is:
 
 ```
 <chain-id>/<contract-addr>/<token-id>:<owner-addr>/<weight>,<owner-addr>/<weight>,...
@@ -114,6 +106,8 @@ The Ownership topic is for determining the current owner of NFTs from external c
 ## Reward
 
 Rewards for oracles are pooled from the fees collected from the [x/settlement](../settlement/README.md) module.
+`x/settlement` module's gas fees are paid with USDC, so the oracle rewards are also distributed in USDC.
+The rewards are distributed via the distribution module.
 
 ## Slashing
 
@@ -129,6 +123,22 @@ During every `SlashWindow`, participating validators must maintain a valid vote 
 A validator may abstain from voting by submitting empty data in `MsgVote`. Doing so will absolve them of any penalties for missing `VotePeriod`s, but also disqualify them from receiving Oracle rewards for faithful reporting.
 
 # State
+
+## RoundInfo 
+
+`RoundInfo` contains information about the current `VotePeriod` and a set of problems for validators to solve.
+Currently, there is only one topic: `Ownership`.
+`RoundInfo` gets overridden in the `EndBlock` of every block.
+
+```go
+type RoundInfo struct {
+	Id                 uint64
+	PrevoteEnd         int64
+    VoteEnd            int64
+	repeated OracleData OracleData
+	timestamp          int64
+}
+```
 
 ## AggregatePrevote
 
@@ -273,3 +283,8 @@ The oracle module contains the following parameters:
 - `slashFraction` must be larger than 0 and less than 0.1.
 - `slashWindow` must be larger than 0 and divisible by the `votePeriod`.
 - `maxMissCountPerSlashWindow` must be less than the `slashWindow`.
+
+# Interop Node
+Reading and parsing `RoundInfo` and submitting `Prevote` and `Vote` messages are the primary tasks for validators.
+New validators can implement their own server to perform oracle tasks, but it is recommended to use the [`tools/interop-node`](../../tools/interop-node) for convenience.
+The `interop-node` is a standalone server that can be used to interact with the Settlus blockchain and external chains to perform oracle related tasks.
