@@ -5,7 +5,9 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
 	"github.com/settlus/chain/x/settlement/types"
@@ -43,6 +45,37 @@ func (suite *SettlementTestSuite) TestSettle_Settle_Native() {
 
 	balance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, "uusdc")
 	suite.EqualValues(10, balance.Amount.Int64())
+}
+
+func (suite *SettlementTestSuite) TestSettle_Settle_MintableContract() {
+	tenantId, err := suite.keeper.CreateNewTenant(suite.ctx, suite.appAdmin.String(), "bluc", 1, "mintable_contract", "")
+	suite.NoError(err)
+
+	tenant := suite.keeper.GetTenant(suite.ctx, tenantId)
+
+	requestId := "request-1"
+	recipient := sdk.MustAccAddressFromBech32(sample.AccAddress())
+	_, err = suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
+		RequestId:  requestId,
+		Recipients: types.SingleRecipients(recipient),
+		Amount:     sdk.NewCoin("bluc", math.NewInt(10)),
+		CreatedAt:  10,
+	})
+	suite.NoError(err)
+
+	utxr := suite.keeper.GetUTXRByRequestId(suite.ctx, tenantId, requestId)
+	suite.NotNil(utxr)
+	suite.EqualValues(10, utxr.Amount.Amount.Int64())
+
+	suite.keeper.Settle(suite.ctx.WithBlockHeight(11), tenantId)
+
+	utxr = suite.keeper.GetUTXRByRequestId(suite.ctx.WithBlockHeight(12), tenantId, requestId)
+	suite.Nil(utxr)
+
+	abi := contracts.ERC20Contract.ABI
+	balance := s.app.Erc20Keeper.BalanceOf(suite.ctx, abi, common.HexToAddress(tenant.ContractAddress), common.Address(recipient))
+
+	suite.EqualValues(10, balance.Int64())
 }
 
 func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance() {
