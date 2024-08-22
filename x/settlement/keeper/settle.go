@@ -118,8 +118,8 @@ func (k SettlementKeeper) tryPayout(ctx sdk.Context, tenantId uint64, utxr *type
 		case payoutMethod == types.PayoutMethod_Native:
 			if k.erc20k.IsDenomRegistered(ctx, amount.Denom) {
 				// convert from erc20 to Coin
-				contractAddr, err := k.erc20k.GetCoinAddress(ctx, amount.Denom)
-				if err != nil {
+				contractAddr, cerr := k.erc20k.GetCoinAddress(ctx, amount.Denom)
+				if cerr != nil {
 					return false, fmt.Errorf("denom is registred as erc20 but failed to get coin address: %w", err)
 				}
 				msg := erc20types.NewMsgConvertERC20(
