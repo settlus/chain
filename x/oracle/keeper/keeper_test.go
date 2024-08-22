@@ -403,11 +403,11 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners() {
 
 func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 	tests := []struct {
-		name       string
-		vcm        map[string]types.Claim
-		totalCoin  sdk.Coins
-		rewardMap  map[string]sdk.DecCoins
-		probonoMap map[int]sdk.Dec
+		name         string
+		vcm          map[string]types.Claim
+		totalCoin    sdk.Coins
+		rewardMap    map[string]sdk.DecCoins
+		probonoMap   map[int]sdk.Dec
 	}{
 		{
 			name: "Probono validators send rewards to community pool with their probono rate, normal validators get rewards",
@@ -515,10 +515,10 @@ func (suite *OracleTestSuite) TestKeeper_RewardBallotWinners_WithProbono() {
 				contribution := tt.rewardMap[validator.GetOperator().String()].MulDec(validator.GetProbonoRate())
 
 				probonoRewards = probonoRewards.Add(contribution...)
-
+				
 				rewards := s.app.DistrKeeper.GetValidatorCurrentRewards(s.ctx, validator.GetOperator())
 				s.Equal(tt.rewardMap[validator.GetOperator().String()].Sub(contribution).AmountOf("asetl"), rewards.Rewards.AmountOf("asetl"))
-
+				
 				s.app.DistrKeeper.DeleteValidatorCurrentRewards(s.ctx, validator.GetOperator())
 			}
 
