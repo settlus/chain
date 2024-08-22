@@ -117,7 +117,6 @@ chains:
   chain_name: ethereum
   chain_type: ethereum
   rpc_url: https://mainnet.infura.io/v3/YOUR_INFURA_KEY
-db_home: ...
 log_level: info
 ```
 

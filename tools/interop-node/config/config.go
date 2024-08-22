@@ -30,7 +30,6 @@ type Config struct {
 	Settlus  SettlusConfig `yaml:"settlus"`
 	Feeder   FeederConfig  `yaml:"feeder"`
 	Chains   []ChainConfig `yaml:"chains"`
-	DBHome   string        `yaml:"db_home"`
 	LogLevel string        `yaml:"log_level"`
 	Port     uint16        `yaml:"port"`
 }
@@ -48,10 +47,6 @@ func (c *Config) Validate() error {
 
 	if err := c.Feeder.Validate(); err != nil {
 		return err
-	}
-
-	if len(c.DBHome) == 0 {
-		return fmt.Errorf("db_home must not be empty")
 	}
 
 	if len(c.LogLevel) == 0 {

@@ -16,12 +16,7 @@ const (
 	flagOutput = "output"
 )
 
-// VersionCommand returns a CLI command to interactively print the application binary version information.
-// Note: When seeking to add the extra info to the context
-// The below can be added to the initRootCmd to include the extraInfo field
-//
-// cmdContext := context.WithValue(context.Background(), version.ContextKey{}, extraInfo)
-// rootCmd.SetContext(cmdContext)
+// VersionCommand returns a command that prints the application binary version information.
 func VersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -30,15 +25,14 @@ func VersionCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			verInfo := version.NewInfo()
 
-			s, _ := json.MarshalIndent(verInfo, "", "\t")
-			fmt.Print(string(s))
+			long, _ := cmd.Flags().GetBool(flagLong)
+			output, _ := cmd.Flags().GetString(flagOutput)
 
-			if long, _ := cmd.Flags().GetBool(flagLong); !long {
+			if !long {
 				fmt.Fprintln(cmd.OutOrStdout(), verInfo.Version)
 				return nil
 			}
 
-			// Extract and set extra information from the context
 			verInfo.ExtraInfo = extraInfoFromContext(cmd)
 
 			var (
@@ -46,13 +40,11 @@ func VersionCommand() *cobra.Command {
 				err error
 			)
 
-			output, _ := cmd.Flags().GetString(flagOutput)
 			switch strings.ToLower(output) {
 			case "json":
-				bz, err = json.Marshal(verInfo)
-
+				bz, err = json.MarshalIndent(createSimplifiedVersion(verInfo), "", "  ")
 			default:
-				bz, err = yaml.Marshal(&verInfo)
+				bz, err = yaml.Marshal(createSimplifiedVersion(verInfo))
 			}
 
 			if err != nil {
@@ -68,6 +60,16 @@ func VersionCommand() *cobra.Command {
 	cmd.Flags().StringP(flagOutput, "o", "text", "Output format (text|json)")
 
 	return cmd
+}
+
+func createSimplifiedVersion(info version.Info) map[string]interface{} {
+	return map[string]interface{}{
+		"name":       info.Name,
+		"version":    info.Version,
+		"go_version": info.GoVersion,
+		"build_tags": info.BuildTags,
+		"extra_info": info.ExtraInfo,
+	}
 }
 
 func extraInfoFromContext(cmd *cobra.Command) version.ExtraInfo {
