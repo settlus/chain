@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/spf13/cobra"
 
@@ -13,7 +12,6 @@ import (
 const (
 	flagOverwrite   = "overwrite"
 	DefaultLogLevel = "info"
-	DefaultDBHome   = "db"
 	DefaultPort     = 8000
 )
 
@@ -47,7 +45,6 @@ for oracle feeder.
 					config.ConfigFile)
 			}
 
-			home := config.HomeDir
 			c := cfg.Config{
 				Settlus: cfg.SettlusConfig{
 					ChainId:  "settlus_5371-1",
@@ -76,7 +73,6 @@ for oracle feeder.
 				},
 				LogLevel: DefaultLogLevel,
 				Port:     DefaultPort,
-				DBHome:   path.Join(home, DefaultDBHome),
 			}
 
 			config.Config = c
