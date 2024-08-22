@@ -43,7 +43,7 @@ ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
            -X github.com/settlus/chain/tools/interop-node/version.Version=$(VERSION) \
            -X github.com/settlus/chain/tools/interop-node/version.Commit=$(COMMIT) \
            -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep) \
-		   -X github.com/settlus/chain/tools/interop-node/version.BuildTags=$(build_tags_comma_sep)
+           -X github.com/settlus/chain/tools/interop-node/version.BuildTags=$(build_tags_comma_sep)
 
 # Additional linker flags
 ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
