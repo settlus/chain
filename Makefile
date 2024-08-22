@@ -31,6 +31,9 @@ endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
+# Build tags to linker flags
+build_tags_comma_sep := $(subst $(subst ,, ),,,$(build_tags))
+
 # Linker flags setup
 ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
            -X github.com/cosmos/cosmos-sdk/version.AppName=$(SETTLUS_BINARY) \
@@ -38,11 +41,9 @@ ldflags := -X github.com/cosmos/cosmos-sdk/version.Name=settlus \
            -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
            -X github.com/settlus/chain/tools/interop-node/version.Name=interop-node \
            -X github.com/settlus/chain/tools/interop-node/version.Version=$(VERSION) \
-           -X github.com/settlus/chain/tools/interop-node/version.Commit=$(COMMIT)
-
-# Build tags to linker flags
-build_tags_comma_sep := $(subst $(subst ,, ),,,$(build_tags))
-ldflags += -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+           -X github.com/settlus/chain/tools/interop-node/version.Commit=$(COMMIT) \
+           -X github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep) \
+           -X github.com/settlus/chain/tools/interop-node/version.BuildTags=$(build_tags_comma_sep)
 
 # Additional linker flags
 ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
@@ -211,19 +212,20 @@ localnet-start: localnet-stop
 ###############################################################################
 
 PACKAGE_NAME:=github.com/settlus/chain
-GOLANG_CROSS_VERSION  = v1.21
+GOLANG_CROSS_VERSION  = v1.22
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
+		-e LDFLAGS="$(ldflags)" \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
 		-v ${GOPATH}/pkg:/go/pkg \
 		-w /go/src/$(PACKAGE_NAME) \
 		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		--clean --skip-validate --skip-publish --snapshot
+		--clean --skip=validate --skip=publish --snapshot
 
 release:
 	@if [ ! -f ".release-env" ]; then \
@@ -234,11 +236,30 @@ release:
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
+		-e LDFLAGS="$(ldflags)" \
 		--env-file .release-env \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
 		-w /go/src/$(PACKAGE_NAME) \
 		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
-		release --clean --skip-validate
+		release --clean --skip=validate
 
 .PHONY: release-dry-run release
+
+###############################################################################
+###                                    MISC                                 ###
+###############################################################################
+help:
+	@echo "Available targets:"
+	@echo "  build              - Build the project"
+	@echo "  test               - Run tests"
+	@echo "  e2e-test           - Run end-to-end tests"
+	@echo "  clean              - Clean build artifacts"
+	@echo "  lint               - Run linter"
+	@echo "  proto-all          - Run all protobuf-related tasks"
+	@echo "  proto-gen          - Generate Protobuf files"
+	@echo "  proto-format       - Format Protobuf files"
+	@echo "  proto-lint         - Lint Protobuf files"
+	@echo "  proto-swagger-gen  - Generate Protobuf Swagger"
+	@echo "  release-dry-run    - Dry run release"
+	@echo "  release            - Release"
