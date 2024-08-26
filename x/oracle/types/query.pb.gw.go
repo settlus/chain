@@ -849,23 +849,23 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_AggregatePrevote_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "aggregate_prevote", "validator_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AggregatePrevote_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "aggregate_prevote", "validator_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_AggregatePrevotes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "aggregate_prevotes"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AggregatePrevotes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "aggregate_prevotes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_AggregateVote_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "aggregate_vote", "validator_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AggregateVote_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "aggregate_vote", "validator_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_AggregateVotes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "aggregate_votes"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_AggregateVotes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "aggregate_votes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_FeederDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "feeder_delegation", "validator_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FeederDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "feeder_delegation", "validator_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_MissCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "miss_count", "validator_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_MissCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"settlus", "oracle", "v1alpha1", "miss_count", "validator_address"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_RewardPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "reward_pool"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_RewardPool_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "reward_pool"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_CurrentRoundInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "current_round_info"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_CurrentRoundInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"settlus", "oracle", "v1alpha1", "current_round_info"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

@@ -6,9 +6,8 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
-
 	"github.com/evmos/evmos/v19/contracts"
+	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
 
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
@@ -75,7 +74,7 @@ func (suite *SettlementTestSuite) TestSettle_Settle_ERC20_Conversion() {
 	_, err := suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
 		RequestId:  requestId,
 		Recipients: types.SingleRecipients(recipient),
-		Amount:     sdk.NewCoin(suite.erc20TokenPair.Denom, amount),
+		Amount:     sdk.NewCoin(suite.erc20TokenPair.Denom, math.NewInt(10)),
 		CreatedAt:  10,
 	})
 	suite.NoError(err)
