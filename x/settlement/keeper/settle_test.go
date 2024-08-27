@@ -6,8 +6,9 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/evmos/evmos/v19/contracts"
+	erc20types "github.com/evmos/evmos/v19/x/erc20/types"
 
-	"github.com/settlus/chain/contracts"
 	"github.com/settlus/chain/testutil/sample"
 	utiltx "github.com/settlus/chain/testutil/tx"
 	"github.com/settlus/chain/x/settlement/types"
@@ -47,35 +48,50 @@ func (suite *SettlementTestSuite) TestSettle_Settle_Native() {
 	suite.EqualValues(10, balance.Amount.Int64())
 }
 
-func (suite *SettlementTestSuite) TestSettle_Settle_MintableContract() {
-	tenantId, err := suite.keeper.CreateNewTenant(suite.ctx, suite.appAdmin.String(), "bluc", 1, "mintable_contract", "")
-	suite.NoError(err)
+func (suite *SettlementTestSuite) TestSettle_Settle_ERC20_Conversion() {
+	tenantId := uint64(2)
+	amount := math.NewInt(100)
+	treasuryAddr := types.GetTenantTreasuryAccount(tenantId)
 
-	tenant := suite.keeper.GetTenant(suite.ctx, tenantId)
+	suite.MintERC20Token(
+		suite.erc20TokenPair.GetERC20Contract(),
+		erc20types.ModuleAddress,
+		common.Address(treasuryAddr),
+		amount.BigInt(),
+	)
+	suite.Commit()
 
-	requestId := "request-1"
+	treasuryBalance := suite.app.Erc20Keeper.BalanceOf(
+		suite.ctx,
+		contracts.ERC20MinterBurnerDecimalsContract.ABI,
+		suite.erc20TokenPair.GetERC20Contract(),
+		common.Address(treasuryAddr),
+	)
+	suite.Require().EqualValues(amount.Int64(), treasuryBalance.Int64())
+
+	requestId := "req-1"
 	recipient := sdk.MustAccAddressFromBech32(sample.AccAddress())
-	_, err = suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
+	_, err := suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
 		RequestId:  requestId,
 		Recipients: types.SingleRecipients(recipient),
-		Amount:     sdk.NewCoin("bluc", math.NewInt(10)),
+		Amount:     sdk.NewCoin(suite.erc20TokenPair.Denom, amount),
 		CreatedAt:  10,
 	})
 	suite.NoError(err)
 
 	utxr := suite.keeper.GetUTXRByRequestId(suite.ctx, tenantId, requestId)
 	suite.NotNil(utxr)
-	suite.EqualValues(10, utxr.Amount.Amount.Int64())
+
+	initialBalance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, suite.erc20TokenPair.Denom)
+	suite.EqualValues(0, initialBalance.Amount.Int64())
 
 	suite.keeper.Settle(suite.ctx.WithBlockHeight(11), tenantId)
 
 	utxr = suite.keeper.GetUTXRByRequestId(suite.ctx.WithBlockHeight(12), tenantId, requestId)
 	suite.Nil(utxr)
 
-	abi := contracts.ERC20Contract.ABI
-	balance := s.app.Erc20Keeper.BalanceOf(suite.ctx, abi, common.HexToAddress(tenant.ContractAddress), common.Address(recipient))
-
-	suite.EqualValues(10, balance.Int64())
+	balance := s.app.BankKeeper.GetBalance(suite.ctx, recipient, suite.erc20TokenPair.Denom)
+	suite.EqualValues(amount.Int64(), balance.Amount.Int64())
 }
 
 func (suite *SettlementTestSuite) TestSettle_Settle_InsufficientTreasuryBalance() {

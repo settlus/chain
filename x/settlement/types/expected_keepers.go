@@ -1,7 +1,8 @@
 package types
 
 import (
-	"cosmossdk.io/math"
+	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,8 +32,9 @@ type BankKeeper interface {
 }
 
 type Erc20Keeper interface {
-	ConvertCoinNativeERC20(ctx sdk.Context, pari erc20types.TokenPair, amount math.Int, receiver common.Address, sender sdk.AccAddress) error
+	ConvertERC20(goCtx context.Context, msg *erc20types.MsgConvertERC20) (*erc20types.MsgConvertERC20Response, error)
 	IsDenomRegistered(ctx sdk.Context, denom string) bool
+	GetCoinAddress(ctx sdk.Context, denom string) (common.Address, error)
 }
 
 type EvmKeeper interface {
