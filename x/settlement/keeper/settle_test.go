@@ -74,7 +74,7 @@ func (suite *SettlementTestSuite) TestSettle_Settle_ERC20_Conversion() {
 	_, err := suite.keeper.CreateUTXR(suite.ctx, tenantId, &types.UTXR{
 		RequestId:  requestId,
 		Recipients: types.SingleRecipients(recipient),
-		Amount:     sdk.NewCoin(suite.erc20TokenPair.Denom, math.NewInt(10)),
+		Amount:     sdk.NewCoin(suite.erc20TokenPair.Denom, amount),
 		CreatedAt:  10,
 	})
 	suite.NoError(err)

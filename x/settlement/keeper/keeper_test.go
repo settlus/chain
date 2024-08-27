@@ -195,8 +195,13 @@ func (suite *SettlementTestSuite) addTestTenants() {
 		PayoutPeriod: 1,
 		PayoutMethod: "native",
 	}
-	suite.keeper.SetTenant(suite.ctx, tenant1)
-	suite.keeper.SetTenant(suite.ctx, tenant2)
+	res, err := suite.msgServer.CreateTenant(suite.ctx, &types.MsgCreateTenant{Sender: suite.appAdmin.String(), Denom: tenant1.Denom, PayoutPeriod: tenant1.PayoutPeriod})
+	suite.Require().NoError(err)
+	suite.Require().Equal(tenant1.Id, res.TenantId)
+
+	res, err = suite.msgServer.CreateTenant(suite.ctx, &types.MsgCreateTenant{Sender: suite.appAdmin.String(), Denom: tenant2.Denom, PayoutPeriod: tenant2.PayoutPeriod})
+	suite.Require().NoError(err)
+	suite.Require().Equal(tenant2.Id, res.TenantId)
 }
 
 func (suite *SettlementTestSuite) deploySampleContract() {
