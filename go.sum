@@ -1215,8 +1215,8 @@ github.com/segmentio/kafka-go v0.2.0/go.mod h1:X6itGqS9L4jDletMsxZ7Dz+JFWxM6JHfP
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/settlus/cosmos-sdk v0.47.12-settlus.3 h1:RINSLTQes1z/7xOVXeeQetW6Iojrw0GtgBSRS3diLjw=
 github.com/settlus/cosmos-sdk v0.47.12-settlus.3/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
-github.com/settlus/evmos/v19 v19.0.0-settlus.3 h1:P5n6lCDofIf4c2Kg3uNdj0nYad+A0Or7AwrfXwfQizc=
-github.com/settlus/evmos/v19 v19.0.0-settlus.3/go.mod h1:oxzKo9nicHfPnGDV+sItCvz6Hkv1QhTFtG1dplSGcSE=
+github.com/settlus/evmos/v19 v19.0.0-settlus.4 h1:0JD8VUGJ2ny4leCnkF/BpSZaNOOwaeQjdNrab5SLENY=
+github.com/settlus/evmos/v19 v19.0.0-settlus.4/go.mod h1:cH2IV7ZrZlp+2KfeExMvtlQe8sxOYt2cC4J3ZiiwJHU=
 github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible h1:Bn1aCHHRnjv4Bl16T8rcaFjYSrGrIZvpiGO6P3Q4GpU=
 github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
