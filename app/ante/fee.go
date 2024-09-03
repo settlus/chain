@@ -238,7 +238,13 @@ func getValidatorFromOracleMsg(msg sdk.Msg) (sdk.ValAddress, error) {
 			return nil, err
 		}
 		return val, nil
+	case *oracletypes.MsgFeederDelegationConsent:
+		val, err := sdk.ValAddressFromBech32(msg.Validator)
+		if err != nil {
+			return nil, err
+		}
+		return val, nil
 	default:
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid oracle msg type")
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid oracle msg type %T", msg)
 	}
 }
