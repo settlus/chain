@@ -245,6 +245,6 @@ func getValidatorFromOracleMsg(msg sdk.Msg) (sdk.ValAddress, error) {
 		}
 		return val, nil
 	default:
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid oracle msg type %T", msg)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid oracle msg type")
 	}
 }

@@ -316,10 +316,10 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 			probonoRate := receiverVal.GetProbonoRate()
 			probonoContribution := sdk.NewDecCoinsFromCoins(rewardCoins...).MulDecTruncate(probonoRate)
 			totalContribution = totalContribution.Add(probonoContribution...)
-			
+
 			finalReward := sdk.NewDecCoinsFromCoins(rewardCoins...).Sub(probonoContribution)
 			finalRewardCoins, _ := finalReward.TruncateDecimal()
-			
+
 			k.DistributionKeeper.AllocateTokensToValidator(ctx, receiverVal, finalReward)
 			distributedReward = distributedReward.Add(finalRewardCoins...)
 		} else {
@@ -334,7 +334,7 @@ func (k Keeper) RewardBallotWinners(ctx sdk.Context, validatorClaimMap map[strin
 	feePool := k.DistributionKeeper.GetFeePool(ctx)
 	feePool.CommunityPool = feePool.CommunityPool.Add(totalContribution...)
 	k.DistributionKeeper.SetFeePool(ctx, feePool)
-	
+
 	totalContributionCoins, _ := totalContribution.TruncateDecimal()
 
 	// Move both distributed reward and contribution reward to distribution module
