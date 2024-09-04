@@ -226,18 +226,15 @@ func (svcd SettlusValidatorCheckDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx
 
 func getValidatorFromOracleMsg(msg sdk.Msg) (sdk.ValAddress, error) {
 	switch msg := msg.(type) {
-	case *oracletypes.MsgVote:
-		val, err := sdk.ValAddressFromBech32(msg.Validator)
-		if err != nil {
-			return nil, err
+	case *oracletypes.MsgVote, *oracletypes.MsgPrevote, *oracletypes.MsgFeederDelegationConsent:
+		if validatorMsg, ok := msg.(interface{ GetValidator() string }); ok {
+			val, err := sdk.ValAddressFromBech32(validatorMsg.GetValidator())
+			if err != nil {
+				return nil, err
+			}
+			return val, nil
 		}
-		return val, nil
-	case *oracletypes.MsgPrevote:
-		val, err := sdk.ValAddressFromBech32(msg.Validator)
-		if err != nil {
-			return nil, err
-		}
-		return val, nil
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Cannot extract validator from oracle msg")
 	default:
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid oracle msg type")
 	}
