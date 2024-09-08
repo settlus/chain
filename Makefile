@@ -77,9 +77,9 @@ test:
 	@echo "Running tests..."
 	@go test -mod=readonly $(shell go list ./... | grep -v tests/e2e)|| (echo "Tests failed"; exit 1)
 
-e2e-test:
+test-e2e:
 	@echo "Running e2e tests..."
-	@go test ./tests/e2e -v || (echo "Tests failed"; exit 1)	
+	@go test ./tests/e2e -v || (echo "Tests failed"; exit 1)
 
 clean:
 	@echo "Cleaning up..."

@@ -1,0 +1,20 @@
+name: E2E Test
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-test:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run E2E Test
+        run: make test-e2e

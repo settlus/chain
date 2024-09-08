@@ -1,2 +1,5 @@
-# build
 build
+.idea
+.vscode
+.github
+swagger/swagger-ui/swagger.json
