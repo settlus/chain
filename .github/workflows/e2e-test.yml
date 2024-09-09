@@ -24,6 +24,7 @@ jobs:
         env:
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
         run: |
+          echo "ETH_RPC_URL: $ETH_RPC_URL"
           docker build -t e2e -f Dockerfile.e2e . --build-arg ETH_RPC_URL="$ETH_RPC_URL"
 
       - name: Run E2E Test
