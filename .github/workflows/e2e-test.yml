@@ -1,6 +1,7 @@
 name: E2E Test
 
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -14,7 +15,12 @@ jobs:
     name: E2E Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: build e2e test image
+        run: docker build -t e2e -f Dockerfile.e2e . --build-arg ETH_RPC_URL=${{ secrets.ETH_RPC_URL }}
+ 
       - name: Run E2E Test
-        run: make test-e2e
+        run: docker run --rm e2e

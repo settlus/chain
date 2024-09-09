@@ -169,7 +169,7 @@ settlusd start "$TRACE" \
 	--log_level $LOGLEVEL \
 	--minimum-gas-prices=0.0001asetl \
 	--json-rpc.api eth,txpool,personal,net,debug,web3 \
-	--chain-id "$CHAINID" &
+	--chain-id "$CHAINID" > /dev/null 2>&1 &
 
 # Wait for the node to start
 sleep 10
@@ -208,7 +208,7 @@ EOF
 echo "Interop config file created at /root/.interop/config.yaml"
 
 # Start the interop node
-interop-node start &
+interop-node start > /dev/null 2>&1 &
 
 # Wait for the interop node to start
 sleep 10

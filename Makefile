@@ -79,7 +79,12 @@ test:
 
 test-e2e:
 	@echo "Running e2e tests..."
-	@go test ./tests/e2e -v || (echo "Tests failed"; exit 1)
+	@if [ -z "$$ETH_RPC_URL" ]; then \
+		echo "Error: ETH_RPC_URL environment variable is not set"; \
+		exit 1; \
+	fi
+	@docker build -t e2e -f Dockerfile.e2e . --build-arg ETH_RPC_URL=$(ETH_RPC_URL)
+	@docker run --rm e2e
 
 clean:
 	@echo "Cleaning up..."
