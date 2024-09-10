@@ -7,6 +7,9 @@ on:
       - main
       - release/**
 
+permissions:
+  contents: read
+
 jobs:
   e2e-test:
     name: E2E Test
