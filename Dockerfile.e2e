@@ -1,0 +1,40 @@
+FROM golang:1.22.5-alpine
+
+ARG ETH_RPC_URL
+
+# Check if ETH_RPC_URL is provided
+RUN test -n "$ETH_RPC_URL" || (echo "Error: ETH_RPC_URL is not specified" && exit 1)
+
+ENV CGO_ENABLED=1 \
+    GO111MODULE=on \
+    GOOS=linux
+
+# Install make and other necessary tools
+RUN apk update && \
+    apk upgrade && \
+    apk add --update --no-cache \
+        alpine-sdk \
+        linux-headers \
+        make \
+        jq
+
+WORKDIR /app
+
+COPY . .
+
+RUN go mod download
+
+RUN make build && \
+    mv build/settlusd /usr/local/bin/ && \
+    mv build/interop-node /usr/local/bin/ && \
+    chmod +x /usr/local/bin/settlusd && \
+    chmod +x /usr/local/bin/interop-node
+
+# Create necessary directories and set HOME
+ENV HOME=/root
+RUN mkdir -p $HOME/.settlusd/config && \
+    mkdir -p $HOME/.interop
+
+EXPOSE 26656 26657 1317 9090 8545
+
+CMD ["sh", "./tests/e2e/init-node.sh", "$ETH_RPC_URL"]

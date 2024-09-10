@@ -1,0 +1,39 @@
+name: E2E Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release/**
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-test:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: build e2e test image
+        shell: bash
+        env:
+          ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+          TEST: test
+        run: |
+          echo "ETH_RPC_URL: $ETH_RPC_URL"
+          echo "TEST: $TEST"
+          if [ -z "$ETH_RPC_URL" ]; then
+            echo "Error: ETH_RPC_URL is not set"
+            exit 1
+          fi
+          docker build -t e2e -f Dockerfile.e2e . --build-arg ETH_RPC_URL="$ETH_RPC_URL"
+
+      - name: Run E2E Test
+        env:
+          ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+        run: docker run --rm e2e
