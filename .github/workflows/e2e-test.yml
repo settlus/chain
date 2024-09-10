@@ -7,9 +7,6 @@ on:
       - main
       - release/**
 
-permissions:
-  contents: read
-
 jobs:
   e2e-test:
     name: E2E Test
@@ -23,8 +20,10 @@ jobs:
         shell: bash
         env:
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+          TEST: test
         run: |
           echo "ETH_RPC_URL: $ETH_RPC_URL"
+          echo "TEST: $TEST"
           docker build -t e2e -f Dockerfile.e2e . --build-arg ETH_RPC_URL="$ETH_RPC_URL"
 
       - name: Run E2E Test
