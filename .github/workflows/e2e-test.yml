@@ -23,7 +23,8 @@ jobs:
           TEST: test
         run: |
           echo "ETH_RPC_URL: $ETH_RPC_URL"
-          echo ${{ secrets.ETH_RPC_URL }} | sed 's/./& /g' | cut -d ' ' -f1-10
+          echo "test #1 $(echo "${{ secrets.ETH_RPC_URL }}" | sed 's/./& /g' | cut -d ' ' -f1-10)"
+          echo "test #2 $(echo "$ETH_RPC_URL" | sed 's/./& /g' | cut -d ' ' -f1-10)"
           echo "TEST: $TEST"
           if [ -z "$ETH_RPC_URL" ]; then
             echo "Error: ETH_RPC_URL is not set"
