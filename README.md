@@ -1,3 +1,8 @@
+# ⚠️ DEPRECATED ⚠️
+
+This Cosmos SDK-based implementation is no longer maintained.
+For detailed information about our migration to Superchain, please read our Medium post:
+[Moving to L2: The Reasons Behind](https://medium.com/@settlus_official/chapter-3-moving-to-l2-the-reasons-behind-b273771525fb)
 # Settlus
 
 **Settlus** is a purpose-built blockchain designed to provide a transparent settlement system for the creator economy.
